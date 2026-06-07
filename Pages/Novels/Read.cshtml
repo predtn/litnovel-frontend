@@ -1,0 +1,189 @@
+@page "/Novels/{novelSlug}/{chapterId:int}/read"
+@model litnovel_frontend.Pages.Novels.ReadModel
+@{
+    ViewData["Title"] = Model.Chapter?.Title ?? "Đọc chương";
+    var ch = Model.Chapter;
+}
+@if (ch == null)
+{
+    <div class="container" style="padding-top:80px;"><div class="empty-state"><div class="empty-state__icon">🔍</div><div class="empty-state__title">Không tìm thấy chương này</div><a href="/Novels" class="btn btn-primary mt-md">Quay lại</a></div></div>
+    return;
+}
+
+<!-- Reader toolbar -->
+<div style="background:var(--color-canvas); border-bottom:1px solid var(--color-hairline); padding: var(--space-sm) var(--space-lg); position:sticky; top:64px; z-index:50;">
+    <div class="container" style="display:flex; align-items:center; justify-content:space-between;">
+        <div class="breadcrumb" style="margin:0;">
+            <a href="/">Home</a><span class="breadcrumb__sep">/</span>
+            <a href="/Novels/@ch.Novel?.Slug">@ch.Novel?.Title</a><span class="breadcrumb__sep">/</span>
+            <span class="breadcrumb__current">Ch.@ch.ChapterNumber</span>
+        </div>
+        <div class="flex gap-sm items-center">
+            <!-- Font size -->
+            <button onclick="changeFontSize(-1)" class="btn-icon" title="Nhỏ hơn">A-</button>
+            <button onclick="changeFontSize(1)"  class="btn-icon" title="Lớn hơn">A+</button>
+        </div>
+    </div>
+</div>
+
+<!-- Reading area -->
+<div class="reader-layout" id="readerLayout">
+    <div class="reader-header">
+        <div class="reader-novel-title">
+            <a href="/Novels/@ch.Novel?.Slug" style="color:var(--color-mute); text-decoration:none;">@ch.Novel?.Title</a>
+        </div>
+        <h1 class="reader-chapter-title">@ch.Title</h1>
+        <div class="text-caption text-mute mt-xs">Chương @ch.ChapterNumber · @ch.CreatedAt.ToString("dd/MM/yyyy")</div>
+    </div>
+
+    <!-- Chapter content -->
+    <div class="reader-content" id="chapterContent">
+        @Html.Raw(ch.Content)
+    </div>
+
+    <!-- Prev / Next navigation -->
+    <div class="reader-nav">
+        @if (ch.PrevChapter != null)
+        {
+            <a href="/Novels/@ch.Novel?.Slug/@ch.PrevChapter.Id/read" class="btn btn-secondary">
+                ← Ch.@ch.PrevChapter.ChapterNumber
+            </a>
+        }
+        else { <span></span> }
+
+        <a href="/Novels/@ch.Novel?.Slug" class="btn btn-ghost">Danh sách chương</a>
+
+        @if (ch.NextChapter != null)
+        {
+            <a href="/Novels/@ch.Novel?.Slug/@ch.NextChapter.Id/read" class="btn btn-primary">
+                Ch.@ch.NextChapter.ChapterNumber →
+            </a>
+        }
+        else { <span></span> }
+    </div>
+</div>
+
+<!-- Comments Section -->
+<div style="background:var(--color-canvas); border-top:1px solid var(--color-hairline); padding:var(--space-2xl) 0;">
+    <div class="reader-layout" style="padding-top:0; padding-bottom:0;">
+        <h2 class="text-display-sm mb-xl">Bình luận (@Model.TotalComments)</h2>
+
+        @if (User.Identity!.IsAuthenticated)
+        {
+            <form method="post" asp-page-handler="Comment" class="mb-xl">
+                @Html.AntiForgeryToken()
+                <div class="flex gap-md">
+                    <div class="avatar-placeholder avatar-sm" style="flex-shrink:0;">@(ViewData["UserName"]?.ToString()?.Substring(0,1).ToUpper() ?? "U")</div>
+                    <div style="flex:1;">
+                        <textarea class="form-textarea" name="content" placeholder="Viết bình luận..." rows="3" required></textarea>
+                        <div class="flex justify-between mt-xs">
+                            <span class="form-hint">Tối đa 2000 ký tự</span>
+                            <button type="submit" class="btn btn-primary" style="height:36px; border-radius:var(--radius-sm);">Gửi</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        }
+        else
+        {
+            <div class="alert alert-info mb-xl"><a href="/Auth/Login" style="color:inherit; font-weight:500;">Đăng nhập</a> để bình luận.</div>
+        }
+
+        <!-- Comment list -->
+        @foreach (var comment in Model.Comments)
+        {
+            <div class="comment">
+                <div class="avatar-placeholder avatar-sm">@(comment.User?.Username?.Substring(0,1).ToUpper() ?? "U")</div>
+                <div class="comment__body">
+                    <div class="comment__header">
+                        <span class="comment__author">@comment.User?.Username</span>
+                        <span class="comment__time">@TimeAgo(comment.CreatedAt)</span>
+                    </div>
+                    <div class="comment__content">@comment.Content</div>
+                    <div class="comment__actions">
+                        <button class="comment__action">👍 @comment.LikeCount</button>
+                        <button class="comment__action" onclick="showReply(@comment.Id)">↩ Trả lời</button>
+                    </div>
+                    <!-- Reply form (hidden) -->
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <form method="post" asp-page-handler="Reply" id="replyForm-@comment.Id" class="hidden mt-sm" style="margin-left:0;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="parentCommentId" value="@comment.Id" />
+                            <div class="flex gap-sm">
+                                <textarea class="form-textarea" name="content" placeholder="Trả lời..." rows="2" style="min-height:60px;"></textarea>
+                                <div class="flex flex-col gap-xs" style="flex-shrink:0;">
+                                    <button type="submit" class="btn btn-primary btn-sm">Gửi</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="showReply(@comment.Id)">Hủy</button>
+                                </div>
+                            </div>
+                        </form>
+                    }
+                    <!-- Replies -->
+                    @if (comment.Replies.Any())
+                    {
+                        <div class="comment__replies">
+                            @foreach (var reply in comment.Replies)
+                            {
+                                <div class="comment" style="padding-top:var(--space-sm);">
+                                    <div class="avatar-placeholder" style="width:28px;height:28px;border-radius:50%;background:var(--color-canvas-soft-2);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">
+                                        @(reply.User?.Username?.Substring(0,1).ToUpper() ?? "U")
+                                    </div>
+                                    <div class="comment__body">
+                                        <div class="comment__header">
+                                            <span class="comment__author">@reply.User?.Username</span>
+                                            <span class="comment__time">@TimeAgo(reply.CreatedAt)</span>
+                                        </div>
+                                        <div class="comment__content">@reply.Content</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (!Model.Comments.Any())
+        {
+            <div class="empty-state" style="padding:var(--space-2xl);">
+                <div class="empty-state__icon">💬</div>
+                <div class="empty-state__title">Chưa có bình luận nào</div>
+                <div class="empty-state__desc">Hãy là người đầu tiên bình luận!</div>
+            </div>
+        }
+    </div>
+</div>
+
+@functions {
+    string TimeAgo(DateTime dt) {
+        var d = DateTime.UtcNow - dt;
+        if (d.TotalMinutes < 60) return $"{(int)d.TotalMinutes}p trước";
+        if (d.TotalHours   < 24) return $"{(int)d.TotalHours}h trước";
+        if (d.TotalDays    < 30) return $"{(int)d.TotalDays}d trước";
+        return dt.ToString("dd/MM/yy");
+    }
+}
+
+@section Scripts {
+<script>
+// Reading progress
+initReadingProgress(@ch.Id);
+
+// Font size
+let fontSize = 17;
+function changeFontSize(delta) {
+    fontSize = Math.max(14, Math.min(24, fontSize + delta));
+    document.getElementById('chapterContent').style.fontSize = fontSize + 'px';
+    localStorage.setItem('readerFontSize', fontSize);
+}
+const saved = localStorage.getItem('readerFontSize');
+if (saved) { fontSize = parseInt(saved); document.getElementById('chapterContent').style.fontSize = fontSize + 'px'; }
+
+// Reply toggle
+function showReply(id) {
+    const form = document.getElementById('replyForm-' + id);
+    if (form) form.classList.toggle('hidden');
+}
+</script>
+}

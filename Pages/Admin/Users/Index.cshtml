@@ -1,0 +1,121 @@
+@page
+@model litnovel_frontend.Pages.Admin.Users.IndexModel
+@{
+    Layout = "_LayoutDashboard";
+    ViewData["Title"] = "Quản lý người dùng";
+    ViewData["ActiveNav"] = "admin";
+}
+
+@section Sidebar {
+    <a href="/Admin/Dashboard" class="sidebar__link">Tổng quan</a>
+    <div class="sidebar__section-label">Người dùng</div>
+    <a href="/Admin/Users" class="sidebar__link active">Tất cả người dùng</a>
+    <a href="/Admin/Staff" class="sidebar__link">Nhân viên</a>
+    <div class="sidebar__section-label">Nội dung</div>
+    <a href="/Admin/Categories" class="sidebar__link">Thể loại</a>
+    <a href="/Admin/Tags" class="sidebar__link">Tag</a>
+    <a href="/Admin/Badges" class="sidebar__link">Huy hiệu</a>
+    <div class="sidebar__section-label">Hệ thống</div>
+    <a href="/Admin/Settings" class="sidebar__link">Cài đặt</a>
+    <a href="/Admin/AuditLogs" class="sidebar__link">Audit Logs</a>
+}
+
+<!-- SCR-48: User Management -->
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Quản lý người dùng</h1>
+        <p class="page-header__subtitle">@Model.TotalElements người dùng</p>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="flex gap-md mb-xl items-center" style="flex-wrap:wrap;">
+    <div class="search-bar" style="width:280px; flex-shrink:0;">
+        <svg class="search-bar__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <form method="get">
+            <input type="text" name="keyword" value="@Model.Keyword" placeholder="Tên, email..." onchange="this.form.submit()" />
+            <input type="hidden" name="role" value="@Model.RoleFilter" />
+            <input type="hidden" name="status" value="@Model.StatusFilter" />
+        </form>
+    </div>
+    <select class="form-select" style="width:auto;" onchange="updateQueryParam('role', this.value)">
+        <option value="">Tất cả vai trò</option>
+        <option value="User"  selected="@(Model.RoleFilter == "User")">User</option>
+        <option value="Staff" selected="@(Model.RoleFilter == "Staff")">Staff</option>
+        <option value="Admin" selected="@(Model.RoleFilter == "Admin")">Admin</option>
+    </select>
+    <select class="form-select" style="width:auto;" onchange="updateQueryParam('status', this.value)">
+        <option value="">Tất cả trạng thái</option>
+        <option value="Online"  selected="@(Model.StatusFilter == "Online")">Online</option>
+        <option value="Offline" selected="@(Model.StatusFilter == "Offline")">Offline</option>
+        <option value="Banned"  selected="@(Model.StatusFilter == "Banned")">Banned</option>
+    </select>
+</div>
+
+<!-- Users table -->
+<div class="table-wrapper">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Người dùng</th>
+                <th>Email</th>
+                <th>Vai trò</th>
+                <th>Trạng thái</th>
+                <th>Ngày tham gia</th>
+                <th class="col-actions">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model.Users)
+            {
+                <tr>
+                    <td>
+                        <div class="flex gap-sm items-center">
+                            <div class="avatar-placeholder avatar-sm" style="flex-shrink:0;">@(user.Username.Substring(0,1).ToUpper())</div>
+                            <div class="text-body-sm font-medium">@user.Username</div>
+                        </div>
+                    </td>
+                    <td class="text-body-sm text-mute">@user.Email</td>
+                    <td><span class="badge badge-secondary role-@user.Role.ToLower()">@user.Role</span></td>
+                    <td><span class="status-badge status-@user.Status.ToLower()">@user.Status</span></td>
+                    <td class="text-caption text-mute">@user.CreatedAt.ToString("dd/MM/yyyy")</td>
+                    <td class="col-actions">
+                        <div class="flex gap-xs justify-end">
+                            <a href="/Admin/Users/@user.Id" class="btn btn-secondary btn-sm">Chi tiết</a>
+                            @if (user.Status != "Banned")
+                            {
+                                <form method="post" asp-page-handler="Ban" style="display:inline;" onsubmit="return confirm('Xác nhận cấm người dùng này?')">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="userId" value="@user.Id" />
+                                    <button type="submit" class="btn btn-danger btn-sm">Cấm</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form method="post" asp-page-handler="Unban" style="display:inline;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="userId" value="@user.Id" />
+                                    <button type="submit" class="btn btn-secondary btn-sm">Bỏ cấm</button>
+                                </form>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+@if (Model.TotalPages > 1)
+{
+    <div class="flex justify-center mt-xl">
+        <div class="pagination">
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <a href="?page=@i&keyword=@Model.Keyword&role=@Model.RoleFilter&status=@Model.StatusFilter"
+                   class="pagination__btn @(i == Model.Page ? "active" : "")">@i</a>
+            }
+        </div>
+    </div>
+}

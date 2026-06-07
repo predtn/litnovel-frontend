@@ -1,0 +1,89 @@
+@page
+@model litnovel_frontend.Pages.Auth.RegisterModel
+@{
+    Layout = "_LayoutAuth";
+    ViewData["Title"] = "Đăng ký";
+}
+
+<div class="auth-page">
+    <div class="auth-card" style="max-width:440px;">
+        <div class="auth-card__logo">Lit<span style="color:var(--color-link);">Novel</span></div>
+        <h1 class="auth-card__title">Tạo tài khoản</h1>
+        <p class="auth-card__subtitle">Tham gia cộng đồng hàng triệu người đọc và tác giả.</p>
+
+        @if (TempData["Error"] is string err)
+        {
+            <div class="alert alert-error mb-md">@err</div>
+        }
+        @if (TempData["Success"] is string suc)
+        {
+            <div class="alert alert-success mb-md">@suc</div>
+        }
+
+        <form method="post" class="auth-form">
+            @Html.AntiForgeryToken()
+            <div class="form-group">
+                <label class="form-label" for="username">Tên đăng nhập</label>
+                <input id="username" name="username" type="text" class="form-input @(Model.Errors.ContainsKey("username") ? "error" : "")"
+                       placeholder="vd: doc_gia_truyen" value="@Model.Username" required
+                       autocomplete="username" />
+                @if (Model.Errors.TryGetValue("username", out var uErr))
+                {
+                    <span class="form-error">@uErr</span>
+                }
+                <span class="form-hint">3–50 ký tự, chỉ chữ cái, số và _</span>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="email">Email</label>
+                <input id="email" name="email" type="email" class="form-input @(Model.Errors.ContainsKey("email") ? "error" : "")"
+                       placeholder="email@example.com" value="@Model.Email" required
+                       autocomplete="email" />
+                @if (Model.Errors.TryGetValue("email", out var eErr))
+                {
+                    <span class="form-error">@eErr</span>
+                }
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="password">Mật khẩu</label>
+                <div style="position:relative;">
+                    <input id="reg-password" name="password" type="password" class="form-input @(Model.Errors.ContainsKey("password") ? "error" : "")"
+                           placeholder="Tối thiểu 8 ký tự" required style="padding-right:44px;" />
+                    <button type="button" onclick="togglePwd('reg-password', this)"
+                            style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--color-mute);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                </div>
+                @if (Model.Errors.TryGetValue("password", out var pErr))
+                {
+                    <span class="form-error">@pErr</span>
+                }
+                <span class="form-hint">Ít nhất 8 ký tự, 1 chữ hoa, 1 chữ số</span>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="confirmPassword">Xác nhận mật khẩu</label>
+                <input id="confirmPassword" name="confirmPassword" type="password" class="form-input"
+                       placeholder="Nhập lại mật khẩu" required />
+            </div>
+
+            <!-- Terms checkbox -->
+            <label class="form-check">
+                <input type="checkbox" name="agreeTerms" required />
+                <span>Tôi đồng ý với <a href="/Terms" style="color:var(--color-link);">Điều khoản dịch vụ</a> và <a href="/Privacy" style="color:var(--color-link);">Chính sách bảo mật</a></span>
+            </label>
+
+            <button type="submit" class="btn btn-primary" style="width:100%; height:44px; border-radius:var(--radius-sm);">
+                Tạo tài khoản
+            </button>
+        </form>
+
+        <div class="auth-card__footer">
+            Đã có tài khoản? <a href="/Auth/Login">Đăng nhập</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function togglePwd(id) { const i = document.getElementById(id); i.type = i.type === 'password' ? 'text' : 'password'; }
+</script>
+}

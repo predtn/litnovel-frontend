@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(ViewData["Title"] != null ? ViewData["Title"] + " — LitNovel" : "LitNovel")</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="auth-body" style="background: var(--color-canvas-soft); min-height: 100vh;">
+    <!-- Auth header logo -->
+    <div style="position: absolute; top: 24px; left: 24px;">
+        <a href="/" style="font-size: 16px; font-weight: 600; color: var(--color-ink); text-decoration: none;">
+            Lit<span style="color: var(--color-link);">Novel</span>
+        </a>
+    </div>
+
+    @RenderBody()
+
+    <div class="toast-container" id="toastContainer"></div>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

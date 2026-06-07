@@ -1,0 +1,40 @@
+@page
+@model litnovel_frontend.Pages.Notifications.IndexModel
+@{ ViewData["Title"] = "Thông báo"; }
+<!-- SCR-36: Notification Center -->
+<div class="container" style="padding-top:var(--space-xl);padding-bottom:var(--space-4xl);max-width:700px;">
+    <div class="page-header">
+        <h1 class="page-header__title">🔔 Thông báo</h1>
+        @if (Model.UnreadCount > 0)
+        {
+            <form method="post" asp-page-handler="MarkAll">@Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-ghost btn-sm">Đánh dấu tất cả đã đọc</button>
+            </form>
+        }
+    </div>
+
+    @if (!Model.Notifications.Any())
+    { <div class="empty-state"><div class="empty-state__icon">🔔</div><div class="empty-state__title">Không có thông báo</div></div> }
+    else
+    {
+        <div style="display:flex;flex-direction:column;gap:var(--space-xs);">
+            @foreach (var n in Model.Notifications)
+            {
+                <a href="/Notifications/@n.Id" style="display:flex;gap:var(--space-md);padding:var(--space-md);border-radius:var(--radius-md);border:1px solid var(--color-hairline);background:@(n.IsRead ? "var(--color-canvas)" : "var(--color-canvas-soft)");text-decoration:none;transition:box-shadow .15s;" onmouseenter="this.style.boxShadow='var(--shadow-2)'" onmouseleave="this.style.boxShadow=''">
+                    <div style="font-size:24px;flex-shrink:0;">@NotifIcon(n.Type)</div>
+                    <div style="flex:1;min-width:0;">
+                        <div class="text-body-sm font-medium text-ink">@n.Title</div>
+                        <div class="text-caption text-mute mt-xs">@n.Body</div>
+                        <div class="text-caption text-mute mt-xs">@TimeAgo(n.CreatedAt)</div>
+                    </div>
+                    @if (!n.IsRead)
+                    { <div style="width:8px;height:8px;border-radius:50%;background:var(--color-link);flex-shrink:0;margin-top:6px;"></div> }
+                </a>
+            }
+        </div>
+    }
+</div>
+@functions {
+    string NotifIcon(string t) => t switch { "NewChapter"=>"📖","NewComment"=>"💬","CommentReply"=>"↩️","CommentLike"=>"👍","BadgeEarned"=>"🏅","ReportUpdate"=>"⚠️",_=>"🔔" };
+    string TimeAgo(DateTime dt) { var d = DateTime.UtcNow - dt; return d.TotalMinutes < 60 ? $"{(int)d.TotalMinutes}p" : d.TotalHours < 24 ? $"{(int)d.TotalHours}h" : $"{(int)d.TotalDays}d"; }
+}

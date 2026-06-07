@@ -1,0 +1,63 @@
+@page
+@model litnovel_frontend.Pages.Auth.LoginModel
+@{
+    Layout = "_LayoutAuth";
+    ViewData["Title"] = "Đăng nhập";
+}
+
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-card__logo">Lit<span style="color:var(--color-link);">Novel</span></div>
+        <h1 class="auth-card__title">Đăng nhập</h1>
+        <p class="auth-card__subtitle">Chào mừng trở lại! Đăng nhập để tiếp tục đọc truyện.</p>
+
+        @if (TempData["Error"] is string err)
+        {
+            <div class="alert alert-error mb-md">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                @err
+            </div>
+        }
+
+        <form method="post" class="auth-form">
+            @Html.AntiForgeryToken()
+            <div class="form-group">
+                <label class="form-label" for="identifier">Email hoặc tên đăng nhập</label>
+                <input id="identifier" name="identifier" type="text" class="form-input"
+                       placeholder="email@example.com hoặc username"
+                       value="@Model.Identifier" required autocomplete="username" />
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="password">Mật khẩu</label>
+                <div style="position:relative;">
+                    <input id="password" name="password" type="password" class="form-input"
+                           placeholder="••••••••" required autocomplete="current-password"
+                           style="padding-right:44px;" />
+                    <button type="button" onclick="togglePwd('password', this)"
+                            style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--color-mute);">
+                        <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                </div>
+                <div style="text-align:right; margin-top:4px;">
+                    <a href="/Auth/ForgotPassword" class="text-caption" style="color:var(--color-link);">Quên mật khẩu?</a>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%; height:44px; border-radius:var(--radius-sm);">
+                Đăng nhập
+            </button>
+        </form>
+
+        <div class="auth-card__footer">
+            Chưa có tài khoản? <a href="/Auth/Register">Đăng ký ngay</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function togglePwd(id, btn) {
+    const input = document.getElementById(id);
+    input.type = input.type === 'password' ? 'text' : 'password';
+}
+</script>
+}

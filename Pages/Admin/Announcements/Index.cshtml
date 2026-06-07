@@ -1,0 +1,35 @@
+@page
+@model litnovel_frontend.Pages.Admin.Announcements.IndexModel
+@{ Layout = "_LayoutDashboard"; ViewData["Title"] = "Thông báo trang"; }
+@section Sidebar {<a href="/Admin/Dashboard" class="sidebar__link">Tổng quan</a><div class="sidebar__section-label">Hệ thống</div><a href="/Admin/Settings" class="sidebar__link">Cài đặt</a><a href="/Admin/AuditLogs" class="sidebar__link">Audit Logs</a><a href="/Admin/Announcements" class="sidebar__link active">Thông báo trang</a>}
+<!-- SCR-63 -->
+<div class="page-header"><h1 class="page-header__title">📣 Thông báo trang chủ</h1><button class="btn btn-primary" onclick="openModal('addModal')">+ Tạo thông báo</button></div>
+@if (TempData["Success"] is string ok) { <div class="alert alert-success mb-md alert-auto-close">@ok</div> }
+<div style="display:flex;flex-direction:column;gap:var(--space-sm);">
+    @foreach (var a in Model.Announcements)
+    {
+        <div class="card" style="display:flex;gap:var(--space-md);align-items:flex-start;">
+            <div style="flex:1;">
+                <div class="flex items-center gap-sm mb-xs"><span class="badge badge-@(a.Type == "Warning" ? "danger" : "secondary")">@a.Type</span><span class="text-caption text-mute">@a.StartDate.ToString("dd/MM") → @a.EndDate.ToString("dd/MM")</span></div>
+                <div class="text-body-sm font-medium">@a.Title</div>
+                <div class="text-caption text-mute mt-xs">@a.Content</div>
+            </div>
+            <form method="post" asp-page-handler="Delete" onsubmit="return confirm('Xóa thông báo?')">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@a.Id" />
+                <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
+            </form>
+        </div>
+    }
+</div>
+@if (!Model.Announcements.Any()) { <div class="empty-state"><div class="empty-state__icon">📢</div><div class="empty-state__title">Chưa có thông báo nào</div></div> }
+
+<div class="modal-overlay" id="addModal"><div class="modal">
+    <div class="modal__header"><div class="modal__title">Tạo thông báo</div><button class="modal__close" onclick="closeModal('addModal')">✕</button></div>
+    <form method="post" asp-page-handler="Add">@Html.AntiForgeryToken()
+        <div class="form-group"><label class="form-label">Tiêu đề</label><input name="title" class="form-input" required /></div>
+        <div class="form-group"><label class="form-label">Nội dung</label><textarea name="content" class="form-textarea" rows="3"></textarea></div>
+        <div class="grid-2"><div class="form-group"><label class="form-label">Loại</label><select name="type" class="form-select"><option value="Info">Thông tin</option><option value="Warning">Cảnh báo</option><option value="Success">Thành công</option></select></div><div class="form-group"><label class="form-label">Thời hạn (ngày)</label><input name="durationDays" type="number" class="form-input" value="7" /></div></div>
+        <div class="modal__footer"><button type="button" class="btn btn-secondary" onclick="closeModal('addModal')">Hủy</button><button type="submit" class="btn btn-primary">Tạo</button></div>
+    </form>
+</div></div>

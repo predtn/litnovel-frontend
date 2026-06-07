@@ -1,0 +1,20 @@
+@page
+@model litnovel_frontend.Pages.Reading.LikesModel
+@{ ViewData["Title"] = "Truyện đã thích"; }
+<div class="container" style="padding-top:var(--space-xl);padding-bottom:var(--space-4xl);">
+    <div class="page-header"><h1 class="page-header__title">👍 Truyện đã thích</h1><p class="page-header__subtitle">@Model.Novels.Count truyện</p></div>
+    @if (!Model.Novels.Any())
+    { <div class="empty-state"><div class="empty-state__icon">👍</div><div class="empty-state__title">Chưa có truyện đã thích</div><a href="/Novels" class="btn btn-primary mt-md">Khám phá ngay</a></div> }
+    else
+    {
+        <div class="grid-4" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr));">
+            @foreach (var n in Model.Novels)
+            {
+                <a href="/Novels/@n.Slug" class="novel-card">
+                    <div class="novel-card__cover-placeholder">📖</div>
+                    <div class="novel-card__body"><div class="novel-card__title">@n.Title</div><div class="novel-card__meta"><span>⭐ @n.RatingAverage.ToString("0.0")</span></div></div>
+                </a>
+            }
+        </div>
+    }
+</div>

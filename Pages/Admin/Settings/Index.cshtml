@@ -1,0 +1,35 @@
+@page
+@model litnovel_frontend.Pages.Admin.Settings.IndexModel
+@{ Layout = "_LayoutDashboard"; ViewData["Title"] = "Cài đặt hệ thống"; }
+@section Sidebar {
+    <a href="/Admin/Dashboard" class="sidebar__link">Tổng quan</a>
+    <div class="sidebar__section-label">Hệ thống</div>
+    <a href="/Admin/Settings" class="sidebar__link active">Cài đặt</a>
+    <a href="/Admin/AuditLogs" class="sidebar__link">Audit Logs</a>
+    <a href="/Admin/Announcements" class="sidebar__link">Thông báo trang</a>
+}
+<!-- SCR-62: System Settings -->
+<div class="page-header"><h1 class="page-header__title">⚙️ Cài đặt hệ thống</h1></div>
+@if (TempData["Success"] is string ok) { <div class="alert alert-success mb-md alert-auto-close">@ok</div> }
+<form method="post">
+    @Html.AntiForgeryToken()
+    <div class="card mb-md">
+        <h3 class="text-body-sm font-semibold mb-md">🌐 Thông tin chung</h3>
+        <div class="form-group"><label class="form-label">Tên trang web</label><input name="siteName" class="form-input" value="@Model.Settings.SiteName" /></div>
+        <div class="form-group"><label class="form-label">Mô tả</label><textarea name="siteDescription" class="form-textarea" rows="3">@Model.Settings.SiteDescription</textarea></div>
+        <div class="form-group"><label class="form-label">Email liên hệ</label><input name="contactEmail" type="email" class="form-input" value="@Model.Settings.ContactEmail" /></div>
+    </div>
+    <div class="card mb-md">
+        <h3 class="text-body-sm font-semibold mb-md">📖 Cài đặt nội dung</h3>
+        <div class="form-check mb-sm"><input type="checkbox" name="requireModerationForNovels" value="true" @(Model.Settings.RequireModerationForNovels ? "checked" : "") /> Yêu cầu duyệt trước khi đăng tiểu thuyết</div>
+        <div class="form-check mb-sm"><input type="checkbox" name="requireModerationForChapters" value="true" @(Model.Settings.RequireModerationForChapters ? "checked" : "") /> Yêu cầu duyệt trước khi đăng chương</div>
+        <div class="form-check mb-sm"><input type="checkbox" name="allowGuestRead" value="true" @(Model.Settings.AllowGuestRead ? "checked" : "") /> Cho phép khách đọc truyện</div>
+        <div class="form-group mt-md"><label class="form-label">Số chapter tối đa 1 ngày / tác giả</label><input name="maxChaptersPerDay" type="number" class="form-input" value="@Model.Settings.MaxChaptersPerDay" style="width:120px;" /></div>
+    </div>
+    <div class="card mb-xl">
+        <h3 class="text-body-sm font-semibold mb-md">🔐 Bảo mật</h3>
+        <div class="form-group"><label class="form-label">JWT Secret (chỉ xem)</label><input class="form-input" value="••••••••••••••••" disabled style="font-family:monospace;" /></div>
+        <div class="form-group"><label class="form-label">Session timeout (phút)</label><input name="sessionTimeout" type="number" class="form-input" value="@Model.Settings.SessionTimeoutMinutes" style="width:120px;" /></div>
+    </div>
+    <button type="submit" class="btn btn-primary" style="border-radius:var(--radius-sm);">Lưu cài đặt</button>
+</form>

@@ -1,0 +1,75 @@
+@page
+@model litnovel_frontend.Pages.Profile.IndexModel
+@{
+    ViewData["Title"] = "Hồ sơ cá nhân";
+    var u = Model.UserDetail;
+}
+<!-- SCR-06: User Profile (Edit) -->
+<div class="container" style="padding-top:var(--space-xl);padding-bottom:var(--space-4xl);max-width:720px;">
+    <div class="breadcrumb"><a href="/">Trang chủ</a><span class="breadcrumb__sep">/</span><span class="breadcrumb__current">Hồ sơ cá nhân</span></div>
+
+    @if (TempData["Success"] is string ok) { <div class="alert alert-success mb-md alert-auto-close">@ok</div> }
+    @if (TempData["Error"]   is string er) { <div class="alert alert-error mb-md">@er</div> }
+
+    <div class="card mt-md">
+        <div class="flex gap-xl items-start" style="flex-wrap:wrap;">
+            <!-- Avatar -->
+            <div style="text-align:center;flex-shrink:0;">
+                @if (!string.IsNullOrEmpty(u?.Avatar))
+                { <img src="@u.Avatar" class="avatar avatar-2xl" style="margin-bottom:var(--space-md);" /> }
+                else
+                { <div class="avatar-placeholder avatar-2xl" style="margin:0 auto var(--space-md);">@(u?.Username?.Substring(0,1).ToUpper()??"U")</div> }
+                <div class="text-body-sm font-medium">@u?.Username</div>
+                <span class="badge role-@u?.Role.ToLower() mt-xs">@u?.Role</span>
+            </div>
+            <!-- Form -->
+            <form method="post" style="flex:1;min-width:220px;" class="auth-form" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div class="form-group">
+                    <label class="form-label">Tên đăng nhập</label>
+                    <input class="form-input" value="@u?.Username" disabled style="background:var(--color-canvas-soft);" />
+                    <span class="form-hint">Không thể thay đổi tên đăng nhập</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input name="email" type="email" class="form-input" value="@u?.Email" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tiểu sử</label>
+                    <textarea name="bio" class="form-textarea" placeholder="Giới thiệu về bản thân...">@u?.Bio</textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ảnh đại diện (URL)</label>
+                    <input name="avatar" type="url" class="form-input" value="@u?.Avatar" placeholder="https://..." />
+                </div>
+                <button type="submit" class="btn btn-primary" style="border-radius:var(--radius-sm);">Lưu thay đổi</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid-4 mt-xl" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-card"><div class="stat-card__label">Truyện đã viết</div><div class="stat-card__value">@u?.Stats.NovelsCreated</div></div>
+        <div class="stat-card"><div class="stat-card__label">Chương đã đăng</div><div class="stat-card__value">@u?.Stats.ChaptersPublished</div></div>
+        <div class="stat-card"><div class="stat-card__label">Yêu thích</div><div class="stat-card__value">@u?.Stats.FavoritesCount</div></div>
+        <div class="stat-card"><div class="stat-card__label">Bình luận</div><div class="stat-card__value">@u?.Stats.CommentsCount</div></div>
+    </div>
+
+    <!-- Badges -->
+    @if (u?.Badges.Any() == true)
+    {
+        <div class="card mt-xl">
+            <h3 class="text-body-sm font-semibold mb-md">🏅 Huy hiệu đạt được</h3>
+            <div class="flex gap-sm" style="flex-wrap:wrap;">
+                @foreach (var b in u.Badges)
+                { <span class="badge badge-violet" title="@b.Name">@b.Icon @b.Name</span> }
+            </div>
+        </div>
+    }
+
+    <!-- Links -->
+    <div class="flex gap-sm mt-xl">
+        <a href="/Profile/ChangePassword" class="btn btn-secondary" style="border-radius:var(--radius-sm);">Đổi mật khẩu</a>
+        <a href="/Profile/@u?.Id" class="btn btn-ghost">Xem trang công khai →</a>
+    </div>
+</div>

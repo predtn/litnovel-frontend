@@ -1,0 +1,64 @@
+@page "/Profile/{userId:int}"
+@model litnovel_frontend.Pages.Profile.PublicModel
+@{
+    ViewData["Title"] = Model.User?.Username ?? "Hồ sơ";
+    var u = Model.User;
+}
+<!-- SCR-07: Public Profile -->
+<div class="container" style="padding-top:var(--space-xl);padding-bottom:var(--space-4xl);">
+    @if (u == null)
+    {
+        <div class="empty-state"><div class="empty-state__icon">🔍</div><div class="empty-state__title">Không tìm thấy người dùng</div></div>
+        return;
+    }
+    <!-- Profile header -->
+    <div class="card mb-xl" style="display:flex;gap:var(--space-xl);align-items:flex-start;flex-wrap:wrap;">
+        @if (!string.IsNullOrEmpty(u.Avatar))
+        { <img src="@u.Avatar" class="avatar avatar-2xl" /> }
+        else
+        { <div class="avatar-placeholder avatar-2xl">@(u.Username.Substring(0,1).ToUpper())</div> }
+        <div style="flex:1;min-width:0;">
+            <div class="flex items-center gap-sm mb-xs">
+                <h1 class="text-display-sm">@u.Username</h1>
+                <span class="badge role-@u.Role.ToLower()">@u.Role</span>
+                <span class="status-badge status-@u.Status.ToLower()">@u.Status</span>
+            </div>
+            @if (!string.IsNullOrEmpty(u.Bio)) { <p class="text-body-sm text-body mb-md">@u.Bio</p> }
+            <div class="flex gap-lg" style="flex-wrap:wrap;">
+                <div><span class="text-display-sm font-semibold">@u.Reputation</span> <span class="text-caption text-mute">Reputation</span></div>
+                <div><span class="text-display-sm font-semibold">@u.Stats.NovelsCreated</span> <span class="text-caption text-mute">Truyện</span></div>
+                <div><span class="text-display-sm font-semibold">@u.Stats.ChaptersPublished</span> <span class="text-caption text-mute">Chương</span></div>
+            </div>
+            <div class="text-caption text-mute mt-sm">Tham gia từ @u.CreatedAt.ToString("MM/yyyy")</div>
+        </div>
+    </div>
+    <!-- Badges -->
+    @if (u.Badges.Any())
+    {
+        <div class="card mb-xl">
+            <h2 class="text-body-sm font-semibold mb-md">🏅 Huy hiệu</h2>
+            <div class="flex gap-sm" style="flex-wrap:wrap;">
+                @foreach (var b in u.Badges) { <span class="badge badge-violet">@b.Icon @b.Name</span> }
+            </div>
+        </div>
+    }
+    <!-- Novels by this author -->
+    <h2 class="text-display-sm mb-lg">Tiểu thuyết của @u.Username</h2>
+    @if (!Model.Novels.Any())
+    { <div class="empty-state"><div class="empty-state__icon">📝</div><div class="empty-state__title">Chưa có truyện nào</div></div> }
+    else
+    {
+        <div class="grid-4" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr));">
+            @foreach (var n in Model.Novels)
+            {
+                <a href="/Novels/@n.Slug" class="novel-card">
+                    <div class="novel-card__cover-placeholder">📖</div>
+                    <div class="novel-card__body">
+                        <div class="novel-card__title">@n.Title</div>
+                        <div class="novel-card__meta"><span>⭐ @n.RatingAverage.ToString("0.0")</span></div>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+</div>

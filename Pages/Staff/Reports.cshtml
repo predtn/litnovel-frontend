@@ -1,0 +1,37 @@
+@page
+@model litnovel_frontend.Pages.Staff.ReportsModel
+@{ Layout = "_LayoutDashboard"; ViewData["Title"] = "Quản lý báo cáo"; }
+@section Sidebar {
+    <a href="/Staff/Dashboard" class="sidebar__link">Tổng quan</a>
+    <a href="/Staff/PendingNovels" class="sidebar__link">Tiểu thuyết chờ duyệt</a>
+    <a href="/Staff/PendingChapters" class="sidebar__link">Chương chờ duyệt</a>
+    <a href="/Staff/Reports" class="sidebar__link active">Báo cáo</a>
+}
+<!-- SCR-43: Reports Center -->
+<div class="page-header">
+    <h1 class="page-header__title">⚠️ Báo cáo vi phạm</h1>
+    <div class="flex gap-xs">
+        <a href="?status=Pending" class="btn btn-sm @(Model.StatusFilter=="Pending"?"btn-primary":"btn-secondary")">Chờ xử lý (@Model.PendingCount)</a>
+        <a href="?status=Resolved" class="btn btn-sm @(Model.StatusFilter=="Resolved"?"btn-primary":"btn-secondary")">Đã xử lý</a>
+        <a href="?status=" class="btn btn-sm @(string.IsNullOrEmpty(Model.StatusFilter)?"btn-primary":"btn-secondary")">Tất cả</a>
+    </div>
+</div>
+<div class="table-wrapper">
+    <table class="table">
+        <thead><tr><th>Đối tượng</th><th>Loại báo cáo</th><th>Người báo cáo</th><th>Trạng thái</th><th>Ngày gửi</th><th class="col-actions">Hành động</th></tr></thead>
+        <tbody>
+            @foreach (var r in Model.Reports)
+            {
+                <tr>
+                    <td class="text-body-sm">@(r.TargetNovel?.Title ?? r.TargetUser?.Username ?? "—")</td>
+                    <td><span class="badge badge-secondary">@r.ReportType</span></td>
+                    <td class="text-body-sm">@r.Reporter?.Username</td>
+                    <td><span class="status-badge status-@r.Status.ToLower()">@r.Status</span></td>
+                    <td class="text-caption text-mute">@r.CreatedAt.ToString("dd/MM HH:mm")</td>
+                    <td class="col-actions"><a href="/Staff/ReportDetail?id=@r.Id" class="btn btn-secondary btn-sm">Xử lý</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+@if (!Model.Reports.Any()) { <div class="empty-state"><div class="empty-state__icon">✅</div><div class="empty-state__title">Không có báo cáo nào</div></div> }

@@ -1,0 +1,47 @@
+@page
+@model litnovel_frontend.Pages.Staff.NovelReviewModel
+@{ Layout = "_LayoutDashboard"; ViewData["Title"] = "Xét duyệt tiểu thuyết"; var n = Model.Novel; }
+@section Sidebar { <a href="/Staff/PendingNovels" class="sidebar__link">← Danh sách chờ duyệt</a> }
+<!-- SCR-40: Novel Review Detail -->
+@if (n == null) { <div class="empty-state"><div class="empty-state__title">Không tìm thấy</div></div> return; }
+<div class="page-header">
+    <div><h1 class="page-header__title">Xét duyệt: @n.Title</h1><p class="page-header__subtitle">Tác giả: @n.Author?.Username · @n.TotalChapters chương</p></div>
+    <span class="status-badge status-pending">Pending</span>
+</div>
+<div class="grid-2 mb-xl">
+    <div class="card">
+        <h3 class="text-body-sm font-semibold mb-md">📋 Thông tin</h3>
+        <div class="flex gap-sm mb-xs"><span class="text-caption text-mute">Thể loại:</span><span class="text-body-sm">@(n.Category?.Name ?? "—")</span></div>
+        @foreach (var t in n.Tags) { <span class="tag">@t.Name</span> }
+        <div class="mt-md text-body-sm text-body">@Html.Raw(n.Description)</div>
+    </div>
+    <div class="card">
+        <h3 class="text-body-sm font-semibold mb-md">📖 Chương mẫu</h3>
+        @if (n.Volumes.Any() && n.Volumes[0].Chapters.Any())
+        {
+            var ch = n.Volumes[0].Chapters[0];
+            <div class="text-body-sm text-body" style="max-height:300px;overflow-y:auto;">(Chương @ch.ChapterNumber: @ch.Title)</div>
+        }
+    </div>
+</div>
+
+<!-- Approve / Reject -->
+<div class="card">
+    <h3 class="text-body-sm font-semibold mb-md">⚖️ Quyết định kiểm duyệt</h3>
+    <div class="flex gap-xl" style="flex-wrap:wrap;">
+        <form method="post" asp-page-handler="Approve">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="novelId" value="@n.Id" />
+            <button type="submit" class="btn btn-primary" style="border-radius:var(--radius-sm);" onclick="return confirm('Xác nhận duyệt truyện này?')">✅ Duyệt</button>
+        </form>
+        <form method="post" asp-page-handler="Reject" style="display:flex;gap:var(--space-sm);align-items:flex-end;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="novelId" value="@n.Id" />
+            <div class="form-group" style="margin:0;flex:1;">
+                <label class="form-label">Lý do từ chối</label>
+                <input name="reason" type="text" class="form-input" placeholder="Nhập lý do..." style="width:280px;" required />
+            </div>
+            <button type="submit" class="btn btn-danger" style="border-radius:var(--radius-sm);">❌ Từ chối</button>
+        </form>
+    </div>
+</div>

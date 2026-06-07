@@ -1,0 +1,123 @@
+@page
+@model litnovel_frontend.Pages.Admin.DashboardModel
+@{
+    Layout = "_LayoutDashboard";
+    ViewData["Title"] = "Admin Dashboard";
+    ViewData["ActiveNav"] = "admin";
+    var s = Model.Stats;
+}
+
+@section Sidebar {
+    <div class="sidebar__section-label">Quản trị</div>
+    <a href="/Admin/Dashboard" class="sidebar__link active">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Tổng quan
+    </a>
+    <a href="/Admin/Statistics" class="sidebar__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Thống kê
+    </a>
+    <div class="sidebar__section-label">Nội dung</div>
+    <a href="/Admin/Users" class="sidebar__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Người dùng
+    </a>
+    <a href="/Admin/Staff" class="sidebar__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Nhân viên
+    </a>
+    <a href="/Admin/Categories" class="sidebar__link">Thể loại</a>
+    <a href="/Admin/Tags" class="sidebar__link">Tag</a>
+    <a href="/Admin/Badges" class="sidebar__link">Huy hiệu</a>
+    <div class="sidebar__section-label">Hệ thống</div>
+    <a href="/Admin/Notifications" class="sidebar__link">Thông báo hệ thống</a>
+    <a href="/Admin/AuditLogs" class="sidebar__link">Audit Logs</a>
+    <a href="/Admin/Settings" class="sidebar__link">Cài đặt</a>
+    <a href="/Admin/Announcements" class="sidebar__link">Thông báo trang</a>
+    <a href="/Admin/Backup" class="sidebar__link">Backup & Restore</a>
+}
+
+<!-- SCR-47: Admin Dashboard -->
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Tổng quan hệ thống</h1>
+        <p class="page-header__subtitle">Cập nhật lúc @DateTime.Now.ToString("HH:mm dd/MM/yyyy")</p>
+    </div>
+</div>
+
+<!-- Main stats -->
+<div class="grid-4 mb-xl">
+    <div class="stat-card">
+        <div class="stat-card__label">Tổng người dùng</div>
+        <div class="stat-card__value">@FormatNum(s.Users.Total)</div>
+        <div class="stat-card__change up">▲ +@s.Users.NewThisWeek tuần này</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card__label">Tiểu thuyết</div>
+        <div class="stat-card__value">@FormatNum(s.Novels.Total)</div>
+        <div class="stat-card__change up">▲ +@s.Novels.NewThisMonth tháng này</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card__label">Chương đã đăng</div>
+        <div class="stat-card__value">@FormatNum(s.Chapters.Total)</div>
+        <div class="stat-card__change up">▲ +@s.Chapters.PublishedThisWeek tuần này</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card__label">Báo cáo mở</div>
+        <div class="stat-card__value" style="color:@(s.Reports.Open > 0 ? "var(--color-error)" : "var(--color-ink)");">@s.Reports.Open</div>
+        <div class="text-caption text-mute">/ @s.Reports.Total tổng</div>
+    </div>
+</div>
+
+<!-- Engagement stats -->
+<div class="grid-3 mb-xl">
+    <div class="card-soft">
+        <div class="text-caption text-mute mb-xs">💬 Bình luận</div>
+        <div class="text-display-sm font-semibold">@FormatNum(s.Engagement.TotalComments)</div>
+    </div>
+    <div class="card-soft">
+        <div class="text-caption text-mute mb-xs">⭐ Đánh giá</div>
+        <div class="text-display-sm font-semibold">@FormatNum(s.Engagement.TotalRatings)</div>
+    </div>
+    <div class="card-soft">
+        <div class="text-caption text-mute mb-xs">❤️ Yêu thích</div>
+        <div class="text-display-sm font-semibold">@FormatNum(s.Engagement.TotalFavorites)</div>
+    </div>
+</div>
+
+<!-- Quick links grid -->
+<div class="grid-2">
+    <div class="card">
+        <h3 class="text-body-sm font-semibold mb-md">🔑 Quản lý người dùng</h3>
+        <div class="flex gap-sm" style="flex-wrap:wrap;">
+            <a href="/Admin/Users" class="btn btn-secondary btn-sm">Tất cả người dùng (@FormatNum(s.Users.Total))</a>
+            <a href="/Admin/Users?status=Banned" class="btn btn-secondary btn-sm" style="color:var(--color-error);">Bị cấm (@s.Users.Banned)</a>
+            <a href="/Admin/Staff" class="btn btn-secondary btn-sm">Nhân viên</a>
+        </div>
+    </div>
+    <div class="card">
+        <h3 class="text-body-sm font-semibold mb-md">📚 Nội dung</h3>
+        <div class="flex gap-sm" style="flex-wrap:wrap;">
+            <a href="/Admin/Categories" class="btn btn-secondary btn-sm">Thể loại</a>
+            <a href="/Admin/Tags" class="btn btn-secondary btn-sm">Tag</a>
+            <a href="/Admin/Badges" class="btn btn-secondary btn-sm">Huy hiệu</a>
+        </div>
+    </div>
+    <div class="card">
+        <h3 class="text-body-sm font-semibold mb-md">📋 Kiểm duyệt</h3>
+        <div class="flex gap-sm" style="flex-wrap:wrap;">
+            <a href="/Staff/PendingNovels" class="btn btn-secondary btn-sm" style="@(s.Novels.Pending > 0 ? "color:var(--color-warning)" : "")">Tiểu thuyết (@s.Novels.Pending)</a>
+            <a href="/Staff/Reports" class="btn btn-secondary btn-sm" style="@(s.Reports.Open > 0 ? "color:var(--color-error)" : "")">Báo cáo (@s.Reports.Open)</a>
+        </div>
+    </div>
+    <div class="card">
+        <h3 class="text-body-sm font-semibold mb-md">⚙️ Hệ thống</h3>
+        <div class="flex gap-sm" style="flex-wrap:wrap;">
+            <a href="/Admin/Settings" class="btn btn-secondary btn-sm">Cài đặt</a>
+            <a href="/Admin/AuditLogs" class="btn btn-secondary btn-sm">Audit Logs</a>
+            <a href="/Admin/Backup" class="btn btn-secondary btn-sm">Backup</a>
+        </div>
+    </div>
+</div>
+
+@functions { string FormatNum(int n) => n >= 1000000 ? $"{n/1000000.0:0.#}M" : n >= 1000 ? $"{n/1000.0:0.#}K" : n.ToString(); }

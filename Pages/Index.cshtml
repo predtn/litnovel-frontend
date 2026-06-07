@@ -1,0 +1,182 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Đọc truyện, Khám phá thế giới mới";
+    ViewData["Description"] = "LitNovel — Nền tảng đọc và xuất bản truyện chữ trực tuyến hàng đầu Việt Nam.";
+}
+
+<!-- SCR-01: Landing Page -->
+
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero__gradient"></div>
+    <div class="container" style="position:relative;">
+        <div class="hero__badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            Nền tảng truyện chữ hàng đầu
+        </div>
+        <h1 class="hero__title">Đọc truyện hay,<br>Khám phá thế giới mới.</h1>
+        <p class="hero__subtitle">Hàng nghìn tiểu thuyết từ các tác giả tài năng. Đọc miễn phí, mọi lúc, mọi nơi.</p>
+        <div class="hero__cta">
+            <a href="/Novels" class="btn btn-primary-lg">Khám phá ngay</a>
+            <a href="/Auth/Register" class="btn btn-secondary-lg">Bắt đầu viết</a>
+        </div>
+    </div>
+</section>
+
+<!-- Category Strip -->
+<section style="padding: var(--space-lg) 0; border-bottom: 1px solid var(--color-hairline); background: var(--color-canvas);">
+    <div class="container">
+        <div class="flex items-center gap-sm" style="overflow-x: auto; scrollbar-width: none; padding-bottom: 4px;">
+            <a href="/Novels" class="tab-pill active">Tất cả</a>
+            @foreach (var cat in Model.Categories)
+            {
+                <a href="/Novels?categoryId=@cat.Id" class="tab-pill">@cat.Name</a>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Trending Novels -->
+<section class="section">
+    <div class="container">
+        <div class="flex items-center justify-between mb-xl">
+            <div>
+                <h2 class="section-title">🔥 Đang hot</h2>
+                <p class="section-subtitle">Những tiểu thuyết được đọc nhiều nhất</p>
+            </div>
+            <a href="/Novels?sort=viewCount&order=desc" class="btn btn-ghost">Xem tất cả →</a>
+        </div>
+        <div class="grid-4" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
+            @foreach (var novel in Model.TrendingNovels)
+            {
+                <a href="/Novels/@novel.Slug" class="novel-card">
+                    @if (!string.IsNullOrEmpty(novel.CoverImage))
+                    {
+                        <img class="novel-card__cover" src="@novel.CoverImage" alt="@novel.Title" loading="lazy" />
+                    }
+                    else
+                    {
+                        <div class="novel-card__cover-placeholder">📖</div>
+                    }
+                    <div class="novel-card__body">
+                        <div class="novel-card__title">@novel.Title</div>
+                        <div class="novel-card__author">@novel.Author?.Username</div>
+                        <div class="novel-card__meta">
+                            <span>⭐ @novel.RatingAverage.ToString("0.0")</span>
+                            <span>👁 @FormatCount(novel.ViewCount)</span>
+                        </div>
+                    </div>
+                </a>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- New Updates -->
+<section class="section" style="background: var(--color-canvas); border-top: 1px solid var(--color-hairline); border-bottom: 1px solid var(--color-hairline);">
+    <div class="container">
+        <div class="flex items-center justify-between mb-xl">
+            <div>
+                <h2 class="section-title">🆕 Mới cập nhật</h2>
+                <p class="section-subtitle">Chapter mới nhất từ các truyện đang ra</p>
+            </div>
+            <a href="/Novels?sort=updatedAt&order=desc&status=Ongoing" class="btn btn-ghost">Xem tất cả →</a>
+        </div>
+        <div class="grid-2" style="gap: var(--space-md);">
+            @foreach (var novel in Model.NewNovels)
+            {
+                <a href="/Novels/@novel.Slug" class="flex gap-md" style="padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--color-hairline); background: var(--color-canvas); text-decoration: none; transition: box-shadow .15s; display:flex;">
+                    @if (!string.IsNullOrEmpty(novel.CoverImage))
+                    {
+                        <img src="@novel.CoverImage" alt="@novel.Title"
+                             style="width:60px; height:80px; object-fit:cover; border-radius:var(--radius-xs); flex-shrink:0;" loading="lazy" />
+                    }
+                    else
+                    {
+                        <div style="width:60px; height:80px; background:var(--color-canvas-soft-2); border-radius:var(--radius-xs); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:24px;">📖</div>
+                    }
+                    <div style="flex:1; min-width:0;">
+                        <div class="text-body-sm font-medium text-ink truncate">@novel.Title</div>
+                        <div class="text-caption text-mute mt-sm">@novel.Author?.Username</div>
+                        <div class="flex gap-sm mt-sm" style="flex-wrap:wrap;">
+                            <span class="status-badge status-@novel.Status.ToLower()">@novel.Status</span>
+                            @if (novel.Category != null)
+                            {
+                                <span class="badge badge-secondary">@novel.Category.Name</span>
+                            }
+                        </div>
+                        <div class="text-caption text-mute mt-sm">
+                            Ch.@novel.TotalChapters · Cập nhật @TimeAgo(novel.UpdatedAt)
+                        </div>
+                    </div>
+                </a>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Top Rated -->
+<section class="section">
+    <div class="container">
+        <div class="flex items-center justify-between mb-xl">
+            <div>
+                <h2 class="section-title">⭐ Được đánh giá cao</h2>
+                <p class="section-subtitle">Tiểu thuyết được yêu thích nhất</p>
+            </div>
+            <a href="/Novels?sort=ratingAverage&order=desc" class="btn btn-ghost">Xem tất cả →</a>
+        </div>
+        <div class="grid-4" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
+            @foreach (var novel in Model.TopRatedNovels)
+            {
+                <a href="/Novels/@novel.Slug" class="novel-card">
+                    @if (!string.IsNullOrEmpty(novel.CoverImage))
+                    {
+                        <img class="novel-card__cover" src="@novel.CoverImage" alt="@novel.Title" loading="lazy" />
+                    }
+                    else
+                    {
+                        <div class="novel-card__cover-placeholder">📖</div>
+                    }
+                    <div class="novel-card__body">
+                        <div class="novel-card__title">@novel.Title</div>
+                        <div class="novel-card__meta">
+                            <span style="color:#f59e0b; font-weight:500;">★ @novel.RatingAverage.ToString("0.0")</span>
+                            <span>(@novel.RatingCount)</span>
+                        </div>
+                    </div>
+                </a>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Call to action (unauthenticated) -->
+@if (!User.Identity!.IsAuthenticated)
+{
+    <section style="background: var(--color-primary); padding: var(--space-5xl) 0; text-align:center;">
+        <div class="container">
+            <h2 style="font-size:var(--text-display-lg); font-weight:600; letter-spacing:var(--ls-display-lg); color:#fff; margin-bottom:var(--space-md);">
+                Bắt đầu hành trình của bạn.
+            </h2>
+            <p style="font-size:var(--text-body-lg); color:rgba(255,255,255,0.7); margin-bottom:var(--space-2xl);">
+                Đăng ký miễn phí, đọc không giới hạn và chia sẻ câu chuyện của bạn.
+            </p>
+            <div class="flex justify-center gap-sm">
+                <a href="/Auth/Register" class="btn btn-secondary-lg">Đăng ký ngay</a>
+                <a href="/Auth/Login" style="font-size:var(--text-body-md); color:rgba(255,255,255,0.8); display:flex; align-items:center; text-decoration:none;">Đã có tài khoản? →</a>
+            </div>
+        </div>
+    </section>
+}
+
+@functions {
+    string FormatCount(int n) => n >= 1000000 ? $"{n / 1000000.0:0.#}M" : n >= 1000 ? $"{n / 1000.0:0.#}K" : n.ToString();
+    string TimeAgo(DateTime dt) {
+        var diff = DateTime.UtcNow - dt;
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes} phút trước";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours} giờ trước";
+        if (diff.TotalDays < 30) return $"{(int)diff.TotalDays} ngày trước";
+        return dt.ToString("dd/MM/yyyy");
+    }
+}

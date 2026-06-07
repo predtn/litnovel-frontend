@@ -1,0 +1,33 @@
+@page
+@model litnovel_frontend.Pages.Staff.PendingNovelsModel
+@{ Layout = "_LayoutDashboard"; ViewData["Title"] = "Tiểu thuyết chờ duyệt"; }
+@section Sidebar {
+    <a href="/Staff/Dashboard" class="sidebar__link">Tổng quan</a>
+    <a href="/Staff/PendingNovels" class="sidebar__link active">Tiểu thuyết chờ duyệt</a>
+    <a href="/Staff/PendingChapters" class="sidebar__link">Chương chờ duyệt</a>
+    <a href="/Staff/Reports" class="sidebar__link">Báo cáo</a>
+}
+<!-- SCR-39 -->
+<div class="page-header"><h1 class="page-header__title">Tiểu thuyết chờ duyệt</h1><p class="page-header__subtitle">@Model.Novels.Count mục</p></div>
+<div class="table-wrapper">
+    <table class="table">
+        <thead><tr><th>Tiểu thuyết</th><th>Tác giả</th><th>Thể loại</th><th>Ngày gửi</th><th class="col-actions">Hành động</th></tr></thead>
+        <tbody>
+            @foreach (var n in Model.Novels)
+            {
+                <tr>
+                    <td class="text-body-sm font-medium">@n.Title</td>
+                    <td class="text-body-sm">@n.Author?.Username</td>
+                    <td>@if(n.Category!=null){<span class="badge badge-secondary">@n.Category.Name</span>}</td>
+                    <td class="text-caption text-mute">@n.UpdatedAt.ToString("dd/MM HH:mm")</td>
+                    <td class="col-actions">
+                        <div class="flex gap-xs justify-end">
+                            <a href="/Staff/NovelReview?id=@n.Id" class="btn btn-secondary btn-sm">Xem xét</a>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+@if (!Model.Novels.Any()) { <div class="empty-state"><div class="empty-state__icon">✅</div><div class="empty-state__title">Không có gì cần duyệt</div></div> }

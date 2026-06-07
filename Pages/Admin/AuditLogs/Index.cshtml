@@ -1,0 +1,23 @@
+@page
+@model litnovel_frontend.Pages.Admin.AuditLogs.IndexModel
+@{ Layout = "_LayoutDashboard"; ViewData["Title"] = "Audit Logs"; }
+@section Sidebar {<a href="/Admin/Dashboard" class="sidebar__link">Tổng quan</a><div class="sidebar__section-label">Hệ thống</div><a href="/Admin/Settings" class="sidebar__link">Cài đặt</a><a href="/Admin/AuditLogs" class="sidebar__link active">Audit Logs</a>}
+<!-- SCR-58 -->
+<div class="page-header"><h1 class="page-header__title">📋 Audit Logs</h1></div>
+<div class="table-wrapper">
+    <table class="table">
+        <thead><tr><th>Thời gian</th><th>Người dùng</th><th>Hành động</th><th>Đối tượng</th><th>IP</th></tr></thead>
+        <tbody>
+            @foreach (var l in Model.Logs)
+            {
+                <tr>
+                    <td class="text-caption text-mute">@l.CreatedAt.ToString("dd/MM HH:mm:ss")</td>
+                    <td class="text-body-sm">@l.Username</td>
+                    <td><span class="badge badge-secondary">@l.Action</span></td>
+                    <td class="text-body-sm">@l.EntityType #@l.EntityId</td>
+                    <td class="text-caption text-mute" style="font-family:monospace;">@l.IpAddress</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
