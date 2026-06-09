@@ -67,12 +67,15 @@ packages/
 # Publish Output
 # ==========================================
 publish/
+!Pages/Publish/
+!Pages/Publish/**
 wwwroot/dist/
 wwwroot/lib/
 
 # ==========================================
 # Secrets
 # ==========================================
+.aspnet-data-protection-keys/
 appsettings.Development.json
 appsettings.Local.json
 secrets.json

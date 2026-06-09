@@ -1,0 +1,99 @@
+@page
+@model litnovel_frontend.Pages.Publish.CreateModel
+@{
+    ViewData["Title"] = "Create Novel";
+}
+
+<div class="publish-shell publish-shell--narrow">
+    <div class="breadcrumb">
+        <a asp-page="/Publish/Index">My Novels</a><span class="breadcrumb__sep">/</span><span class="breadcrumb__current">Create</span>
+    </div>
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title">Create New Novel</h1>
+            <p class="page-header__subtitle">Start as a draft, then submit when the first chapters are ready.</p>
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="card publish-form publish-form--compact">
+        <div asp-validation-summary="ModelOnly" class="alert alert-error"></div>
+        <input type="hidden" asp-for="Input.CoverImage" />
+
+        <div class="publish-form-layout">
+            <div class="publish-form-main">
+                <div class="publish-form-grid">
+                    <div class="form-group">
+                        <label class="form-label" asp-for="Input.Title">Title</label>
+                        <input class="form-input" asp-for="Input.Title" maxlength="200" />
+                        <span class="form-error" asp-validation-for="Input.Title"></span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" asp-for="Input.CategoryId">Category</label>
+                        <select class="form-select" asp-for="Input.CategoryId">
+                            <option value="">No category</option>
+                            @foreach (var category in Model.Categories)
+                            {
+                                <option value="@category.Id">@category.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" asp-for="Input.Description">Description</label>
+                    <textarea class="form-textarea publish-description" asp-for="Input.Description" maxlength="5000"></textarea>
+                    <div class="form-hint">Max 5000 characters. HTML from the backend editor is supported.</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Tags</label>
+                    <div class="publish-tag-box publish-tag-box--compact">
+                        @foreach (var tag in Model.Tags)
+                        {
+                            <label class="form-check">
+                                <input type="checkbox" name="SelectedTagIds" value="@tag.Id" />
+                                @tag.Name
+                            </label>
+                        }
+                    </div>
+                    <div class="form-hint">Choose up to 10 tags.</div>
+                </div>
+            </div>
+
+            <div class="publish-cover-panel">
+                <label class="form-label" asp-for="CoverImageFile">Cover image</label>
+                <label class="publish-upload">
+                    <input asp-for="CoverImageFile" type="file" accept="image/png,image/jpeg,image/webp" data-cover-input />
+                    <span class="publish-upload__preview" data-cover-preview>Cover</span>
+                    <span class="publish-upload__text">Upload JPG, PNG, or WEBP</span>
+                </label>
+                <span class="form-error" asp-validation-for="CoverImageFile"></span>
+            </div>
+        </div>
+
+        <div class="publish-form-actions">
+            <a asp-page="/Publish/Index" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-secondary">Save as Draft</button>
+            <button type="submit" name="submit" value="true" class="btn btn-primary">Submit for Review</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('[data-cover-input]').forEach(input => {
+            input.addEventListener('change', () => {
+                const file = input.files && input.files[0];
+                const preview = input.closest('.publish-upload')?.querySelector('[data-cover-preview]');
+                if (!file || !preview) return;
+
+                const reader = new FileReader();
+                reader.onload = event => {
+                    preview.innerHTML = `<img src="${event.target.result}" alt="Cover preview" />`;
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+    </script>
+}

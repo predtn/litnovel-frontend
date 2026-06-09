@@ -1,0 +1,64 @@
+@page "Volumes/{volumeId:int}/Chapters"
+@model litnovel_frontend.Pages.Publish.ChaptersModel
+@{
+    ViewData["Title"] = "Chapter Management";
+}
+
+<div class="publish-shell">
+    <div class="breadcrumb">
+        <a asp-page="/Publish/Index">My Novels</a><span class="breadcrumb__sep">/</span>
+        <a asp-page="/Publish/Manage" asp-route-id="@Model.Novel.Id">@Model.Novel.Title</a><span class="breadcrumb__sep">/</span>
+        <a asp-page="/Publish/Volumes" asp-route-novelId="@Model.Novel.Id">Volumes</a><span class="breadcrumb__sep">/</span>
+        <span class="breadcrumb__current">@Model.Volume.Title</span>
+    </div>
+
+    @if (TempData["Success"] is string success) { <div class="alert alert-success mb-lg">@success</div> }
+    @if (TempData["Error"] is string error) { <div class="alert alert-error mb-lg">@error</div> }
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title">Chapter Management</h1>
+            <p class="page-header__subtitle">@Model.Volume.Title</p>
+        </div>
+        <a asp-page="/Publish/ChapterCreate" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-primary">Add Chapter</a>
+    </div>
+
+    <div class="publish-table-card">
+        <table class="table publish-table">
+            <thead>
+                <tr>
+                    <th class="publish-col-center">#</th>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th class="publish-col-center">Words</th>
+                    <th class="publish-col-center">Created</th>
+                    <th class="publish-col-actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var chapter in Model.Chapters.OrderBy(c => c.ChapterNumber))
+                {
+                    <tr>
+                        <td data-label="#" class="publish-col-center">@chapter.ChapterNumber</td>
+                        <td data-label="Title"><span class="font-medium">@chapter.Title</span></td>
+                        <td data-label="Status"><span class="status-badge status-@chapter.Status.ToLowerInvariant()">@chapter.Status</span></td>
+                        <td data-label="Words" class="publish-col-center">@(chapter.WordCount > 0 ? chapter.WordCount.ToString("N0") : "—")</td>
+                        <td data-label="Created" class="publish-col-center">@chapter.CreatedAt.ToString("dd/MM/yyyy")</td>
+                        <td data-label="Actions" class="publish-col-actions">
+                            <div class="publish-actions">
+                                <a asp-page="/Novels/Read" asp-route-novelSlug="@Model.Novel.Slug" asp-route-chapterId="@chapter.Id" class="btn btn-secondary btn-sm">View</a>
+                                <a asp-page="/Publish/ChapterEdit" asp-route-id="@chapter.Id" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-secondary btn-sm">Edit</a>
+                                <form method="post" asp-page-handler="Submit" asp-route-id="@chapter.Id">
+                                    <button class="btn btn-primary btn-sm" type="submit">Submit</button>
+                                </form>
+                                <form method="post" asp-page-handler="Delete" asp-route-id="@chapter.Id" onsubmit="return confirm('Delete this chapter?');">
+                                    <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

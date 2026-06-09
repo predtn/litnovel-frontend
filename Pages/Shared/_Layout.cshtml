@@ -20,6 +20,10 @@
                 <a href="/Novels" class="navbar__link @(ViewData["ActiveNav"]?.ToString() == "catalog" ? "active" : "")">Thư viện</a>
                 <a href="/Novels/Search" class="navbar__link @(ViewData["ActiveNav"]?.ToString() == "search" ? "active" : "")">Tìm kiếm</a>
                 <a href="/Forum" class="navbar__link @(ViewData["ActiveNav"]?.ToString() == "forum" ? "active" : "")">Diễn đàn</a>
+                @if (Context.User.Identity?.IsAuthenticated == true)
+                {
+                    <a href="/Publish" class="navbar__link @(ViewData["ActiveNav"]?.ToString() == "publish" ? "active" : "")">Viết truyện</a>
+                }
                 @if (Context.User.IsInRole("Staff") || Context.User.IsInRole("Admin"))
                 {
                     <a href="/Staff/Dashboard" class="navbar__link @(ViewData["ActiveNav"]?.ToString() == "staff" ? "active" : "")">Kiểm duyệt</a>

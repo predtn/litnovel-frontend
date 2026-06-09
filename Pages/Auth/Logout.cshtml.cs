@@ -8,9 +8,9 @@ public class LogoutModel : PageModel
 {
     private readonly IAuthService _auth;
     public LogoutModel(IAuthService auth) { _auth = auth; }
-    public IActionResult OnPost()
+    public async Task<IActionResult> OnPostAsync()
     {
-        _auth.Logout(HttpContext);
+        await _auth.LogoutAsync(HttpContext);
         return RedirectToPage("/Index");
     }
 }
