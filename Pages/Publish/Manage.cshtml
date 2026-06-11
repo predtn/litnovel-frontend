@@ -1,0 +1,110 @@
+@page "/Publish/{id:int}/manage"
+@model litnovel_frontend.Pages.Publish.ManageModel
+@{
+    Layout = "_LayoutDashboard";
+    ViewData["Title"] = "Quản lý — " + (Model.Novel?.Title ?? "Tiểu thuyết");
+    var novel = Model.Novel;
+}
+@section Sidebar {
+    <a href="/Publish" class="sidebar__link">← Danh sách truyện</a>
+    @if (novel != null)
+    {
+        <div class="sidebar__section-label">@novel.Title.Truncate(24)</div>
+        <a href="/Publish/@novel.Id/manage"  class="sidebar__link active">📋 Tổng quan</a>
+        <a href="/Publish/@novel.Id/edit"    class="sidebar__link">✏️ Chỉnh sửa</a>
+        <a href="/Publish/@novel.Id/volumes" class="sidebar__link">📚 Volumes</a>
+        <a href="/Publish/@novel.Id/stats"   class="sidebar__link">📊 Thống kê</a>
+    }
+}
+<!-- SCR-21: Novel Management Detail -->
+@if (novel == null) { <div class="empty-state"><div class="empty-state__title">Không tìm thấy truyện</div></div> return; }
+
+@if (TempData["Success"] is string ok) { <div class="alert alert-success mb-md alert-auto-close">@ok</div> }
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">@novel.Title</h1>
+        <p class="page-header__subtitle">
+            <span class="status-badge status-@novel.Status.ToLower()">@novel.Status</span>
+            · @novel.TotalChapters chương · @novel.TotalVolumes volumes
+        </p>
+    </div>
+    <div class="flex gap-sm">
+        <a href="/Novels/@novel.Slug" class="btn btn-ghost btn-sm" target="_blank">Xem trang →</a>
+        <a href="/Publish/@novel.Id/edit" class="btn btn-secondary btn-sm">Sửa thông tin</a>
+        @if (novel.Status is "Draft" or "Rejected")
+        {
+            <form method="post" asp-page-handler="Submit" style="display:inline;">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-primary btn-sm">Gửi duyệt</button>
+            </form>
+        }
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="grid-4 mb-xl">
+    <div class="stat-card"><div class="stat-card__label">Lượt xem</div><div class="stat-card__value">@FormatNum(novel.ViewCount)</div></div>
+    <div class="stat-card"><div class="stat-card__label">Yêu thích</div><div class="stat-card__value">@novel.LikeCount</div></div>
+    <div class="stat-card"><div class="stat-card__label">Đánh giá TB</div><div class="stat-card__value" style="color:#f59e0b;">@novel.RatingAverage.ToString("0.0")★</div></div>
+    <div class="stat-card"><div class="stat-card__label">Bình luận</div><div class="stat-card__value">@novel.RatingCount</div></div>
+</div>
+
+<!-- Volumes + Chapters -->
+<div class="flex justify-between items-center mb-md">
+    <h2 class="text-display-sm">Volumes & Chapters</h2>
+    <a href="/Publish/@novel.Id/volumes" class="btn btn-primary btn-sm">+ Thêm Volume</a>
+</div>
+
+@foreach (var vol in novel.Volumes)
+{
+    <div class="card mb-md">
+        <div class="flex justify-between items-center mb-md">
+            <div class="text-body-sm font-semibold">📚 @vol.Title <span class="text-caption text-mute">(@vol.Chapters.Count chương)</span></div>
+            <div class="flex gap-xs">
+                <a href="/Publish/@novel.Id/volumes/@vol.Id/chapters/create" class="btn btn-primary btn-sm">+ Chapter</a>
+                <a href="/Publish/@novel.Id/volumes" class="btn btn-ghost btn-sm">Sửa</a>
+            </div>
+        </div>
+        @if (!vol.Chapters.Any())
+        { <div class="text-body-sm text-mute">Chưa có chương nào.</div> }
+        else
+        {
+            <div class="table-wrapper" style="margin:0;">
+                <table class="table" style="margin:0;">
+                    <thead><tr><th>Chương</th><th>Tiêu đề</th><th>Trạng thái</th><th>Ngày tạo</th><th class="col-actions">Hành động</th></tr></thead>
+                    <tbody>
+                        @foreach (var ch in vol.Chapters)
+                        {
+                            <tr>
+                                <td class="text-body-sm">@ch.ChapterNumber</td>
+                                <td class="text-body-sm">@ch.Title</td>
+                                <td><span class="status-badge status-@ch.Status.ToLower()">@ch.Status</span></td>
+                                <td class="text-caption text-mute">@ch.CreatedAt.ToString("dd/MM/yy")</td>
+                                <td class="col-actions">
+                                    <div class="flex gap-xs justify-end">
+                                        <a href="/Publish/@novel.Id/chapters/@ch.Id/edit" class="btn btn-secondary btn-sm">Sửa</a>
+                                        @if (ch.Status == "Draft")
+                                        {
+                                            <form method="post" asp-page-handler="SubmitChapter" style="display:inline;">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="chapterId" value="@ch.Id" />
+                                                <button type="submit" class="btn btn-primary btn-sm">Duyệt</button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+}
+@if (!novel.Volumes.Any())
+{ <div class="empty-state"><div class="empty-state__icon">📚</div><div class="empty-state__title">Chưa có Volume nào</div><a href="/Publish/@novel.Id/volumes" class="btn btn-primary mt-md">Tạo Volume đầu tiên</a></div> }
+
+@functions {
+    string FormatNum(int n) => n >= 1000 ? $"{n/1000.0:0.#}K" : n.ToString();
+}

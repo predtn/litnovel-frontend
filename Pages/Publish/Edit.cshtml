@@ -1,0 +1,67 @@
+@page "/Publish/{id:int}/edit"
+@model litnovel_frontend.Pages.Publish.EditModel
+@{
+    Layout = "_LayoutDashboard";
+    ViewData["Title"] = "Sửa — " + (Model.Novel?.Title ?? "Tiểu thuyết");
+}
+@section Sidebar {
+    <a href="/Publish" class="sidebar__link">← Danh sách truyện</a>
+    @if (Model.Novel != null)
+    {
+        <div class="sidebar__section-label">@Model.Novel.Title.Truncate(24)</div>
+        <a href="/Publish/@Model.Novel.Id/manage"  class="sidebar__link">📋 Tổng quan</a>
+        <a href="/Publish/@Model.Novel.Id/edit"    class="sidebar__link active">✏️ Chỉnh sửa</a>
+        <a href="/Publish/@Model.Novel.Id/volumes" class="sidebar__link">📚 Volumes</a>
+        <a href="/Publish/@Model.Novel.Id/stats"   class="sidebar__link">📊 Thống kê</a>
+    }
+}
+<!-- SCR-20: Edit Novel -->
+<div class="page-header"><h1 class="page-header__title">Chỉnh sửa tiểu thuyết</h1></div>
+@if (TempData["Error"]   is string er) { <div class="alert alert-error mb-md">@er</div> }
+@if (TempData["Success"] is string ok) { <div class="alert alert-success mb-md alert-auto-close">@ok</div> }
+
+@if (Model.Novel == null) { <div class="empty-state"><div class="empty-state__title">Không tìm thấy truyện</div></div> return; }
+
+<form method="post">
+    @Html.AntiForgeryToken()
+    <div class="card mb-xl">
+        <h2 class="text-body-sm font-semibold mb-md">📌 Thông tin cơ bản</h2>
+        <div class="form-group">
+            <label class="form-label">Tiêu đề <span class="text-error">*</span></label>
+            <input name="title" type="text" class="form-input" value="@Model.Novel.Title" required />
+        </div>
+        <div class="form-group">
+            <label class="form-label">Mô tả</label>
+            <textarea name="description" class="form-textarea" rows="5">@Model.Novel.Description</textarea>
+        </div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label">Thể loại</label>
+                <select name="categoryId" class="form-select">
+                    <option value="">-- Chọn thể loại --</option>
+                    @foreach (var c in Model.Categories)
+                    {
+                        if (c.Id == Model.Novel!.Category?.Id) { <option value="@c.Id" selected>@c.Name</option> } else { <option value="@c.Id">@c.Name</option> }
+                    }
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Trạng thái</label>
+                <select name="status" class="form-select">
+                    @foreach (var s in new[] { "Ongoing", "Hiatus", "Dropped", "Canceled" })
+                    {
+                        if (s == Model.Novel!.Status) { <option value="@s" selected>@s</option> } else { <option value="@s">@s</option> }
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Ảnh bìa (URL)</label>
+            <input name="coverImage" type="url" class="form-input" value="@Model.Novel.CoverImage" />
+        </div>
+    </div>
+    <div class="flex gap-sm">
+        <button type="submit" class="btn btn-primary" style="border-radius:var(--radius-sm);">Lưu thay đổi</button>
+        <a href="/Publish/@Model.Novel.Id/manage" class="btn btn-secondary" style="border-radius:var(--radius-sm);">Hủy</a>
+    </div>
+</form>

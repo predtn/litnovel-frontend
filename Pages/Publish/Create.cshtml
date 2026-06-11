@@ -1,0 +1,53 @@
+@page
+@model litnovel_frontend.Pages.Publish.CreateModel
+@{
+    Layout = "_LayoutDashboard";
+    ViewData["Title"] = "Tạo tiểu thuyết mới";
+}
+@section Sidebar {
+    <a href="/Publish" class="sidebar__link">← Quay lại danh sách</a>
+    <div class="sidebar__section-label">Hướng dẫn</div>
+    <div class="text-caption text-mute" style="padding:var(--space-xs) var(--space-md);">Điền đầy đủ thông tin cơ bản. Bạn có thể thêm volumes và chapters sau.</div>
+}
+<!-- SCR-19: Create Novel -->
+<div class="page-header"><h1 class="page-header__title">Tạo tiểu thuyết mới</h1></div>
+
+@if (TempData["Error"] is string er) { <div class="alert alert-error mb-md">@er</div> }
+
+<form method="post" enctype="multipart/form-data" class="max-w-2xl">
+    @Html.AntiForgeryToken()
+    <div class="card mb-xl">
+        <h2 class="text-body-sm font-semibold mb-md">📌 Thông tin cơ bản</h2>
+        <div class="form-group">
+            <label class="form-label">Tiêu đề <span class="text-error">*</span></label>
+            <input name="title" type="text" class="form-input" placeholder="Tên tiểu thuyết..." required maxlength="200" />
+        </div>
+        <div class="form-group">
+            <label class="form-label">Mô tả / Giới thiệu</label>
+            <textarea name="description" class="form-textarea" placeholder="Giới thiệu nội dung truyện..." rows="5"></textarea>
+        </div>
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label">Thể loại</label>
+                <select name="categoryId" class="form-select">
+                    <option value="">-- Chọn thể loại --</option>
+                    @foreach (var c in Model.Categories)
+                    { <option value="@c.Id">@c.Name</option> }
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Ảnh bìa (URL)</label>
+                <input name="coverImage" type="url" class="form-input" placeholder="https://..." />
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Tags (phân cách bằng dấu phẩy)</label>
+            <input name="tags" type="text" class="form-input" placeholder="Tiên hiệp, Long tộc, Mạnh mẽ..." />
+        </div>
+    </div>
+
+    <div class="flex gap-sm">
+        <button type="submit" class="btn btn-primary" style="border-radius:var(--radius-sm);">Tạo tiểu thuyết</button>
+        <a href="/Publish" class="btn btn-secondary" style="border-radius:var(--radius-sm);">Hủy</a>
+    </div>
+</form>

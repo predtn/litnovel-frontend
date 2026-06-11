@@ -1,0 +1,50 @@
+@page "/Publish/{novelId:int}/chapters/{chapterId:int}/edit"
+@model litnovel_frontend.Pages.Publish.EditChapterModel
+@{
+    Layout = "_LayoutDashboard";
+    ViewData["Title"] = "Sửa chương";
+    var ch = Model.Chapter;
+}
+@section Sidebar { <a href="/Publish/@Model.NovelId/manage" class="sidebar__link">← Quay lại truyện</a> }
+<!-- SCR-24: Edit Chapter -->
+<div class="page-header"><h1 class="page-header__title">Sửa chương</h1></div>
+@if (TempData["Error"]   is string er) { <div class="alert alert-error mb-md">@er</div> }
+@if (TempData["Success"] is string ok) { <div class="alert alert-success mb-md alert-auto-close">@ok</div> }
+@if (ch == null) { <div class="empty-state"><div class="empty-state__title">Không tìm thấy chương</div></div> return; }
+<form method="post">
+    @Html.AntiForgeryToken()
+    <div class="card mb-md">
+        <div class="grid-2 mb-md">
+            <div class="form-group">
+                <label class="form-label">Số chương</label>
+                <input name="chapterNumber" type="number" class="form-input" value="@ch.ChapterNumber" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Trạng thái</label>
+                <span class="status-badge status-@ch.Status.ToLower()">@ch.Status</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Tiêu đề</label>
+            <input name="title" type="text" class="form-input" value="@ch.Title" required />
+        </div>
+        <div class="form-group">
+            <label class="form-label">Nội dung</label>
+            <textarea name="content" id="chapterContent" class="form-textarea" rows="20" style="font-family:var(--font-body);line-height:1.8;">@ch.Content</textarea>
+            <span class="form-hint"><span id="wordCount">0</span> từ</span>
+        </div>
+    </div>
+    <div class="flex gap-sm">
+        <button type="submit" class="btn btn-primary" style="border-radius:var(--radius-sm);">Lưu thay đổi</button>
+        @if (ch.Status == "Draft")
+        {
+            <button type="submit" asp-page-handler="Submit" class="btn btn-secondary" style="border-radius:var(--radius-sm);">📤 Gửi duyệt</button>
+        }
+        <a href="/Publish/@Model.NovelId/manage" class="btn btn-ghost">Hủy</a>
+    </div>
+</form>
+@section Scripts {
+<script>
+const ta = document.getElementById('chapterContent'); const wc = document.getElementById('wordCount');
+if (ta) { wc.textContent = ta.value.trim().split(/\s+/).filter(Boolean).length; ta.addEventListener('input', () => wc.textContent = ta.value.trim().split(/\s+/).filter(Boolean).length); }
+</script>}
