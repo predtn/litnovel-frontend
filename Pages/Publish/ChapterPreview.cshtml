@@ -1,0 +1,38 @@
+@page "Chapters/{id:int}/Preview"
+@model litnovel_frontend.Pages.Publish.ChapterPreviewModel
+@{
+    ViewData["Title"] = "Chapter Preview";
+    var ch = Model.Chapter;
+}
+
+<div class="publish-shell">
+    <div class="breadcrumb">
+        <a asp-page="/Publish/Index">My Novels</a><span class="breadcrumb__sep">/</span>
+        <a asp-page="/Publish/Manage" asp-route-id="@Model.NovelId">@ch.Novel?.Title</a><span class="breadcrumb__sep">/</span>
+        <a asp-page="/Publish/Chapters" asp-route-volumeId="@Model.VolumeId" asp-route-novelId="@Model.NovelId">@ch.Volume?.Title</a><span class="breadcrumb__sep">/</span>
+        <span class="breadcrumb__current">Preview</span>
+    </div>
+
+    <div class="page-header">
+        <div>
+            <div class="publish-meta-row mb-sm">
+                <span class="status-badge status-@ch.Status.ToLowerInvariant()">@ch.Status</span>
+                <span>Chapter @ch.ChapterNumber</span>
+                @if (ch.ReleaseDate.HasValue)
+                {
+                    <span>Release @ch.ReleaseDate.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                }
+            </div>
+            <h1 class="page-header__title">@ch.Title</h1>
+            <p class="page-header__subtitle">@ch.Novel?.Title</p>
+        </div>
+        <div class="publish-actions">
+            <a asp-page="/Publish/ChapterEdit" asp-route-id="@ch.Id" asp-route-volumeId="@Model.VolumeId" asp-route-novelId="@Model.NovelId" class="btn btn-primary">Edit</a>
+            <a asp-page="/Publish/Chapters" asp-route-volumeId="@Model.VolumeId" asp-route-novelId="@Model.NovelId" class="btn btn-secondary">Back</a>
+        </div>
+    </div>
+
+    <article class="publish-richtext">
+        @Html.Raw(ch.Content)
+    </article>
+</div>

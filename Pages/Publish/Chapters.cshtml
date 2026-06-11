@@ -38,20 +38,24 @@
             <tbody>
                 @foreach (var chapter in Model.Chapters.OrderBy(c => c.ChapterNumber))
                 {
+                    var chapterStatus = chapter.Status ?? "Draft";
                     <tr>
                         <td data-label="#" class="publish-col-center">@chapter.ChapterNumber</td>
                         <td data-label="Title"><span class="font-medium">@chapter.Title</span></td>
-                        <td data-label="Status"><span class="status-badge status-@chapter.Status.ToLowerInvariant()">@chapter.Status</span></td>
+                        <td data-label="Status"><span class="status-badge status-@chapterStatus.ToLowerInvariant()">@chapterStatus</span></td>
                         <td data-label="Words" class="publish-col-center">@(chapter.WordCount > 0 ? chapter.WordCount.ToString("N0") : "—")</td>
                         <td data-label="Created" class="publish-col-center">@chapter.CreatedAt.ToString("dd/MM/yyyy")</td>
                         <td data-label="Actions" class="publish-col-actions">
                             <div class="publish-actions">
-                                <a asp-page="/Novels/Read" asp-route-novelSlug="@Model.Novel.Slug" asp-route-chapterId="@chapter.Id" class="btn btn-secondary btn-sm">View</a>
+                                <a asp-page="/Publish/ChapterPreview" asp-route-id="@chapter.Id" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-secondary btn-sm">View</a>
                                 <a asp-page="/Publish/ChapterEdit" asp-route-id="@chapter.Id" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-secondary btn-sm">Edit</a>
-                                <form method="post" asp-page-handler="Submit" asp-route-id="@chapter.Id">
-                                    <button class="btn btn-primary btn-sm" type="submit">Submit</button>
-                                </form>
-                                <form method="post" asp-page-handler="Delete" asp-route-id="@chapter.Id" onsubmit="return confirm('Delete this chapter?');">
+                                @if (chapterStatus.Equals("Draft", StringComparison.OrdinalIgnoreCase) || chapterStatus.Equals("Rejected", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <form method="post" asp-page-handler="Submit" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" asp-route-id="@chapter.Id">
+                                        <button class="btn btn-primary btn-sm" type="submit">Submit</button>
+                                    </form>
+                                }
+                                <form method="post" asp-page-handler="Delete" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" asp-route-id="@chapter.Id" onsubmit="return confirm('Delete this chapter?');">
                                     <button class="btn btn-danger btn-sm" type="submit">Delete</button>
                                 </form>
                             </div>

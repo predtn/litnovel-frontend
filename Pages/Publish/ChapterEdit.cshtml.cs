@@ -41,9 +41,9 @@ public class ChapterEditModel : PublishPageModel
         }
 
         var result = await Api.PutAsync<ChapterNavDto>($"/api/chapters/{id}", Input, Token);
-        if (result?.Success == false)
+        if (!IsApiSuccess(result))
         {
-            ModelState.AddModelError("", result.Message ?? "Unable to update chapter.");
+            ModelState.AddModelError("", ApiFailureMessage(result, "Unable to update chapter."));
             await LoadAsync(id, volumeId, novelId);
             return Page();
         }

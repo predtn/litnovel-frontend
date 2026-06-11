@@ -61,7 +61,7 @@ public class AuthService : IAuthService
             var id = int.TryParse(idClaim, out var i) ? i : 0;
             var name = claims.FirstOrDefault(c => c.Type is "unique_name" or "name" || c.Type == ClaimTypes.Name)?.Value ?? "";
             var email = claims.FirstOrDefault(c => c.Type == "email" || c.Type == ClaimTypes.Email)?.Value ?? "";
-            var role = claims.FirstOrDefault(c => c.Type == "role" || c.Type == ClaimTypes.Role)?.Value ?? "User";
+            var role = GetRoleFromClaims(claims) ?? "User";
             var avatar = claims.FirstOrDefault(c => c.Type == "avatar")?.Value;
             return new AuthUser { Id = id, Username = name, Email = email, Role = role, Avatar = avatar, AccessToken = token ?? "" };
         }
@@ -75,11 +75,13 @@ public class AuthService : IAuthService
     {
         var user = GetCurrentUser(ctx);
         if (user == null) return false;
+        if (role.Equals("User", StringComparison.OrdinalIgnoreCase)) return IsAuthenticated(ctx);
+
         return role switch
         {
-            "Admin" => user.Role == "Admin",
-            "Staff" => user.Role is "Staff" or "Admin",
-            "User"  => user.Role is "User" or "Staff" or "Admin",
+            "Admin" => HasRole(user.Role, "Admin"),
+            "Staff" => HasRole(user.Role, "Staff") || HasRole(user.Role, "Admin"),
+            "User"  => true,
             _ => false
         };
     }
@@ -161,7 +163,7 @@ public class AuthService : IAuthService
                 Id = id,
                 Username = jwt.Claims.FirstOrDefault(c => c.Type is "unique_name" or "name" || c.Type == ClaimTypes.Name)?.Value ?? "",
                 Email = jwt.Claims.FirstOrDefault(c => c.Type == "email" || c.Type == ClaimTypes.Email)?.Value ?? "",
-                Role = jwt.Claims.FirstOrDefault(c => c.Type == "role" || c.Type == ClaimTypes.Role)?.Value ?? "User",
+                Role = GetRoleFromClaims(jwt.Claims) ?? "User",
                 Avatar = jwt.Claims.FirstOrDefault(c => c.Type == "avatar")?.Value,
                 AccessToken = token
             };
@@ -171,4 +173,17 @@ public class AuthService : IAuthService
             return new AuthUser { AccessToken = token };
         }
     }
+
+    private static string? GetRoleFromClaims(IEnumerable<Claim> claims)
+    {
+        var roleClaim = claims.FirstOrDefault(c =>
+            c.Type.Equals("role", StringComparison.OrdinalIgnoreCase) ||
+            c.Type.Equals("roles", StringComparison.OrdinalIgnoreCase) ||
+            c.Type == ClaimTypes.Role);
+
+        return string.IsNullOrWhiteSpace(roleClaim?.Value) ? null : roleClaim.Value.Trim();
+    }
+
+    private static bool HasRole(string? actualRole, string expectedRole)
+        => string.Equals(actualRole, expectedRole, StringComparison.OrdinalIgnoreCase);
 }

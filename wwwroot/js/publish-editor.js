@@ -23,6 +23,22 @@
 
     const commandButtons = [...editor.querySelectorAll('[data-rich-command]')];
     const inlineCommands = ['bold', 'italic', 'underline'];
+    const stickyInlineCommands = new Set();
+
+    const getSelection = () => {
+      const selection = document.getSelection();
+      if (!selection || selection.rangeCount === 0) return null;
+      const node = selection.anchorNode;
+      const container = node?.nodeType === Node.ELEMENT_NODE ? node : node?.parentNode;
+      return container && surface.contains(container)
+        ? selection
+        : null;
+    };
+
+    const hasSelectedText = () => {
+      const selection = getSelection();
+      return !!selection && !selection.isCollapsed;
+    };
 
     const sync = () => {
       output.value = surface.innerHTML.trim();
@@ -45,17 +61,56 @@
 
     const resetInlineFormatting = () => {
       inlineCommands.forEach(command => {
-        if (document.queryCommandState(command)) {
+        if (!stickyInlineCommands.has(command) && document.queryCommandState(command)) {
           document.execCommand(command, false);
         }
       });
       updateToolbarState();
     };
 
+    const ensureStickyFormatting = () => {
+      stickyInlineCommands.forEach(command => {
+        if (!document.queryCommandState(command)) {
+          document.execCommand(command, false);
+        }
+      });
+      updateToolbarState();
+    };
+
+    const collapseSelectionToEnd = () => {
+      const selection = getSelection();
+      if (!selection || selection.rangeCount === 0) return;
+      const range = selection.getRangeAt(0);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    };
+
     commandButtons.forEach(button => {
       button.addEventListener('click', () => {
         surface.focus();
-        document.execCommand(button.dataset.richCommand, false);
+        const command = button.dataset.richCommand;
+        if (!command) return;
+
+        if (inlineCommands.includes(command) && !hasSelectedText()) {
+          if (stickyInlineCommands.has(command)) {
+            stickyInlineCommands.delete(command);
+          } else {
+            stickyInlineCommands.add(command);
+          }
+          document.execCommand(command, false);
+        } else {
+          document.execCommand(command, false);
+          if (inlineCommands.includes(command)) {
+            collapseSelectionToEnd();
+            inlineCommands.forEach(inlineCommand => {
+              if (document.queryCommandState(inlineCommand)) {
+                document.execCommand(inlineCommand, false);
+              }
+            });
+          }
+        }
+
         sync();
         updateToolbarState();
       });
@@ -72,11 +127,14 @@
       if (event.key !== 'Enter' || event.shiftKey) return;
       window.setTimeout(() => {
         resetInlineFormatting();
+        document.execCommand('formatBlock', false, 'p');
+        ensureStickyFormatting();
         sync();
       }, 0);
     });
 
     surface.addEventListener('input', () => {
+      ensureStickyFormatting();
       sync();
       updateToolbarState();
     });
@@ -91,7 +149,8 @@
     });
 
     if (!surface.innerHTML.trim()) {
-      surface.innerHTML = '<p><br></p>';
+      surface.innerHTML = '<h2><br></h2>';
+      if (format) format.value = 'h2';
     }
 
     sync();

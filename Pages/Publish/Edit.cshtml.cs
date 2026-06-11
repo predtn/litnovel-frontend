@@ -30,7 +30,8 @@ public class EditModel : PublishPageModel
             Description = Novel.Description,
             CoverImage = Novel.CoverImage,
             CategoryId = Novel.Category?.Id,
-            TagIds = Novel.Tags.Select(t => t.Id).ToList()
+            TagIds = Novel.Tags.Select(t => t.Id).ToList(),
+            Status = Novel.Status
         };
         SelectedTagIds = Input.TagIds;
         return Page();
@@ -55,9 +56,9 @@ public class EditModel : PublishPageModel
         }
 
         var result = await Api.PutAsync<NovelSummaryDto>($"/api/novels/{id}", Input, Token);
-        if (result?.Success == false)
+        if (!IsApiSuccess(result))
         {
-            ModelState.AddModelError("", result.Message ?? "Unable to update novel.");
+            ModelState.AddModelError("", ApiFailureMessage(result, "Unable to update novel."));
             await LoadAsync(id);
             return Page();
         }

@@ -26,6 +26,7 @@ public class ChapterCreateModel : PublishPageModel
     {
         var guard = RequireAuthor();
         if (guard != null) return guard;
+        Input.Status = "Draft";
         if (string.IsNullOrWhiteSpace(Input.Title) || !HasText(Input.Content))
         {
             ModelState.AddModelError("", "Chapter title and content are required.");
@@ -34,21 +35,41 @@ public class ChapterCreateModel : PublishPageModel
         }
 
         var result = await Api.PostAsync<ChapterNavDto>($"/api/volumes/{volumeId}/chapters", Input, Token);
-        if (result?.Success == false)
+        if (!IsApiSuccess(result))
         {
-            ModelState.AddModelError("", result.Message ?? "Unable to create chapter.");
+            ModelState.AddModelError("", ApiFailureMessage(result, "Unable to create chapter."));
             await LoadAsync(volumeId, novelId);
             return Page();
         }
 
+        if (!submit && result?.Data?.Id is int draftId && draftId > 0 && !IsDraft(result.Data.Status))
+        {
+            var draftResult = await Api.PutAsync<ChapterNavDto>($"/api/chapters/{draftId}", Input, Token);
+            if (!IsApiSuccess(draftResult))
+            {
+                ModelState.AddModelError("", ApiFailureMessage(draftResult, "Chapter was created, but could not be kept as a draft."));
+                await LoadAsync(volumeId, novelId);
+                return Page();
+            }
+        }
+
         if (submit && result?.Data?.Id is int id && id > 0)
         {
-            await Api.PostAsync<object>($"/api/chapters/{id}/submit", null, Token);
+            var submitResult = await Api.PostAsync<object>($"/api/chapters/{id}/submit", null, Token);
+            if (!IsApiSuccess(submitResult))
+            {
+                ModelState.AddModelError("", ApiFailureMessage(submitResult, "Chapter was saved as a draft, but could not be submitted."));
+                await LoadAsync(volumeId, novelId);
+                return Page();
+            }
         }
 
         TempData["Success"] = submit ? "Chapter saved and submitted." : "Chapter draft saved.";
         return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
     }
+
+    private static bool IsDraft(string? status)
+        => string.Equals(status, "Draft", StringComparison.OrdinalIgnoreCase);
 
     private async Task LoadAsync(int volumeId, int novelId)
     {

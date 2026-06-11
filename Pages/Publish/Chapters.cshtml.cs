@@ -25,7 +25,7 @@ public class ChaptersModel : PublishPageModel
         var guard = RequireAuthor();
         if (guard != null) return guard;
         var result = await Api.PostAsync<object>($"/api/chapters/{id}/submit", null, Token);
-        TempData[result?.Success == false ? "Error" : "Success"] = result?.Message ?? "Chapter submitted.";
+        SetApiResultMessage(result, "Chapter submitted.", "Unable to submit chapter.");
         return RedirectToPage(new { volumeId, novelId });
     }
 
@@ -34,7 +34,7 @@ public class ChaptersModel : PublishPageModel
         var guard = RequireAuthor();
         if (guard != null) return guard;
         var result = await Api.DeleteAsync<object>($"/api/chapters/{id}", Token);
-        TempData[result?.Success == false ? "Error" : "Success"] = result?.Message ?? "Chapter deleted.";
+        SetApiResultMessage(result, "Chapter deleted.", "Unable to delete chapter.");
         return RedirectToPage(new { volumeId, novelId });
     }
 
@@ -45,6 +45,11 @@ public class ChaptersModel : PublishPageModel
         await Task.WhenAll(novelTask, chapterTask);
         Novel = novelTask.Result?.Data ?? MockNovel(novelId);
         Volume = Novel.Volumes.FirstOrDefault(v => v.Id == volumeId) ?? Novel.Volumes.First();
+        if (chapterTask.Result?.Success == false)
+        {
+            TempData["Error"] = ApiFailureMessage(chapterTask.Result, "Unable to load chapters.");
+        }
+
         Chapters = chapterTask.Result?.Data?.Items ?? Novel.Volumes.FirstOrDefault(v => v.Id == volumeId)?.Chapters ?? [];
         await FillMissingWordCountsAsync();
     }

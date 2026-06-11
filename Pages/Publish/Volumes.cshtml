@@ -47,7 +47,7 @@
                 </div>
                 <div class="publish-actions">
                     <a asp-page="/Publish/Chapters" asp-route-volumeId="@volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-primary btn-sm">Manage Chapters</a>
-                    <form method="post" asp-page-handler="Delete" asp-route-id="@volume.Id" onsubmit="return confirm('Delete this volume and all chapters?');">
+                    <form method="post" asp-page-handler="Delete" asp-route-novelId="@Model.Novel.Id" asp-route-id="@volume.Id" onsubmit="return confirm('Delete this volume and all chapters?');">
                         <button class="btn btn-danger btn-sm" type="submit">Delete</button>
                     </form>
                 </div>

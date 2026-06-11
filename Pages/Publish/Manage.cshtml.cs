@@ -23,7 +23,7 @@ public class ManageModel : PublishPageModel
         var guard = RequireAuthor();
         if (guard != null) return guard;
         var result = await Api.PostAsync<object>($"/api/novels/{id}/submit", null, Token);
-        TempData[result?.Success == false ? "Error" : "Success"] = result?.Message ?? "Novel submitted for review.";
+        SetApiResultMessage(result, "Novel submitted for review.", "Unable to submit novel.");
         return RedirectToPage(new { id });
     }
 
@@ -32,7 +32,7 @@ public class ManageModel : PublishPageModel
         var guard = RequireAuthor();
         if (guard != null) return guard;
         var result = await Api.DeleteAsync<object>($"/api/novels/{id}", Token);
-        TempData[result?.Success == false ? "Error" : "Success"] = result?.Message ?? "Novel deleted.";
+        SetApiResultMessage(result, "Novel deleted.", "Unable to delete novel.");
         return RedirectToPage("/Publish/Index");
     }
 }

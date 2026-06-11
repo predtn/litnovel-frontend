@@ -35,6 +35,22 @@ public abstract class PublishPageModel : PageModel
 
     protected string? Token => Auth.GetToken(HttpContext);
 
+    protected bool IsApiSuccess<T>(ApiResponse<T>? result) => result?.Success == true;
+
+    protected string ApiFailureMessage<T>(ApiResponse<T>? result, string fallback)
+        => string.IsNullOrWhiteSpace(result?.Message) ? fallback : result.Message;
+
+    protected void SetApiResultMessage<T>(ApiResponse<T>? result, string successFallback, string failureFallback)
+    {
+        if (IsApiSuccess(result))
+        {
+            TempData["Success"] = string.IsNullOrWhiteSpace(result?.Message) ? successFallback : result.Message;
+            return;
+        }
+
+        TempData["Error"] = ApiFailureMessage(result, failureFallback);
+    }
+
     protected static List<CategoryDto> MockCategories() =>
     [
         new() { Id = 1, Name = "Fantasy", Slug = "fantasy", NovelCount = 42 },
@@ -131,7 +147,7 @@ public abstract class PublishPageModel : PageModel
             Id = id,
             ChapterNumber = chapter.ChapterNumber,
             Title = chapter.Title,
-            Status = chapter.Status,
+            Status = chapter.Status ?? "Draft",
             Content = "<p>The archive woke before the city did.</p><p>Between two rows of glass-backed shelves, Mara found a letter addressed in her own handwriting.</p>",
             Volume = novel.Volumes.First(v => v.Chapters.Any(c => c.Id == chapter.Id)),
             Novel = novel,

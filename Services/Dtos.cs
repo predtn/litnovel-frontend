@@ -259,6 +259,7 @@ public class NovelUpsertRequest
     public string? CoverImage { get; set; }
     public int? CategoryId { get; set; }
     public List<int> TagIds { get; set; } = [];
+    public string? Status { get; set; }
 }
 
 public class VolumeUpsertRequest
@@ -273,6 +274,7 @@ public class ChapterUpsertRequest
     public string Title { get; set; } = "";
     public string Content { get; set; } = "";
     public DateTime? ReleaseDate { get; set; }
+    public string Status { get; set; } = "Draft";
 }
 
 public class NovelAnalyticsDto

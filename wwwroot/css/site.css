@@ -1024,6 +1024,16 @@ ul, ol { list-style: none; }
 .alert-success { background: #d1fae5; border-color: #a7f3d0; color: #065f46; }
 .alert-warning { background: var(--color-warning-soft); border-color: #fed7aa; color: var(--color-warning-deep); }
 .alert-error   { background: var(--color-error-soft); border-color: #fca5a5; color: var(--color-error-deep); }
+.publish-response-message { margin-bottom: var(--space-md); }
+.publish-response-message__title {
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.publish-response-message__list {
+  margin: var(--space-xs) 0 0;
+  padding-left: 1.2rem;
+}
+.publish-response-message__list li + li { margin-top: 2px; }
 
 /* Toast */
 .toast-container {

@@ -17,7 +17,24 @@
     </div>
 
     <form method="post" enctype="multipart/form-data" class="card publish-form publish-form--compact">
-        <div asp-validation-summary="ModelOnly" class="alert alert-error"></div>
+        @if (!string.IsNullOrWhiteSpace(Model.ResponseMessage))
+        {
+            <div class="alert alert-error publish-response-message" role="alert">
+                <div>
+                    <div class="publish-response-message__title">Some information needs attention</div>
+                    <div>@Model.ResponseMessage</div>
+                    @if (Model.ResponseErrors.Count > 0)
+                    {
+                        <ul class="publish-response-message__list">
+                            @foreach (var error in Model.ResponseErrors)
+                            {
+                                <li><strong>@error.Field:</strong> @error.Message</li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+        }
         <input type="hidden" asp-for="Input.CoverImage" />
 
         <div class="publish-form-layout">
@@ -37,6 +54,7 @@
                                 <option value="@category.Id">@category.Name</option>
                             }
                         </select>
+                        <span class="form-error" asp-validation-for="Input.CategoryId"></span>
                     </div>
                 </div>
 
@@ -52,11 +70,12 @@
                         @foreach (var tag in Model.Tags)
                         {
                             <label class="form-check">
-                                <input type="checkbox" name="SelectedTagIds" value="@tag.Id" />
+                                <input type="checkbox" name="SelectedTagIds" value="@tag.Id" checked="@Model.SelectedTagIds.Contains(tag.Id)" />
                                 @tag.Name
                             </label>
                         }
                     </div>
+                    <span class="form-error" asp-validation-for="SelectedTagIds"></span>
                     <div class="form-hint">Choose up to 10 tags.</div>
                 </div>
             </div>

@@ -25,7 +25,7 @@ public class VolumesModel : PublishPageModel
         var guard = RequireAuthor();
         if (guard != null) return guard;
         var result = await Api.PostAsync<VolumeDto>($"/api/novels/{novelId}/volumes", Input, Token);
-        TempData[result?.Success == false ? "Error" : "Success"] = result?.Message ?? "Volume created.";
+        SetApiResultMessage(result, "Volume created.", "Unable to create volume.");
         return RedirectToPage(new { novelId });
     }
 
@@ -34,7 +34,7 @@ public class VolumesModel : PublishPageModel
         var guard = RequireAuthor();
         if (guard != null) return guard;
         var result = await Api.DeleteAsync<object>($"/api/volumes/{id}", Token);
-        TempData[result?.Success == false ? "Error" : "Success"] = result?.Message ?? "Volume deleted.";
+        SetApiResultMessage(result, "Volume deleted.", "Unable to delete volume.");
         return RedirectToPage(new { novelId });
     }
 
