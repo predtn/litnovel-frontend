@@ -1015,41 +1015,6 @@ GET /api/novels
 
 ---
 
-## SCR-17 — Bookmarks
-
-**Purpose:** View bookmarked chapters.
-
-### APIs Used
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/users/me/bookmarks` | Load bookmarks |
-| `DELETE` | `/api/bookmarks/{id}` | Remove bookmark |
-
----
-
-### `GET /api/users/me/bookmarks`
-
-**Permission:** User+
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "items": [
-      {
-        "id": 1,
-        "novel": { "id": 1, "title": "The Dragon War Chronicles", "coverImage": "..." },
-        "chapter": { "id": 45, "chapterNumber": 45, "title": "Chapter 45" },
-        "bookmarkedAt": "2024-01-11T20:00:00Z"
-      }
-    ],
-    "page": 1, "size": 20, "totalElements": 5, "totalPages": 1
-  }
-}
-```
-
 ---
 
 # MODULE 3 — PUBLISHING MODULE
