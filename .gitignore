@@ -66,6 +66,9 @@ packages/
 # ==========================================
 # Publish Output
 # ==========================================
+publish/
+!Pages/Publish/
+!Pages/Publish/**
 wwwroot/dist/
 wwwroot/lib/
 
