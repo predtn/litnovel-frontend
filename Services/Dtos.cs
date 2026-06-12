@@ -254,3 +254,137 @@ public static class StringExtensions
     public static string Truncate(this string s, int max) => s.Length <= max ? s : s[..max] + "…";
 }
 
+// ─── Staff Moderation DTOs ───
+public class PendingNovelDto
+{
+    public int Id { get; set; }
+    public string Title { get; set; } = "";
+    public string Slug { get; set; } = "";
+    public string? CoverImage { get; set; }
+    public string? Description { get; set; }
+    public int AuthorId { get; set; }
+    public string AuthorUsername { get; set; } = "";
+    public string? CategoryName { get; set; }
+    public List<string> Tags { get; set; } = [];
+    public int TotalChapters { get; set; }
+    public DateTime SubmittedAt { get; set; }
+}
+
+public class PendingChapterDto
+{
+    public int Id { get; set; }
+    public int ChapterNumber { get; set; }
+    public string Title { get; set; } = "";
+    public string Slug { get; set; } = "";
+    public int NovelId { get; set; }
+    public string NovelTitle { get; set; } = "";
+    public string NovelSlug { get; set; } = "";
+    public int AuthorId { get; set; }
+    public string AuthorUsername { get; set; } = "";
+    public DateTime SubmittedAt { get; set; }
+}
+
+public class NovelReviewDetailDto
+{
+    public int Id { get; set; }
+    public string Title { get; set; } = "";
+    public string Slug { get; set; } = "";
+    public string? Description { get; set; }
+    public string? CoverImage { get; set; }
+    public string Status { get; set; } = "";
+    public int AuthorId { get; set; }
+    public string AuthorUsername { get; set; } = "";
+    public string? AuthorAvatar { get; set; }
+    public string? CategoryName { get; set; }
+    public List<string> Tags { get; set; } = [];
+    public int TotalChapters { get; set; }
+    public int TotalVolumes { get; set; }
+    public int ViewCount { get; set; }
+    public List<ReviewVolumeDto> Volumes { get; set; } = [];
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
+
+public class ReviewVolumeDto
+{
+    public int Id { get; set; }
+    public int VolumeNumber { get; set; }
+    public string Title { get; set; } = "";
+    public List<ReviewChapterDto> Chapters { get; set; } = [];
+}
+
+public class ReviewChapterDto
+{
+    public int Id { get; set; }
+    public int ChapterNumber { get; set; }
+    public string Title { get; set; } = "";
+    public string Status { get; set; } = "";
+}
+
+public class ChapterReviewDetailDto
+{
+    public int Id { get; set; }
+    public int ChapterNumber { get; set; }
+    public string Title { get; set; } = "";
+    public string Slug { get; set; } = "";
+    public string Status { get; set; } = "";
+    public string Content { get; set; } = "";
+    public int NovelId { get; set; }
+    public string NovelTitle { get; set; } = "";
+    public string NovelSlug { get; set; } = "";
+    public int AuthorId { get; set; }
+    public string AuthorUsername { get; set; } = "";
+    public int VolumeId { get; set; }
+    public string VolumeTitle { get; set; } = "";
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
+
+public class StaffReportDto
+{
+    public int Id { get; set; }
+    public string Kind { get; set; } = "";
+    public string ReportType { get; set; } = "";
+    public string? Description { get; set; }
+    public string Status { get; set; } = "Pending";
+    public string? ActionTaken { get; set; }
+    public string? ResolutionNotes { get; set; }
+    public ReportActorInfoDto? Reporter { get; set; }
+    public ReportActorInfoDto? ProcessedBy { get; set; }
+    public ReportTargetNovelInfoDto? TargetNovel { get; set; }
+    public ReportActorInfoDto? TargetUser { get; set; }
+    public ReportTargetChapterInfoDto? TargetChapter { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+}
+
+public class ReportActorInfoDto
+{
+    public int Id { get; set; }
+    public string Username { get; set; } = "";
+    public string? Avatar { get; set; }
+}
+
+public class ReportTargetNovelInfoDto
+{
+    public int Id { get; set; }
+    public string Title { get; set; } = "";
+    public string Slug { get; set; } = "";
+}
+
+public class ReportTargetChapterInfoDto
+{
+    public int Id { get; set; }
+    public string Title { get; set; } = "";
+    public int ChapterNumber { get; set; }
+}
+
+public class ModerationHistoryDto
+{
+    public int Id { get; set; }
+    public string Kind { get; set; } = "";
+    public string Action { get; set; } = "";
+    public string? TargetTitle { get; set; }
+    public string? ResolutionNotes { get; set; }
+    public DateTime ProcessedAt { get; set; }
+}

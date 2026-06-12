@@ -1,28 +1,89 @@
-@page
+﻿@page
 @model litnovel_frontend.Pages.Staff.PendingNovelsModel
 @{ Layout = "_LayoutDashboard"; ViewData["Title"] = "Tiểu thuyết chờ duyệt"; }
 @section Sidebar {
-    <a href="/Staff/Dashboard" class="sidebar__link">Tổng quan</a>
-    <a href="/Staff/PendingNovels" class="sidebar__link active">Tiểu thuyết chờ duyệt</a>
-    <a href="/Staff/PendingChapters" class="sidebar__link">Chương chờ duyệt</a>
-    <a href="/Staff/Reports" class="sidebar__link">Báo cáo</a>
+    <a href="/Staff/Dashboard" class="sidebar__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+        Tổng quan
+    </a>
+    <a href="/Staff/PendingNovels" class="sidebar__link active">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        Tiểu thuyết chờ duyệt
+    </a>
+    <a href="/Staff/PendingChapters" class="sidebar__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Chương chờ duyệt
+    </a>
+    <a href="/Staff/Reports" class="sidebar__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Báo cáo vi phạm
+    </a>
+    <a href="/Staff/ModerationHistory" class="sidebar__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Lịch sử kiểm duyệt
+    </a>
 }
-<!-- SCR-39 -->
-<div class="page-header"><h1 class="page-header__title">Tiểu thuyết chờ duyệt</h1><p class="page-header__subtitle">@Model.Novels.Count mục</p></div>
+<!-- SCR-39: Pending Novels -->
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Tiểu thuyết chờ duyệt</h1>
+        <p class="page-header__subtitle">@Model.TotalElements mục cần xem xét</p>
+    </div>
+    <div class="stat-pills">
+        <span class="stat-pill stat-pill--warning">@Model.Dashboard.PendingNovels truyện</span>
+        <span class="stat-pill stat-pill--info">@Model.Dashboard.PendingChapters chương</span>
+        <span class="stat-pill stat-pill--danger">@Model.Dashboard.OpenReports báo cáo</span>
+    </div>
+</div>
+
 <div class="table-wrapper">
     <table class="table">
-        <thead><tr><th>Tiểu thuyết</th><th>Tác giả</th><th>Thể loại</th><th>Ngày gửi</th><th class="col-actions">Hành động</th></tr></thead>
+        <thead>
+            <tr>
+                <th>Tiểu thuyết</th>
+                <th>Tác giả</th>
+                <th>Thể loại & Tags</th>
+                <th>Chương</th>
+                <th>Ngày gửi</th>
+                <th class="col-actions">Hành động</th>
+            </tr>
+        </thead>
         <tbody>
             @foreach (var n in Model.Novels)
             {
                 <tr>
-                    <td class="text-body-sm font-medium">@n.Title</td>
-                    <td class="text-body-sm">@n.Author?.Username</td>
-                    <td>@if(n.Category!=null){<span class="badge badge-secondary">@n.Category.Name</span>}</td>
-                    <td class="text-caption text-mute">@n.UpdatedAt.ToString("dd/MM HH:mm")</td>
+                    <td>
+                        <div class="novel-cell">
+                            @if (!string.IsNullOrEmpty(n.CoverImage))
+                            {
+                                <img src="@n.CoverImage" class="novel-thumb" alt="@n.Title" />
+                            }
+                            else
+                            {
+                                <div class="novel-thumb-placeholder"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+                            }
+                            <div>
+                                <div class="text-body-sm font-medium">@n.Title</div>
+                                @if (!string.IsNullOrEmpty(n.Description))
+                                {
+                                    <div class="text-caption text-mute">@n.Description.Truncate(60)</div>
+                                }
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-body-sm">@n.AuthorUsername</td>
+                    <td>
+                        @if (n.CategoryName != null) { <span class="badge badge-primary">@n.CategoryName</span> }
+                        @foreach (var tag in n.Tags.Take(2))
+                        {
+                            <span class="badge badge-secondary">@tag</span>
+                        }
+                    </td>
+                    <td class="text-body-sm text-center">@n.TotalChapters</td>
+                    <td class="text-caption text-mute">@n.SubmittedAt.ToString("dd/MM HH:mm")</td>
                     <td class="col-actions">
                         <div class="flex gap-xs justify-end">
-                            <a href="/Staff/NovelReview?id=@n.Id" class="btn btn-secondary btn-sm">Xem xét</a>
+                            <a href="/Staff/NovelReview?id=@n.Id" class="btn btn-primary btn-sm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Xem xét</a>
                         </div>
                     </td>
                 </tr>
@@ -30,4 +91,22 @@
         </tbody>
     </table>
 </div>
-@if (!Model.Novels.Any()) { <div class="empty-state"><div class="empty-state__icon">✅</div><div class="empty-state__title">Không có gì cần duyệt</div></div> }
+
+@if (!Model.Novels.Any())
+{
+    <div class="empty-state">
+        <div class="empty-state__icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="empty-state__title">Không có tiểu thuyết nào chờ duyệt</div>
+        <div class="empty-state__subtitle">Tất cả nội dung đã được kiểm duyệt</div>
+    </div>
+}
+
+@if (Model.TotalPages > 1)
+{
+    <div class="pagination">
+        @for (int i = 1; i <= Model.TotalPages; i++)
+        {
+            <a href="?page=@i" class="pagination__item @(i == Model.Page ? "active" : "")">@i</a>
+        }
+    </div>
+}

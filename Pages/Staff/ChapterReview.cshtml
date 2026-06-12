@@ -1,0 +1,133 @@
+﻿@page
+@model litnovel_frontend.Pages.Staff.ChapterReviewModel
+@{ Layout = "_LayoutDashboard"; ViewData["Title"] = "Xem xét chương"; }
+@section Sidebar {
+    <a href="/Staff/Dashboard" class="sidebar__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+        Tổng quan
+    </a>
+    <a href="/Staff/PendingNovels" class="sidebar__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        Tiểu thuyết chờ duyệt
+    </a>
+    <a href="/Staff/PendingChapters" class="sidebar__link active">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Chương chờ duyệt
+    </a>
+    <a href="/Staff/Reports" class="sidebar__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Báo cáo vi phạm
+    </a>
+    <a href="/Staff/ModerationHistory" class="sidebar__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Lịch sử kiểm duyệt
+    </a>
+}
+<!-- SCR-42: Chapter Review -->
+<div class="page-header">
+    <div>
+        <a href="/Staff/PendingChapters" class="btn btn-secondary btn-sm">← Quay lại</a>
+        <h1 class="page-header__title mt-sm">Xem xét chương</h1>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ActionMessage))
+{
+    <div class="alert alert-danger">@Model.ActionMessage</div>
+}
+
+@if (Model.Chapter != null)
+{
+    var c = Model.Chapter;
+    <div class="review-grid">
+        <div class="review-main">
+            <div class="card mb-md">
+                <div class="card__header">
+                    <div>
+                        <div class="breadcrumb-trail">
+                            <span class="text-mute">@c.NovelTitle</span>
+                            <span class="text-mute"> › </span>
+                            <span class="text-mute">@c.VolumeTitle</span>
+                            <span class="text-mute"> › </span>
+                            <strong>Chương @c.ChapterNumber</strong>
+                        </div>
+                        <h2 class="card__title">@c.Title</h2>
+                    </div>
+                    <span class="status-badge status-@c.Status.ToLower()">@c.Status</span>
+                </div>
+                <div class="card__body">
+                    <div class="meta-grid">
+                        <div class="meta-item"><span class="meta-label">Tác giả</span><span class="meta-value">@c.AuthorUsername</span></div>
+                        <div class="meta-item"><span class="meta-label">Tập</span><span class="meta-value">@c.VolumeTitle</span></div>
+                        <div class="meta-item"><span class="meta-label">Ngày tạo</span><span class="meta-value">@c.CreatedAt.ToString("dd/MM/yyyy")</span></div>
+                        <div class="meta-item"><span class="meta-label">Cập nhật</span><span class="meta-value">@c.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card__header"><h3 class="card__title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Nội dung chương</h3></div>
+                <div class="card__body chapter-content-preview">
+                    @if (!string.IsNullOrEmpty(c.Content))
+                    {
+                        @Html.Raw(System.Web.HttpUtility.HtmlEncode(c.Content).Replace("\n", "<br/>"))
+                    }
+                    else
+                    {
+                        <div class="empty-state"><div class="empty-state__icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="empty-state__title">Chương chưa có nội dung</div></div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="review-sidebar">
+            <div class="card action-card">
+                <div class="card__header"><h3 class="card__title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Hành động</h3></div>
+                <div class="card__body">
+                    <form method="post">
+                        <input type="hidden" name="id" value="@c.Id" />
+                        <input type="hidden" name="action" value="Approve" />
+                        <button type="submit" class="btn btn-success w-full mb-sm"
+                                onclick="return confirm('Phê duyệt chương này?')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Phê duyệt</button>
+                    </form>
+                    <button class="btn btn-danger w-full mb-sm"
+                            onclick="document.getElementById('rejectModal').showModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Từ chối</button>
+                    <button class="btn btn-warning w-full"
+                            onclick="document.getElementById('lockModal').showModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Khóa</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <dialog id="rejectModal" class="modal-dialog">
+        <form method="post" class="modal-content">
+            <div class="modal-header"><h3>Từ chối chương</h3></div>
+            <div class="modal-body">
+                <input type="hidden" name="id" value="@c.Id" />
+                <input type="hidden" name="action" value="Reject" />
+                <label class="form-label">Lý do *</label>
+                <textarea name="reason" class="form-control" rows="3" placeholder="Nhập lý do từ chối..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('rejectModal').close()">Hủy</button>
+                <button type="submit" class="btn btn-danger">Xác nhận</button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog id="lockModal" class="modal-dialog">
+        <form method="post" class="modal-content">
+            <div class="modal-header"><h3>Khóa chương</h3></div>
+            <div class="modal-body">
+                <input type="hidden" name="id" value="@c.Id" />
+                <input type="hidden" name="action" value="Lock" />
+                <label class="form-label">Lý do</label>
+                <textarea name="reason" class="form-control" rows="3" placeholder="Nhập lý do khóa..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('lockModal').close()">Hủy</button>
+                <button type="submit" class="btn btn-warning">Xác nhận</button>
+            </div>
+        </form>
+    </dialog>
+}
