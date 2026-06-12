@@ -9,7 +9,7 @@ public class ModerationHistoryModel : PageModel
     private readonly IApiService _api;
     private readonly IAuthService _auth;
     public List<ModerationHistoryDto> History { get; set; } = [];
-    public int Page { get; set; } = 1;
+    public new int Page { get; set; } = 1;
     public int TotalPages { get; set; } = 1;
     public int TotalElements { get; set; } = 0;
 

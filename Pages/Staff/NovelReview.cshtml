@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model litnovel_frontend.Pages.Staff.NovelReviewModel
 @{ Layout = "_LayoutDashboard"; ViewData["Title"] = "Xem xét tiểu thuyết"; }
 @section Sidebar {
@@ -60,8 +60,8 @@
                         <div class="meta-item"><span class="meta-label">Thể loại</span><span class="meta-value">@(n.CategoryName ?? "—")</span></div>
                         <div class="meta-item"><span class="meta-label">Tổng chương</span><span class="meta-value">@n.TotalChapters</span></div>
                         <div class="meta-item"><span class="meta-label">Lượt xem</span><span class="meta-value">@n.ViewCount</span></div>
-                        <div class="meta-item"><span class="meta-label">Ngày tạo</span><span class="meta-value">@n.CreatedAt.ToString("dd/MM/yyyy")</span></div>
-                        <div class="meta-item"><span class="meta-label">Cập nhật</span><span class="meta-value">@n.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</span></div>
+                        <div class="meta-item"><span class="meta-label">Ngày tạo</span><span class="meta-value">@n.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</span></div>
+                        <div class="meta-item"><span class="meta-label">Cập nhật</span><span class="meta-value">@n.UpdatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span></div>
                     </div>
                     @if (n.Tags.Any())
                     {

@@ -12,7 +12,7 @@ public class ReportsModel : PageModel
     public string? StatusFilter { get; set; }
     public string? KindFilter { get; set; }
     public int PendingCount { get; set; }
-    public int Page { get; set; } = 1;
+    public new int Page { get; set; } = 1;
     public int TotalPages { get; set; } = 1;
 
     public ReportsModel(IApiService api, IAuthService auth) { _api = api; _auth = auth; }

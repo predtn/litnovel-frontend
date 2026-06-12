@@ -246,6 +246,16 @@ public class StaffDashboardDto
     public int PendingNovels { get; set; }
     public int PendingChapters { get; set; }
     public int OpenReports { get; set; }
+    public int ActiveWarnings { get; set; }
+    public List<ModerationActivityItem> RecentActivity { get; set; } = [];
+}
+
+public class ModerationActivityItem
+{
+    public string Action { get; set; } = "";
+    public string StaffUsername { get; set; } = "";
+    public string Target { get; set; } = "";
+    public DateTime PerformedAt { get; set; }
 }
 
 // Extension methods for string
@@ -382,9 +392,12 @@ public class ReportTargetChapterInfoDto
 public class ModerationHistoryDto
 {
     public int Id { get; set; }
-    public string Kind { get; set; } = "";
-    public string Action { get; set; } = "";
+    public int StaffId { get; set; }
+    public string StaffUsername { get; set; } = "";
+    public string Action { get; set; } = "";       // e.g. "ApproveNovel", "RejectChapter"
+    public string TargetType { get; set; } = "";   // "Novel" | "Chapter" | "Report" | "User"
+    public int TargetId { get; set; }
     public string? TargetTitle { get; set; }
-    public string? ResolutionNotes { get; set; }
-    public DateTime ProcessedAt { get; set; }
+    public string? Notes { get; set; }
+    public DateTime PerformedAt { get; set; }
 }

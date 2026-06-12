@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model litnovel_frontend.Pages.Staff.PendingNovelsModel
 @{ Layout = "_LayoutDashboard"; ViewData["Title"] = "Tiểu thuyết chờ duyệt"; }
 @section Sidebar {
@@ -80,7 +80,7 @@
                         }
                     </td>
                     <td class="text-body-sm text-center">@n.TotalChapters</td>
-                    <td class="text-caption text-mute">@n.SubmittedAt.ToString("dd/MM HH:mm")</td>
+                    <td class="text-caption text-mute">@n.SubmittedAt.ToLocalTime().ToString("dd/MM HH:mm")</td>
                     <td class="col-actions">
                         <div class="flex gap-xs justify-end">
                             <a href="/Staff/NovelReview?id=@n.Id" class="btn btn-primary btn-sm"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Xem xét</a>

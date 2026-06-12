@@ -66,7 +66,7 @@
                         </div>
                         <div class="meta-item">
                             <span class="meta-label">Ngày gửi</span>
-                            <span class="meta-value">@r.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                            <span class="meta-value">@r.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
                         </div>
                         @if (r.ProcessedBy != null)
                         {
