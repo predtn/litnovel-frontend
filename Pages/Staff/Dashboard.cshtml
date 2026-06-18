@@ -7,9 +7,8 @@
 }
 
 @section Sidebar {
-    <div class="sidebar__section-label">Kiểm duyệt</div>
     <a href="/Staff/Dashboard" class="sidebar__link active">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
         Tổng quan
     </a>
     <a href="/Staff/PendingNovels" class="sidebar__link">
@@ -18,18 +17,17 @@
         @if (Model.Dashboard.PendingNovels > 0) { <span class="sidebar__badge">@Model.Dashboard.PendingNovels</span> }
     </a>
     <a href="/Staff/PendingChapters" class="sidebar__link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         Chương chờ duyệt
         @if (Model.Dashboard.PendingChapters > 0) { <span class="sidebar__badge">@Model.Dashboard.PendingChapters</span> }
     </a>
-    <div class="sidebar__section-label">Báo cáo</div>
     <a href="/Staff/Reports" class="sidebar__link">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        Quản lý báo cáo
+        Báo cáo vi phạm
         @if (Model.Dashboard.OpenReports > 0) { <span class="sidebar__badge">@Model.Dashboard.OpenReports</span> }
     </a>
     <a href="/Staff/ModerationHistory" class="sidebar__link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         Lịch sử kiểm duyệt
     </a>
 }
@@ -43,7 +41,7 @@
 </div>
 
 <!-- Stats -->
-<div class="grid-3 mb-xl">
+<div class="grid-4 mb-xl">
     <a href="/Staff/PendingNovels" style="text-decoration:none;">
         <div class="stat-card" style="border:1px solid var(--color-hairline); transition:box-shadow .15s;">
             <div class="stat-card__label">Tiểu thuyết chờ duyệt</div>
@@ -65,6 +63,11 @@
             <div class="text-caption text-mute">Xem tất cả →</div>
         </div>
     </a>
+    <div class="stat-card" style="border:1px solid var(--color-hairline);">
+        <div class="stat-card__label">Cảnh báo đang hiệu lực</div>
+        <div class="stat-card__value" style="color:var(--color-ink);">@Model.Dashboard.ActiveWarnings</div>
+        <div class="text-caption text-mute">(Trong 30 ngày)</div>
+    </div>
 </div>
 
 <!-- Quick access cards -->
@@ -80,10 +83,10 @@
             @foreach (var novel in Model.PendingNovels.Take(5))
             {
                 <div class="queue-item mb-sm">
-                    <div class="queue-item__cover">📖</div>
+                    <div class="queue-item__cover"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
                     <div class="queue-item__body">
                         <div class="queue-item__title">@novel.Title</div>
-                        <div class="queue-item__meta">@novel.Author?.Username · @novel.UpdatedAt.ToString("dd/MM HH:mm")</div>
+                        <div class="queue-item__meta">@novel.AuthorUsername · @novel.SubmittedAt.ToLocalTime().ToString("dd/MM HH:mm")</div>
                     </div>
                     <div class="queue-item__actions">
                         <a href="/Staff/NovelReview?id=@novel.Id" class="btn btn-secondary btn-sm">Xem</a>
@@ -95,7 +98,7 @@
     </div>
 
     <div class="card">
-        <h3 class="text-body-sm font-semibold mb-md">⚠️ Báo cáo gần đây</h3>
+        <h3 class="text-body-sm font-semibold mb-md"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Báo cáo gần đây</h3>
         @if (!Model.PendingReports.Any())
         {
             <div class="text-body-sm text-mute">Không có báo cáo nào đang chờ xử lý.</div>
@@ -109,10 +112,62 @@
                         <div class="text-body-sm font-medium text-ink truncate">@report.TargetNovel?.Title ?? report.TargetUser?.Username ?? "—"</div>
                         <div class="text-caption text-mute">@report.ReportType · @report.Reporter?.Username</div>
                     </div>
-                    <a href="/Staff/ReportDetail?id=@report.Id" class="btn btn-secondary btn-sm">Xử lý</a>
+                    <a href="/Staff/ReportDetail?id=@report.Id&kind=@report.Kind" class="btn btn-secondary btn-sm">Xử lý</a>
                 </div>
             }
             <a href="/Staff/Reports" class="btn btn-ghost" style="width:100%; margin-top:var(--space-sm);">Xem tất cả →</a>
         }
     </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="card mb-xl" style="margin-top:var(--space-xl);">
+    <h3 class="text-body-sm font-semibold mb-md"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Hoạt động kiểm duyệt gần đây</h3>
+    @if (!Model.Dashboard.RecentActivity.Any())
+    {
+        <div class="text-body-sm text-mute">Chưa có hoạt động nào.</div>
+    }
+    else
+    {
+        <div class="table-wrapper" style="margin-top:var(--space-md);">
+            <table class="table" style="font-size:0.875rem;">
+                <thead>
+                    <tr>
+                        <th style="padding-top:0; padding-bottom:var(--space-xs);">Nhân viên</th>
+                        <th style="padding-top:0; padding-bottom:var(--space-xs);">Hành động</th>
+                        <th style="padding-top:0; padding-bottom:var(--space-xs);">Đối tượng</th>
+                        <th style="padding-top:0; padding-bottom:var(--space-xs);">Thời gian</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var act in Model.Dashboard.RecentActivity)
+                    {
+                        <tr>
+                            <td class="font-medium">@act.StaffUsername</td>
+                            <td>
+                                @{
+                                    var actionText = act.Action switch {
+                                        "ApproveNovel" => "Duyệt truyện",
+                                        "RejectNovel" => "Từ chối truyện",
+                                        "LockNovel" => "Khoá truyện",
+                                        "ApproveChapter" => "Duyệt chương",
+                                        "RejectChapter" => "Từ chối chương",
+                                        "LockChapter" => "Khoá chương",
+                                        "ResolveReport" => "Giải quyết BC",
+                                        "RejectReport" => "Bác bỏ BC",
+                                        "WarnUser" => "Cảnh cáo",
+                                        _ => act.Action
+                                    };
+                                }
+                                <span class="badge badge-secondary">@actionText</span>
+                            </td>
+                            <td class="text-mute truncate" style="max-width:250px;">@act.Target</td>
+                            <td class="text-mute">@act.PerformedAt.ToLocalTime().ToString("dd/MM HH:mm")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 </div>
