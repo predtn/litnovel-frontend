@@ -6,15 +6,29 @@ namespace litnovel_frontend.Pages.Auth;
 
 public class ForgotPasswordModel : PageModel
 {
-    private readonly IApiService _api;
+    private readonly IAuthService _auth;
+
     public bool Sent { get; set; }
     [BindProperty] public string Email { get; set; } = "";
 
-    public ForgotPasswordModel(IApiService api) { _api = api; }
-    public void OnGet() { }
+    public ForgotPasswordModel(IAuthService auth)
+    {
+        _auth = auth;
+    }
+
+    public void OnGet()
+    {
+    }
+
     public async Task<IActionResult> OnPostAsync()
     {
-        await _api.PostAsync<object>("/api/auth/forgot-password", new { email = Email });
+        var (success, error) = await _auth.ForgotPasswordAsync(Email);
+        if (!success)
+        {
+            TempData["Error"] = error;
+            return Page();
+        }
+
         Sent = true;
         return Page();
     }

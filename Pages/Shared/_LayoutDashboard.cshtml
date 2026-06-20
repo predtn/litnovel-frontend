@@ -2,6 +2,11 @@
 @{
     var sessionNotice = Context.Session.GetString("SessionNotice");
     var sessionNoticeType = Context.Session.GetString("SessionNoticeType") ?? "info";
+    var activeNav = ViewData["ActiveNav"]?.ToString() ?? "";
+    var isStaffArea = activeNav.StartsWith("staff", StringComparison.OrdinalIgnoreCase) ||
+        Context.Request.Path.StartsWithSegments("/Staff");
+    var dashboardHome = isStaffArea ? "/Staff/Dashboard" : "/Admin/Dashboard";
+    var dashboardLabel = isStaffArea ? "Staff Console" : "Admin Console";
     if (!string.IsNullOrWhiteSpace(sessionNotice))
     {
         Context.Session.Remove("SessionNotice");
@@ -21,8 +26,8 @@
     <div class="dashboard-shell dashboard-shell--admin">
         <aside class="sidebar admin-sidebar" id="dashSidebar">
             <div class="admin-brand">
-                <a href="/Admin/Dashboard" class="admin-brand__logo">Lit<span>Novel</span></a>
-                <div class="admin-brand__label">Admin Console</div>
+                <a href="@dashboardHome" class="admin-brand__logo">Lit<span>Novel</span></a>
+                <div class="admin-brand__label">@dashboardLabel</div>
             </div>
             @await RenderSectionAsync("Sidebar", required: false)
             <div class="admin-sidebar__footer">

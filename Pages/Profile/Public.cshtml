@@ -32,6 +32,8 @@
             <div class="text-caption text-mute mt-sm">Tham gia từ @u.CreatedAt.ToString("MM/yyyy")</div>
         </div>
     </div>
+    @if (TempData["Success"] is string ok) { <div class="alert alert-success mb-md alert-auto-close">@ok</div> }
+    @if (TempData["Error"] is string er) { <div class="alert alert-error mb-md">@er</div> }
     <!-- Badges -->
     @if (u.Badges.Any())
     {
@@ -55,6 +57,28 @@
             </div>
         </div>
     }
+    <!-- Report user -->
+    <div class="card mb-xl">
+        <h2 class="text-body-sm font-semibold mb-md">BĂ¡o cĂ¡o ngÆ°á»i dĂ¹ng</h2>
+        <form method="post" asp-page-handler="Report" class="auth-form">
+            @Html.AntiForgeryToken()
+            <div class="form-group">
+                <label class="form-label">Loáº¡i bĂ¡o cĂ¡o</label>
+                <select name="ReportType" class="form-input">
+                    <option value="Harassment">Harassment</option>
+                    <option value="Spam">Spam</option>
+                    <option value="Inappropriate">Inappropriate</option>
+                    <option value="Copyright">Copyright</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">MĂ´ táº£</label>
+                <textarea name="Description" class="form-textarea" maxlength="1000" placeholder="MĂ´ táº£ ngáº¯n gá»n lĂ½ do bĂ¡o cĂ¡o..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-secondary" style="border-radius:var(--radius-sm);">Gá»­i bĂ¡o cĂ¡o</button>
+        </form>
+    </div>
     <!-- Novels by this author -->
     <h2 class="text-display-sm mb-lg">Tiểu thuyết của @u.Username</h2>
     @if (!Model.Novels.Any())

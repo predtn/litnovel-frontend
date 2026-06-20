@@ -15,7 +15,7 @@ builder.Services.AddDataProtection()
 // API HttpClient
 builder.Services.AddHttpClient<IApiService, ApiService>(client =>
 {
-    var baseUrl = builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7001";
+    var baseUrl = builder.Configuration["ApiBaseUrl"] ?? "https://localhost:5181";
     client.BaseAddress = new Uri(baseUrl);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.Timeout = TimeSpan.FromSeconds(30);
