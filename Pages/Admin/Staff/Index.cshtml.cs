@@ -1,0 +1,83 @@
+using litnovel_frontend.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace litnovel_frontend.Pages.Admin.Staff;
+
+public class IndexModel(IApiService api, IAuthService auth) : PageModel
+{
+    public List<UserDetailDto> StaffUsers { get; set; } = [];
+    public List<UserDetailDto> CandidateUsers { get; set; } = [];
+    public string? LoadError { get; set; }
+
+    public async Task<IActionResult> OnGetAsync()
+    {
+        if (!auth.IsInRole(HttpContext, "Admin")) return RedirectToPage("/Index");
+        SetShell();
+        var token = auth.GetToken(HttpContext);
+        var staff = await api.GetAsync<PagedData<UserDetailDto>>("/api/admin/users?role=Staff&page=1&size=50", token);
+        var users = await api.GetAsync<PagedData<UserDetailDto>>("/api/admin/users?role=User&page=1&size=20", token);
+        if (staff?.Success == true && staff.Data != null)
+        {
+            StaffUsers = staff.Data.Items
+                .Where(user => string.Equals(user.Role, "Staff", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+        else
+        {
+            LoadError = staff?.Message ?? "Khong the tai danh sach Staff.";
+        }
+
+        if (users?.Success == true && users.Data != null)
+        {
+            var currentUserId = auth.GetCurrentUser(HttpContext)?.Id;
+            CandidateUsers = users.Data.Items
+                .Where(user => string.Equals(user.Role, "User", StringComparison.OrdinalIgnoreCase))
+                .Where(user => currentUserId == null || user.Id != currentUserId.Value)
+                .ToList();
+        }
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostAssignAsync(int userId)
+    {
+        var token = auth.GetToken(HttpContext);
+        var result = await api.PostAsync<object>($"/api/admin/users/{userId}/assign-staff", null, token);
+        if (result?.Success == true)
+        {
+            await SendUserNotificationAsync(userId, "Tài khoản của bạn đã được cấp quyền Staff. Staff Dashboard hiện đã sẵn sàng để sử dụng.", token);
+            TempData["Success"] = "Đã cấp quyền Staff và gửi thông báo cho người dùng.";
+        }
+        else TempData["Error"] = result?.Message ?? "Assign Staff failed.";
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostRevokeAsync(int userId)
+    {
+        var result = await api.PostAsync<object>($"/api/admin/users/{userId}/revoke-staff", null, auth.GetToken(HttpContext));
+        if (result?.Success == true) TempData["Success"] = "Removed Staff role.";
+        else TempData["Error"] = result?.Message ?? "Revoke Staff failed.";
+        return RedirectToPage();
+    }
+
+    private void SetShell()
+    {
+        ViewData["AdminSection"] = "staff";
+        var user = auth.GetCurrentUser(HttpContext);
+        if (user == null) return;
+        ViewData["UserName"] = user.Username;
+        ViewData["UserEmail"] = user.Email;
+    }
+
+    private async Task SendUserNotificationAsync(int userId, string message, string? token)
+    {
+        await api.PostAsync<object>("/api/admin/notifications", new
+        {
+            notificationType = "SystemAlert",
+            message,
+            targetAll = false,
+            targetUserId = userId
+        }, token);
+    }
+
+}

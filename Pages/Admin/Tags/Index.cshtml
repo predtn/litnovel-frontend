@@ -1,38 +1,82 @@
 @page
 @model litnovel_frontend.Pages.Admin.Tags.IndexModel
-@{ Layout = "_LayoutDashboard"; ViewData["Title"] = "Quản lý Tag"; }
-@section Sidebar {
-    <a href="/Admin/Dashboard" class="sidebar__link">Tổng quan</a>
-    <div class="sidebar__section-label">Nội dung</div>
-    <a href="/Admin/Users" class="sidebar__link">Người dùng</a>
-    <a href="/Admin/Categories" class="sidebar__link">Thể loại</a>
-    <a href="/Admin/Tags" class="sidebar__link active">Tag</a>
-    <a href="/Admin/Badges" class="sidebar__link">Huy hiệu</a>
+@{
+    Layout = "_LayoutDashboard";
+    ViewData["Title"] = "Tag Management";
 }
-<!-- SCR-53: Tag Management -->
-<div class="page-header"><h1 class="page-header__title">Quản lý Tag</h1><button class="btn btn-primary" onclick="openModal('addModal')">+ Thêm Tag</button></div>
-@if (TempData["Success"] is string ok) { <div class="alert alert-success mb-md alert-auto-close">@ok</div> }
-<div class="flex gap-xs mt-md" style="flex-wrap:wrap;">
-    @foreach (var t in Model.Tags)
+
+@section Sidebar { <partial name="~/Pages/Admin/_AdminSidebar.cshtml" /> }
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Tag Management</h1>
+        <p class="page-header__subtitle">Manage tag names and URL slugs.</p>
+    </div>
+    <button class="btn btn-primary" type="button" onclick="openModal('addModal')">Add tag</button>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.LoadError))
+{
+    <div class="card-soft mb-xl" style="border-color:var(--color-warning);">@Model.LoadError</div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="alert alert-error mb-md">@error</div>
+}
+@if (TempData["Success"] is string ok)
+{
+    <div class="alert alert-success mb-md alert-auto-close">@ok</div>
+}
+
+<div class="admin-chip-grid">
+    @foreach (var tag in Model.Tags)
     {
-        <div class="flex items-center gap-xs" style="background:var(--color-canvas-soft-2);padding:var(--space-xs) var(--space-sm);border-radius:var(--radius-full);border:1px solid var(--color-hairline);">
-            <span class="text-body-sm">@t.Name</span>
-            <span class="text-caption text-mute">(@t.NovelCount)</span>
-            <form method="post" asp-page-handler="Delete" style="display:inline;" onsubmit="return confirm('Xóa tag?')">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="id" value="@t.Id" />
-                <button type="submit" style="background:none;border:none;cursor:pointer;color:var(--color-mute);font-size:12px;padding:0 2px;">✕</button>
-            </form>
-        </div>
+        <article class="admin-chip">
+            <div class="admin-chip__body">
+                <div class="font-medium">@tag.Name</div>
+                <div class="text-caption text-mute">@tag.NovelCount novels</div>
+            </div>
+            <div class="publish-actions">
+                <button class="btn btn-secondary btn-sm" type="button" onclick="openEdit(@tag.Id, '@System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(tag.Name)', '@System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(tag.Slug)')">Edit</button>
+                <form method="post" asp-page-handler="Delete" onsubmit="return confirm('Delete this tag?')">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@tag.Id" />
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+            </div>
+        </article>
     }
 </div>
-<!-- Add Modal -->
+
 <div class="modal-overlay" id="addModal">
     <div class="modal">
-        <div class="modal__header"><div class="modal__title">Thêm Tag</div><button class="modal__close" onclick="closeModal('addModal')">✕</button></div>
-        <form method="post" asp-page-handler="Add">@Html.AntiForgeryToken()
-            <div class="form-group"><label class="form-label">Tên tag</label><input name="name" class="form-input" placeholder="Nhập tag..." required /></div>
-            <div class="modal__footer"><button type="button" class="btn btn-secondary" onclick="closeModal('addModal')">Hủy</button><button type="submit" class="btn btn-primary">Thêm</button></div>
+        <div class="modal__header"><div class="modal__title">Add tag</div><button class="modal__close" type="button" onclick="closeModal('addModal')">x</button></div>
+        <form method="post" asp-page-handler="Add" class="flex-col gap-md">
+            @Html.AntiForgeryToken()
+            <input class="form-input" name="name" placeholder="Name" required />
+            <div class="modal__footer"><button type="button" class="btn btn-secondary" onclick="closeModal('addModal')">Cancel</button><button type="submit" class="btn btn-primary">Create</button></div>
         </form>
     </div>
 </div>
+
+<div class="modal-overlay" id="editModal">
+    <div class="modal">
+        <div class="modal__header"><div class="modal__title">Edit tag</div><button class="modal__close" type="button" onclick="closeModal('editModal')">x</button></div>
+        <form method="post" asp-page-handler="Edit" class="flex-col gap-md">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="editId" name="id" />
+            <input class="form-input" id="editName" name="name" required />
+            <div class="modal__footer"><button type="button" class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openEdit(id, name, slug) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editName').value = name;
+            openModal('editModal');
+        }
+    </script>
+}

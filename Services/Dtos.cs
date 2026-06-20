@@ -34,7 +34,16 @@ public class UserDetailDto : UserSummaryDto
     public int Reputation { get; set; }
     public List<BadgeDto> Badges { get; set; } = [];
     public UserStatsDto Stats { get; set; } = new();
+    public List<UserWarningDto> Warnings { get; set; } = [];
     public DateTime CreatedAt { get; set; }
+}
+
+public class UserWarningDto
+{
+    public string Reason { get; set; } = "";
+    public string Severity { get; set; } = "";
+    public UserSummaryDto? IssuedBy { get; set; }
+    public DateTime IssuedAt { get; set; }
 }
 
 public class UserStatsDto
@@ -47,6 +56,7 @@ public class UserStatsDto
 
 public class BadgeDto
 {
+    public int Id { get; set; }
     public string Key { get; set; } = "";
     public string Name { get; set; } = "";
     public string? Icon { get; set; }
@@ -85,6 +95,7 @@ public class NovelSummaryDto
     public int ViewCount { get; set; }
     public int LikeCount { get; set; }
     public int TotalChapters { get; set; }
+    public int TotalVolumes { get; set; }
     public double RatingAverage { get; set; }
     public int RatingCount { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -96,7 +107,6 @@ public class NovelSummaryDto
 public class NovelDetailDto : NovelSummaryDto
 {
     public string? Description { get; set; }
-    public int TotalVolumes { get; set; }
     public bool? IsFavorited { get; set; }
     public bool? IsLiked { get; set; }
     public byte? UserRating { get; set; }
@@ -106,6 +116,7 @@ public class NovelDetailDto : NovelSummaryDto
 public class VolumeDto
 {
     public int Id { get; set; }
+    public int NovelId { get; set; }
     public int VolumeNumber { get; set; }
     public string Title { get; set; } = "";
     public int ChapterCount { get; set; }
@@ -120,11 +131,14 @@ public class VolumeWithChaptersDto : VolumeDto
 public class ChapterNavDto
 {
     public int Id { get; set; }
+    public int VolumeId { get; set; }
     public int ChapterNumber { get; set; }
     public string Title { get; set; } = "";
     public string Status { get; set; } = "Draft";
+    public int WordCount { get; set; }
     public DateTime? ReleaseDate { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }
 
 public class ChapterDetailDto
@@ -235,11 +249,40 @@ public class StatisticsDto
     public StatReportDto Reports { get; set; } = new();
     public StatEngagementDto Engagement { get; set; } = new();
 }
-public class StatUserDto { public int Total; public int NewThisWeek; public int Banned; }
-public class StatNovelDto { public int Total; public int Ongoing; public int Pending; public int NewThisMonth; }
-public class StatChapterDto { public int Total; public int PublishedThisWeek; }
-public class StatReportDto { public int Total; public int Open; public int ResolvedThisMonth; }
-public class StatEngagementDto { public int TotalComments; public int TotalRatings; public int TotalFavorites; }
+public class StatUserDto
+{
+    public int Total { get; set; }
+    public int NewThisWeek { get; set; }
+    public int Banned { get; set; }
+}
+
+public class StatNovelDto
+{
+    public int Total { get; set; }
+    public int Ongoing { get; set; }
+    public int Pending { get; set; }
+    public int NewThisMonth { get; set; }
+}
+
+public class StatChapterDto
+{
+    public int Total { get; set; }
+    public int PublishedThisWeek { get; set; }
+}
+
+public class StatReportDto
+{
+    public int Total { get; set; }
+    public int Open { get; set; }
+    public int ResolvedThisMonth { get; set; }
+}
+
+public class StatEngagementDto
+{
+    public int TotalComments { get; set; }
+    public int TotalRatings { get; set; }
+    public int TotalFavorites { get; set; }
+}
 
 public class StaffDashboardDto
 {
@@ -256,6 +299,61 @@ public class ModerationActivityItem
     public string StaffUsername { get; set; } = "";
     public string Target { get; set; } = "";
     public DateTime PerformedAt { get; set; }
+}
+
+public class NovelUpsertRequest
+{
+    public string Title { get; set; } = "";
+    public string? Description { get; set; }
+    public string? CoverImage { get; set; }
+    public int? CategoryId { get; set; }
+    public List<int> TagIds { get; set; } = [];
+    public string? Status { get; set; }
+}
+
+public class VolumeUpsertRequest
+{
+    public int VolumeNumber { get; set; }
+    public string Title { get; set; } = "";
+}
+
+public class ChapterUpsertRequest
+{
+    public int ChapterNumber { get; set; }
+    public string Title { get; set; } = "";
+    public string Content { get; set; } = "";
+    public DateTime? ReleaseDate { get; set; }
+    public string Status { get; set; } = "Draft";
+}
+
+public class NovelAnalyticsDto
+{
+    public int NovelId { get; set; }
+    public int ViewCount { get; set; }
+    public int LikeCount { get; set; }
+    public int FavoritesCount { get; set; }
+    public double RatingAverage { get; set; }
+    public int RatingCount { get; set; }
+    public int CommentCount { get; set; }
+    public Dictionary<string, int> RatingDistribution { get; set; } = [];
+    public List<TopChapterDto> TopChapters { get; set; } = [];
+}
+
+public class TopChapterDto
+{
+    public int ChapterId { get; set; }
+    public string Title { get; set; } = "";
+    public int CommentCount { get; set; }
+}
+
+public class ModerationItemDto
+{
+    public int Id { get; set; }
+    public string Title { get; set; } = "";
+    public string Type { get; set; } = "Novel";
+    public string Status { get; set; } = "Pending";
+    public string? ReviewerNotes { get; set; }
+    public DateTime SubmittedAt { get; set; }
 }
 
 // Extension methods for string

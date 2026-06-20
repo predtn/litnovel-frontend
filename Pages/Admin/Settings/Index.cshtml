@@ -1,35 +1,58 @@
 @page
 @model litnovel_frontend.Pages.Admin.Settings.IndexModel
-@{ Layout = "_LayoutDashboard"; ViewData["Title"] = "Cài đặt hệ thống"; }
-@section Sidebar {
-    <a href="/Admin/Dashboard" class="sidebar__link">Tổng quan</a>
-    <div class="sidebar__section-label">Hệ thống</div>
-    <a href="/Admin/Settings" class="sidebar__link active">Cài đặt</a>
-    <a href="/Admin/AuditLogs" class="sidebar__link">Audit Logs</a>
-    <a href="/Admin/Announcements" class="sidebar__link">Thông báo trang</a>
+@{
+    Layout = "_LayoutDashboard";
+    ViewData["Title"] = "System Settings";
 }
-<!-- SCR-62: System Settings -->
-<div class="page-header"><h1 class="page-header__title">⚙️ Cài đặt hệ thống</h1></div>
-@if (TempData["Success"] is string ok) { <div class="alert alert-success mb-md alert-auto-close">@ok</div> }
-<form method="post">
+
+@section Sidebar { <partial name="~/Pages/Admin/_AdminSidebar.cshtml" /> }
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">System Settings</h1>
+        <p class="page-header__subtitle">Configure general, content, and moderation settings.</p>
+    </div>
+</div>
+
+@if (TempData["Success"] is string ok)
+{
+    <div class="alert alert-success mb-md alert-auto-close">@ok</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.LoadError))
+{
+    <div class="card-soft mb-xl" style="border-color:var(--color-warning);">@Model.LoadError</div>
+}
+
+<form method="post" class="admin-stack">
     @Html.AntiForgeryToken()
-    <div class="card mb-md">
-        <h3 class="text-body-sm font-semibold mb-md">🌐 Thông tin chung</h3>
-        <div class="form-group"><label class="form-label">Tên trang web</label><input name="siteName" class="form-input" value="@Model.Settings.SiteName" /></div>
-        <div class="form-group"><label class="form-label">Mô tả</label><textarea name="siteDescription" class="form-textarea" rows="3">@Model.Settings.SiteDescription</textarea></div>
-        <div class="form-group"><label class="form-label">Email liên hệ</label><input name="contactEmail" type="email" class="form-input" value="@Model.Settings.ContactEmail" /></div>
+    <section class="card">
+        <h2 class="text-display-sm mb-md">General</h2>
+        <div class="publish-form-grid">
+            <label class="form-group"><span class="form-label">Site name</span><input name="siteName" class="form-input" value="@Model.Settings.General.SiteName" required /></label>
+            <label class="form-group"><span class="form-label">Tagline</span><input name="tagline" class="form-input" value="@Model.Settings.General.Tagline" required /></label>
+        </div>
+        <label class="form-check mt-md"><input type="checkbox" name="maintenanceMode" value="true" checked="@Model.Settings.General.MaintenanceMode" /> Maintenance mode</label>
+    </section>
+
+    <section class="card">
+        <h2 class="text-display-sm mb-md">Content</h2>
+        <div class="publish-form-grid">
+            <label class="form-group"><span class="form-label">Max novel description length</span><input name="maxNovelDescriptionLength" type="number" min="1" class="form-input" value="@Model.Settings.Content.MaxNovelDescriptionLength" /></label>
+            <label class="form-group"><span class="form-label">Max chapter length</span><input name="maxChapterLength" type="number" min="1" class="form-input" value="@Model.Settings.Content.MaxChapterLength" /></label>
+            <label class="form-group"><span class="form-label">Max tags per novel</span><input name="maxTagsPerNovel" type="number" min="1" class="form-input" value="@Model.Settings.Content.MaxTagsPerNovel" /></label>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2 class="text-display-sm mb-md">Moderation</h2>
+        <div class="publish-form-grid">
+            <label class="form-group"><span class="form-label">Review SLA hours</span><input name="reviewSLAHours" type="number" min="1" class="form-input" value="@Model.Settings.Moderation.ReviewSLAHours" /></label>
+            <label class="form-group"><span class="form-label">Auto-flag keywords</span><input name="autoFlagKeywords" class="form-input" value="@string.Join(", ", Model.Settings.Moderation.AutoFlagKeywords)" /></label>
+        </div>
+    </section>
+
+    <div class="publish-form-actions">
+        <button type="submit" class="btn btn-primary">Save settings</button>
     </div>
-    <div class="card mb-md">
-        <h3 class="text-body-sm font-semibold mb-md">📖 Cài đặt nội dung</h3>
-        <div class="form-check mb-sm"><input type="checkbox" name="requireModerationForNovels" value="true" @(Model.Settings.RequireModerationForNovels ? "checked" : "") /> Yêu cầu duyệt trước khi đăng tiểu thuyết</div>
-        <div class="form-check mb-sm"><input type="checkbox" name="requireModerationForChapters" value="true" @(Model.Settings.RequireModerationForChapters ? "checked" : "") /> Yêu cầu duyệt trước khi đăng chương</div>
-        <div class="form-check mb-sm"><input type="checkbox" name="allowGuestRead" value="true" @(Model.Settings.AllowGuestRead ? "checked" : "") /> Cho phép khách đọc truyện</div>
-        <div class="form-group mt-md"><label class="form-label">Số chapter tối đa 1 ngày / tác giả</label><input name="maxChaptersPerDay" type="number" class="form-input" value="@Model.Settings.MaxChaptersPerDay" style="width:120px;" /></div>
-    </div>
-    <div class="card mb-xl">
-        <h3 class="text-body-sm font-semibold mb-md">🔐 Bảo mật</h3>
-        <div class="form-group"><label class="form-label">JWT Secret (chỉ xem)</label><input class="form-input" value="••••••••••••••••" disabled style="font-family:monospace;" /></div>
-        <div class="form-group"><label class="form-label">Session timeout (phút)</label><input name="sessionTimeout" type="number" class="form-input" value="@Model.Settings.SessionTimeoutMinutes" style="width:120px;" /></div>
-    </div>
-    <button type="submit" class="btn btn-primary" style="border-radius:var(--radius-sm);">Lưu cài đặt</button>
 </form>

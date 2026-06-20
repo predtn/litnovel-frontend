@@ -40,7 +40,20 @@
         <div class="card mb-xl">
             <h2 class="text-body-sm font-semibold mb-md">🏅 Huy hiệu</h2>
             <div class="flex gap-sm" style="flex-wrap:wrap;">
-                @foreach (var b in u.Badges) { <span class="badge badge-violet">@b.Icon @b.Name</span> }
+                @foreach (var b in u.Badges)
+                {
+                    <span class="badge badge-violet profile-badge" title="@b.Name">
+                        @if (IsImageIcon(b.Icon))
+                        {
+                            <img src="@b.Icon" alt="" class="profile-badge__icon" />
+                        }
+                        else if (!string.IsNullOrWhiteSpace(b.Icon))
+                        {
+                            <span>@b.Icon</span>
+                        }
+                        <span>@b.Name</span>
+                    </span>
+                }
             </div>
         </div>
     }
@@ -86,3 +99,13 @@
         </div>
     }
 </div>
+
+@functions {
+    private static bool IsImageIcon(string? icon)
+    {
+        if (string.IsNullOrWhiteSpace(icon)) return false;
+        return Uri.TryCreate(icon, UriKind.Absolute, out _)
+            || icon.StartsWith("/", StringComparison.Ordinal)
+            || icon.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase);
+    }
+}

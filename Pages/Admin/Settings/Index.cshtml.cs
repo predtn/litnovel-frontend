@@ -1,24 +1,59 @@
-using litnovel_frontend.Services; using Microsoft.AspNetCore.Mvc; using Microsoft.AspNetCore.Mvc.RazorPages;
+using litnovel_frontend.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
 namespace litnovel_frontend.Pages.Admin.Settings;
-public class SystemSettings { public string SiteName="LitNovel"; public string SiteDescription="Nền tảng đọc và xuất bản truyện chữ"; public string ContactEmail="admin@litnovel.com"; public bool RequireModerationForNovels=true; public bool RequireModerationForChapters=true; public bool AllowGuestRead=true; public int MaxChaptersPerDay=5; public int SessionTimeoutMinutes=60; }
-public class IndexModel : PageModel
+
+public class IndexModel(IApiService api, IAuthService auth) : PageModel
 {
-    private readonly IApiService _api; private readonly IAuthService _auth;
-    public SystemSettings Settings { get; set; } = new();
-    public IndexModel(IApiService api, IAuthService auth) { _api = api; _auth = auth; }
+    public AdminSettingsDto Settings { get; set; } = new();
+    public string? LoadError { get; set; }
+
     public async Task<IActionResult> OnGetAsync()
     {
-        var token = _auth.GetToken(HttpContext);
-        if (!_auth.IsInRole(HttpContext, "Admin")) return RedirectToPage("/Index");
-        var r = await _api.GetAsync<SystemSettings>("/api/admin/settings", token);
-        Settings = r?.Data ?? new();
-        var u = _auth.GetCurrentUser(HttpContext); if (u!=null){ViewData["UserName"]=u.Username;ViewData["UserEmail"]=u.Email;}
+        var token = auth.GetToken(HttpContext);
+        if (!auth.IsInRole(HttpContext, "Admin")) return RedirectToPage("/Index");
+        SetShell();
+        var result = await api.GetAsync<AdminSettingsDto>("/api/admin/settings", token);
+        if (result?.Success == true && result.Data != null) Settings = result.Data;
+        else LoadError = result?.Message ?? "Khong the tai cau hinh he thong.";
         return Page();
     }
-    public async Task<IActionResult> OnPostAsync(string siteName, string? siteDescription, string? contactEmail, bool requireModerationForNovels, bool requireModerationForChapters, bool allowGuestRead, int maxChaptersPerDay, int sessionTimeout)
+
+    public async Task<IActionResult> OnPostAsync(
+        string siteName,
+        string tagline,
+        bool maintenanceMode,
+        int maxNovelDescriptionLength,
+        int maxChapterLength,
+        int maxTagsPerNovel,
+        int reviewSLAHours,
+        string? autoFlagKeywords)
     {
-        var token = _auth.GetToken(HttpContext);
-        await _api.PutAsync<object>("/api/admin/settings", new { siteName, siteDescription, contactEmail, requireModerationForNovels, requireModerationForChapters, allowGuestRead, maxChaptersPerDay, sessionTimeoutMinutes = sessionTimeout }, token);
-        TempData["Success"] = "Đã lưu cài đặt!"; return RedirectToPage();
+        var request = new AdminSettingsDto
+        {
+            General = new() { SiteName = siteName, Tagline = tagline, MaintenanceMode = maintenanceMode },
+            Content = new() { MaxNovelDescriptionLength = maxNovelDescriptionLength, MaxChapterLength = maxChapterLength, MaxTagsPerNovel = maxTagsPerNovel },
+            Moderation = new()
+            {
+                ReviewSLAHours = reviewSLAHours,
+                AutoFlagKeywords = string.IsNullOrWhiteSpace(autoFlagKeywords)
+                    ? []
+                    : autoFlagKeywords.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList()
+            }
+        };
+
+        await api.PutAsync<object>("/api/admin/settings", request, auth.GetToken(HttpContext));
+        TempData["Success"] = "Settings saved.";
+        return RedirectToPage();
+    }
+
+    private void SetShell()
+    {
+        ViewData["AdminSection"] = "settings";
+        var user = auth.GetCurrentUser(HttpContext);
+        if (user == null) return;
+        ViewData["UserName"] = user.Username;
+        ViewData["UserEmail"] = user.Email;
     }
 }
