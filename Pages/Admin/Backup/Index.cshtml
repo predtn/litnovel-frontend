@@ -1,0 +1,61 @@
+@page
+@model litnovel_frontend.Pages.Admin.Backup.IndexModel
+@{
+    Layout = "_LayoutDashboard";
+    ViewData["Title"] = "Backup & Restore";
+    ViewData["ActiveNav"] = "admin";
+}
+
+@section Sidebar { <partial name="~/Pages/Admin/_AdminSidebar.cshtml" /> }
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Backup & Restore</h1>
+        <p class="page-header__subtitle">Manage system data backups and restores.</p>
+    </div>
+    <form method="post" asp-page-handler="Create">
+        @Html.AntiForgeryToken()
+        <button class="btn btn-primary" type="submit">Create backup now</button>
+    </form>
+</div>
+
+<div class="card-soft mb-xl" style="border-color:var(--color-warning);">
+    <div class="font-semibold mb-sm">Restore requires confirmation</div>
+    <p class="text-body-sm text-body">Restoring a backup overwrites current data. Type RESTORE exactly before starting a restore job.</p>
+</div>
+
+<div class="table-wrapper">
+    <table class="table">
+        <thead><tr><th>Backup ID</th><th>Created</th><th>Size</th><th>Status</th><th class="col-actions">Actions</th></tr></thead>
+        <tbody>
+        @foreach (var backup in Model.Backups)
+        {
+            <tr>
+                <td class="text-mono">@backup.Id</td>
+                <td>@backup.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@backup.SizeFormatted</td>
+                <td><span class="status-badge @(backup.Status == "Completed" ? "status-resolved" : "status-rejected")">@backup.Status</span></td>
+                <td class="col-actions">
+                    <div class="publish-actions">
+                        @if (!string.IsNullOrWhiteSpace(backup.DownloadUrl))
+                        {
+                            <a class="btn btn-secondary btn-sm" href="@backup.DownloadUrl">Download</a>
+                        }
+                        <form method="post" asp-page-handler="Restore">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@backup.Id" />
+                            <input class="form-input form-input-sm" name="confirmationText" placeholder="RESTORE" style="width:96px;" />
+                            <button class="btn btn-danger btn-sm" type="submit">Restore</button>
+                        </form>
+                        <form method="post" asp-page-handler="Delete">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@backup.Id" />
+                            <button class="btn btn-secondary btn-sm" type="submit">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

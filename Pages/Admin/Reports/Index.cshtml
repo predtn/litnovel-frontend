@@ -1,0 +1,51 @@
+@page
+@model litnovel_frontend.Pages.Admin.Reports.IndexModel
+@{
+    Layout = "_LayoutDashboard";
+    ViewData["Title"] = "Reports Overview";
+    ViewData["ActiveNav"] = "admin";
+    var open = Model.Reports.Count(x => x.Status == "Pending");
+    var resolved = Model.Reports.Count(x => x.Status == "Resolved");
+    var rejected = Model.Reports.Count(x => x.Status == "Rejected");
+}
+
+@section Sidebar { <partial name="~/Pages/Admin/_AdminSidebar.cshtml" /> }
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Reports Overview</h1>
+        <p class="page-header__subtitle">Novel and user reports across the platform.</p>
+    </div>
+    <button class="btn btn-secondary" type="button">Export CSV</button>
+</div>
+
+<div class="grid-3 mb-xl">
+    <div class="stat-card"><div class="stat-card__label">Open</div><div class="stat-card__value">@open</div></div>
+    <div class="stat-card"><div class="stat-card__label">Resolved</div><div class="stat-card__value">@resolved</div></div>
+    <div class="stat-card"><div class="stat-card__label">Rejected</div><div class="stat-card__value">@rejected</div></div>
+</div>
+
+<form class="admin-toolbar" method="get">
+    <select class="form-select" name="type"><option value="">All types</option><option value="novel" selected="@(Model.Type == "novel")">Novel reports</option><option value="user" selected="@(Model.Type == "user")">User reports</option></select>
+    <select class="form-select" name="status"><option value="">All statuses</option><option selected="@(Model.Status == "Pending")">Pending</option><option selected="@(Model.Status == "Resolved")">Resolved</option><option selected="@(Model.Status == "Rejected")">Rejected</option></select>
+    <button class="btn btn-secondary" type="submit">Filter</button>
+</form>
+
+<div class="table-wrapper">
+    <table class="table">
+        <thead><tr><th>Target</th><th>Type</th><th>Reporter</th><th>Submitted</th><th>Status</th><th class="col-actions">Actions</th></tr></thead>
+        <tbody>
+        @foreach (var report in Model.Reports)
+        {
+            <tr>
+                <td><div class="font-medium">@report.TargetTitle</div><div class="text-caption text-mute">@report.TargetSubtitle</div></td>
+                <td><span class="badge badge-secondary">@report.ReportType</span></td>
+                <td>@report.ReporterName</td>
+                <td class="text-caption text-mute">@report.CreatedAt.ToString("dd/MM/yyyy")</td>
+                <td><span class="status-badge status-@report.Status.ToLower()">@report.Status</span></td>
+                <td class="col-actions"><a class="btn btn-secondary btn-sm" href="/Staff/Reports">Process</a></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

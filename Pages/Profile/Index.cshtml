@@ -62,7 +62,19 @@
             <h3 class="text-body-sm font-semibold mb-md">🏅 Huy hiệu đạt được</h3>
             <div class="flex gap-sm" style="flex-wrap:wrap;">
                 @foreach (var b in u.Badges)
-                { <span class="badge badge-violet" title="@b.Name">@b.Icon @b.Name</span> }
+                {
+                    <span class="badge badge-violet profile-badge" title="@b.Name">
+                        @if (IsImageIcon(b.Icon))
+                        {
+                            <img src="@b.Icon" alt="" class="profile-badge__icon" />
+                        }
+                        else if (!string.IsNullOrWhiteSpace(b.Icon))
+                        {
+                            <span>@b.Icon</span>
+                        }
+                        <span>@b.Name</span>
+                    </span>
+                }
             </div>
         </div>
     }
@@ -73,3 +85,13 @@
         <a href="/Profile/@u?.Id" class="btn btn-ghost">Xem trang công khai →</a>
     </div>
 </div>
+
+@functions {
+    private static bool IsImageIcon(string? icon)
+    {
+        if (string.IsNullOrWhiteSpace(icon)) return false;
+        return Uri.TryCreate(icon, UriKind.Absolute, out _)
+            || icon.StartsWith("/", StringComparison.Ordinal)
+            || icon.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase);
+    }
+}

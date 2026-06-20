@@ -1,78 +1,49 @@
+@using Microsoft.AspNetCore.Http
+@{
+    var sessionNotice = Context.Session.GetString("SessionNotice");
+    var sessionNoticeType = Context.Session.GetString("SessionNoticeType") ?? "info";
+    if (!string.IsNullOrWhiteSpace(sessionNotice))
+    {
+        Context.Session.Remove("SessionNotice");
+        Context.Session.Remove("SessionNoticeType");
+    }
+}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@(ViewData["Title"] != null ? ViewData["Title"] + " — LitNovel" : "LitNovel")</title>
+    <title>@(ViewData["Title"] != null ? ViewData["Title"] + " - LitNovel" : "LitNovel")</title>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body>
-    <!-- Navbar (same as public but without links) -->
-    <nav class="navbar">
-        <div class="navbar__inner">
-            <a href="/" class="navbar__logo">Lit<span>Novel</span></a>
-            <div class="navbar__links">
-                <a href="/Novels" class="navbar__link">Thư viện</a>
-                @if (Context.User.IsInRole("Staff") || Context.User.IsInRole("Admin"))
-                {
-                    <a href="/Staff/Dashboard" class="navbar__link @(ViewData["ActiveNav"]?.ToString()?.StartsWith("staff") == true ? "active" : "")">Kiểm duyệt</a>
-                }
-                @if (Context.User.IsInRole("Admin"))
-                {
-                    <a href="/Admin/Dashboard" class="navbar__link @(ViewData["ActiveNav"]?.ToString()?.StartsWith("admin") == true ? "active" : "")">Quản trị</a>
-                }
+<body class="admin-body">
+    <div class="dashboard-shell dashboard-shell--admin">
+        <aside class="sidebar admin-sidebar" id="dashSidebar">
+            <div class="admin-brand">
+                <a href="/Admin/Dashboard" class="admin-brand__logo">Lit<span>Novel</span></a>
+                <div class="admin-brand__label">Admin Console</div>
             </div>
-            <div class="navbar__actions">
-                <a href="/Notifications" class="navbar__bell" title="Thông báo">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                    @if (ViewData["UnreadCount"] is int count && count > 0)
-                    {
-                        <span class="navbar__bell-count">@(count > 9 ? "9+" : count)</span>
-                    }
-                </a>
-                <div class="dropdown">
-                    <div class="navbar__avatar" onclick="toggleDropdown()">
-                        <div class="navbar__avatar-placeholder">
-                            @(ViewData["UserName"]?.ToString()?.Substring(0, 1).ToUpper() ?? "U")
-                        </div>
-                    </div>
-                    <div class="dropdown__menu">
-                        <div style="padding: var(--space-xs) var(--space-sm); margin-bottom: var(--space-xs);">
-                            <div style="font-size: 14px; font-weight: 500; color: var(--color-ink);">@ViewData["UserName"]</div>
-                            <div style="font-size: 12px; color: var(--color-mute);">@ViewData["UserEmail"]</div>
-                        </div>
-                        <div class="dropdown__divider"></div>
-                        <a href="/" class="dropdown__item">Trang chủ</a>
-                        <a href="/Profile" class="dropdown__item">Hồ sơ</a>
-                        <div class="dropdown__divider"></div>
-                        <form method="post" action="/Auth/Logout" style="display:contents">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="dropdown__item danger">Đăng xuất</button>
-                        </form>
-                    </div>
-                </div>
-                <button class="navbar__hamburger" onclick="toggleMobileMenu()">
-                    <span></span><span></span><span></span>
-                </button>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Dashboard shell: sidebar + content -->
-    <div class="dashboard-shell">
-        <!-- Sidebar -->
-        <aside class="sidebar" id="dashSidebar">
             @await RenderSectionAsync("Sidebar", required: false)
+            <div class="admin-sidebar__footer">
+                <div class="text-caption text-mute">@ViewData["UserName"]</div>
+                <form method="post" action="/Auth/Logout">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-secondary btn-sm w-full">Đăng xuất</button>
+                </form>
+            </div>
         </aside>
 
-        <!-- Main content -->
-        <div class="dashboard-content">
+        <main class="dashboard-content admin-content">
             @RenderBody()
-        </div>
+        </main>
     </div>
 
     <div class="toast-container" id="toastContainer"></div>
+    @if (!string.IsNullOrWhiteSpace(sessionNotice))
+    {
+        <div id="serverToast" data-message="@sessionNotice" data-type="@sessionNoticeType" hidden></div>
+    }
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

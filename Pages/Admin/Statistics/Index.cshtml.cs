@@ -1,24 +1,50 @@
-using litnovel_frontend.Services; using Microsoft.AspNetCore.Mvc; using Microsoft.AspNetCore.Mvc.RazorPages;
+using litnovel_frontend.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
 namespace litnovel_frontend.Pages.Admin.Statistics;
-public class StatData { public int NewUsers; public int UserGrowthPercent; public int NewNovels; public int ChaptersThisWeek; public int TotalViews; public List<TopNovelItem> TopNovels=[];  public List<TopAuthorItem> TopAuthors=[]; }
-public record TopNovelItem(int Rank, string Title, int ViewCount);
-public record TopAuthorItem(string Username, int NovelsCreated, int TotalViews);
-public class IndexModel : PageModel
+
+public class IndexModel(IApiService api, IAuthService auth) : PageModel
 {
-    private readonly IApiService _api; private readonly IAuthService _auth;
-    public StatData Stats { get; set; } = new();
-    public IndexModel(IApiService api, IAuthService auth) { _api = api; _auth = auth; }
-    public async Task<IActionResult> OnGetAsync()
+    public StatisticsChartDto UserGrowth { get; set; } = new();
+    public StatisticsChartDto NovelPublishRate { get; set; } = new();
+    public string FromDate { get; set; } = "";
+    public string ToDate { get; set; } = "";
+    public string? LoadError { get; set; }
+
+    public async Task<IActionResult> OnGetAsync(string? from, string? to)
     {
-        var token = _auth.GetToken(HttpContext);
-        if (!_auth.IsInRole(HttpContext, "Admin")) return RedirectToPage("/Index");
-        var u = _auth.GetCurrentUser(HttpContext); if (u!=null){ViewData["UserName"]=u.Username;ViewData["UserEmail"]=u.Email;}
-        Stats = new()
+        var token = auth.GetToken(HttpContext);
+        if (!auth.IsInRole(HttpContext, "Admin")) return RedirectToPage("/Index");
+
+        ViewData["AdminSection"] = "statistics";
+        var user = auth.GetCurrentUser(HttpContext);
+        if (user != null)
         {
-            NewUsers=234, UserGrowthPercent=12, NewNovels=45, ChaptersThisWeek=340, TotalViews=4800000,
-            TopNovels=[new(1,"Long Vương Truyền Thuyết",128432),new(2,"Thiên Đạo Thư Viện",98120),new(3,"Vô Hạn Phục Hồi",85200),new(4,"Mộng Tình Thiên Hạ",76400),new(5,"Chiến Thần Tái Lâm",65800)],
-            TopAuthors=[new("author_star",12,280000),new("tac_gia_1",8,180000),new("writer_pro",5,120000)]
-        };
+            ViewData["UserName"] = user.Username;
+            ViewData["UserEmail"] = user.Email;
+        }
+
+        var today = DateTime.UtcNow.Date;
+        FromDate = string.IsNullOrWhiteSpace(from) ? today.AddDays(-30).ToString("yyyy-MM-dd") : from;
+        ToDate = string.IsNullOrWhiteSpace(to) ? today.ToString("yyyy-MM-dd") : to;
+
+        var chartResult = await api.GetAsync<StatisticsChartDto>($"/api/admin/statistics/chart?metric=userGrowth&from={FromDate}&to={ToDate}&granularity=day", token);
+        if (chartResult?.Success == true && chartResult.Data != null)
+        {
+            UserGrowth = chartResult.Data;
+        }
+        else
+        {
+            LoadError = chartResult?.Message ?? "Khong the tai bieu do thong ke tu API.";
+        }
+
+        var novelChartResult = await api.GetAsync<StatisticsChartDto>($"/api/admin/statistics/chart?metric=novelPublishRate&from={FromDate}&to={ToDate}&granularity=day", token);
+        if (novelChartResult?.Success == true && novelChartResult.Data != null)
+        {
+            NovelPublishRate = novelChartResult.Data;
+        }
+
         return Page();
     }
 }

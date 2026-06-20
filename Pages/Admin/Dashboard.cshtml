@@ -45,6 +45,14 @@
     </div>
 </div>
 
+@if (!string.IsNullOrWhiteSpace(Model.LoadError))
+{
+    <div class="card-soft mb-xl" style="border-color:var(--color-warning);">
+        <div class="font-semibold mb-sm">Khong tai duoc du lieu thong ke</div>
+        <p class="text-body-sm text-body">@Model.LoadError</p>
+    </div>
+}
+
 <!-- Main stats -->
 <div class="grid-4 mb-xl">
     <div class="stat-card">

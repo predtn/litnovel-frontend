@@ -34,7 +34,16 @@ public class UserDetailDto : UserSummaryDto
     public int Reputation { get; set; }
     public List<BadgeDto> Badges { get; set; } = [];
     public UserStatsDto Stats { get; set; } = new();
+    public List<UserWarningDto> Warnings { get; set; } = [];
     public DateTime CreatedAt { get; set; }
+}
+
+public class UserWarningDto
+{
+    public string Reason { get; set; } = "";
+    public string Severity { get; set; } = "";
+    public UserSummaryDto? IssuedBy { get; set; }
+    public DateTime IssuedAt { get; set; }
 }
 
 public class UserStatsDto
@@ -47,6 +56,7 @@ public class UserStatsDto
 
 public class BadgeDto
 {
+    public int Id { get; set; }
     public string Key { get; set; } = "";
     public string Name { get; set; } = "";
     public string? Icon { get; set; }
@@ -239,11 +249,40 @@ public class StatisticsDto
     public StatReportDto Reports { get; set; } = new();
     public StatEngagementDto Engagement { get; set; } = new();
 }
-public class StatUserDto { public int Total; public int NewThisWeek; public int Banned; }
-public class StatNovelDto { public int Total; public int Ongoing; public int Pending; public int NewThisMonth; }
-public class StatChapterDto { public int Total; public int PublishedThisWeek; }
-public class StatReportDto { public int Total; public int Open; public int ResolvedThisMonth; }
-public class StatEngagementDto { public int TotalComments; public int TotalRatings; public int TotalFavorites; }
+public class StatUserDto
+{
+    public int Total { get; set; }
+    public int NewThisWeek { get; set; }
+    public int Banned { get; set; }
+}
+
+public class StatNovelDto
+{
+    public int Total { get; set; }
+    public int Ongoing { get; set; }
+    public int Pending { get; set; }
+    public int NewThisMonth { get; set; }
+}
+
+public class StatChapterDto
+{
+    public int Total { get; set; }
+    public int PublishedThisWeek { get; set; }
+}
+
+public class StatReportDto
+{
+    public int Total { get; set; }
+    public int Open { get; set; }
+    public int ResolvedThisMonth { get; set; }
+}
+
+public class StatEngagementDto
+{
+    public int TotalComments { get; set; }
+    public int TotalRatings { get; set; }
+    public int TotalFavorites { get; set; }
+}
 
 public class StaffDashboardDto
 {

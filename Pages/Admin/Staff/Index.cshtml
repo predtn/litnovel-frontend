@@ -1,0 +1,108 @@
+@page
+@model litnovel_frontend.Pages.Admin.Staff.IndexModel
+@{
+    Layout = "_LayoutDashboard";
+    ViewData["Title"] = "Staff Management";
+    ViewData["ActiveNav"] = "admin";
+}
+
+@section Sidebar { <partial name="~/Pages/Admin/_AdminSidebar.cshtml" /> }
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Staff Management</h1>
+        <p class="page-header__subtitle">Assign and revoke Staff accounts.</p>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.LoadError))
+{
+    <div class="card-soft mb-xl" style="border-color:var(--color-warning);">
+        <div class="font-semibold mb-sm">Khong tai duoc danh sach Staff</div>
+        <p class="text-body-sm text-body">@Model.LoadError</p>
+    </div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="alert alert-error mb-md">@error</div>
+}
+@if (TempData["Success"] is string ok)
+{
+    <div class="alert alert-success mb-md alert-auto-close">@ok</div>
+}
+
+<div class="admin-stack">
+    <section class="card admin-card">
+        <div class="flex justify-between items-center gap-md mb-md">
+            <h2 class="text-display-sm">Current staff</h2>
+            <span class="badge badge-secondary">@Model.StaffUsers.Count accounts</span>
+        </div>
+        @if (Model.StaffUsers.Count == 0)
+        {
+            <div class="empty-state">
+                <div class="empty-state__title">No staff accounts</div>
+                <p class="empty-state__text">The API returned an empty staff list.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-wrapper">
+                <table class="table table--compact">
+                    <thead><tr><th>User</th><th>Status</th><th>Moderation</th><th class="col-actions">Action</th></tr></thead>
+                    <tbody>
+                    @foreach (var user in Model.StaffUsers)
+                    {
+                        <tr>
+                            <td>
+                                <div class="font-medium">@user.Username</div>
+                                <div class="text-caption text-mute truncate">@user.Email</div>
+                            </td>
+                            <td><span class="status-badge status-@user.Status.ToLower()">@user.Status</span></td>
+                            <td>@user.Stats.CommentsCount</td>
+                            <td class="col-actions">
+                                <form method="post" asp-page-handler="Revoke">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="userId" value="@user.Id" />
+                                    <button class="btn btn-danger btn-sm" type="submit">Revoke</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    <section class="card admin-card">
+        <div class="flex justify-between items-center gap-md mb-md">
+            <h2 class="text-display-sm">Promote user</h2>
+            <span class="badge badge-secondary">@Model.CandidateUsers.Count candidates</span>
+        </div>
+        @if (Model.CandidateUsers.Count == 0)
+        {
+            <div class="empty-state">
+                <div class="empty-state__title">No eligible users</div>
+                <p class="empty-state__text">The API returned no User-role accounts to promote.</p>
+            </div>
+        }
+        else
+        {
+            <div class="admin-list">
+                @foreach (var user in Model.CandidateUsers)
+                {
+                    <form class="admin-list-row" method="post" asp-page-handler="Assign">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="userId" value="@user.Id" />
+                        <div class="avatar-placeholder avatar-sm">@user.Username[..1].ToUpper()</div>
+                        <div class="admin-list-row__body">
+                            <div class="font-medium truncate">@user.Username</div>
+                            <div class="text-caption text-mute truncate">@user.Email</div>
+                        </div>
+                        <button class="btn btn-primary btn-sm" type="submit">Assign</button>
+                    </form>
+                }
+            </div>
+        }
+    </section>
+</div>

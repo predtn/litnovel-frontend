@@ -12,6 +12,7 @@ public class AuthUser
     public string Email { get; set; } = "";
     public string? Avatar { get; set; }
     public string Role { get; set; } = "User";
+    public string Status { get; set; } = "Online";
     public string AccessToken { get; set; } = "";
     public string? RefreshToken { get; set; }
 }
@@ -24,12 +25,22 @@ public interface IAuthService
 {
     AuthUser? GetCurrentUser(HttpContext ctx);
     string? GetToken(HttpContext ctx);
-    Task<(bool Success, string? Error)> LoginAsync(HttpContext ctx, string identifier, string password);
+    Task<(bool Success, string? Error, AuthUser? User)> LoginAsync(HttpContext ctx, string identifier, string password);
     Task<(bool Success, string? Error)> RegisterAsync(HttpContext ctx, string username, string email, string password);
     Task LogoutAsync(HttpContext ctx);
+    Task<SessionValidationResult> ValidateSessionAsync(HttpContext ctx);
     bool IsAuthenticated(HttpContext ctx);
     bool IsInRole(HttpContext ctx, string role);
 }
+
+public enum SessionValidationState
+{
+    Valid,
+    LoggedOut,
+    Updated
+}
+
+public record SessionValidationResult(SessionValidationState State, string? Message = null, string? RedirectPath = null);
 
 public class AuthService : IAuthService
 {
@@ -62,8 +73,9 @@ public class AuthService : IAuthService
             var name = claims.FirstOrDefault(c => c.Type is "unique_name" or "name" || c.Type == ClaimTypes.Name)?.Value ?? "";
             var email = claims.FirstOrDefault(c => c.Type == "email" || c.Type == ClaimTypes.Email)?.Value ?? "";
             var role = GetRoleFromClaims(claims) ?? "User";
+            var status = claims.FirstOrDefault(c => c.Type.Equals("status", StringComparison.OrdinalIgnoreCase))?.Value ?? "Online";
             var avatar = claims.FirstOrDefault(c => c.Type == "avatar")?.Value;
-            return new AuthUser { Id = id, Username = name, Email = email, Role = role, Avatar = avatar, AccessToken = token ?? "" };
+            return new AuthUser { Id = id, Username = name, Email = email, Role = role, Status = status, Avatar = avatar, AccessToken = token ?? "" };
         }
         catch { return null; }
     }
@@ -86,16 +98,23 @@ public class AuthService : IAuthService
         };
     }
 
-    public async Task<(bool Success, string? Error)> LoginAsync(HttpContext ctx, string identifier, string password)
+    public async Task<(bool Success, string? Error, AuthUser? User)> LoginAsync(HttpContext ctx, string identifier, string password)
     {
         var result = await _api.PostAsync<LoginResponse>("/api/auth/login", new LoginRequest { Identifier = identifier, Password = password });
         if (result?.Success == true && result.Data != null)
         {
+            var loginUser = result.Data.User ?? ParseUserFromToken(result.Data.AccessToken);
+            if (loginUser.Status.Equals("Banned", StringComparison.OrdinalIgnoreCase))
+            {
+                await LogoutAsync(ctx);
+                return (false, "Tài khoản của bạn đã bị cấm.", null);
+            }
+
             SetTokenCookies(ctx, result.Data.AccessToken, result.Data.RefreshToken, result.Data.ExpiresIn);
             await SignInCookieAsync(ctx, result.Data);
-            return (true, null);
+            return (true, null, loginUser);
         }
-        return (false, result?.Message ?? "Thông tin đăng nhập không hợp lệ.");
+        return (false, result?.Message ?? "Thông tin đăng nhập không hợp lệ.", null);
     }
 
     public async Task<(bool Success, string? Error)> RegisterAsync(HttpContext ctx, string username, string email, string password)
@@ -111,6 +130,64 @@ public class AuthService : IAuthService
         ctx.Response.Cookies.Delete(RefreshCookie);
         ctx.Response.Cookies.Delete(UserCookie);
         await ctx.SignOutAsync("Cookies");
+    }
+
+    public async Task<SessionValidationResult> ValidateSessionAsync(HttpContext ctx)
+    {
+        var token = GetToken(ctx);
+        if (string.IsNullOrWhiteSpace(token)) return new(SessionValidationState.Valid);
+
+        var current = GetCurrentUser(ctx);
+        var result = await _api.GetAsync<UserDetailDto>("/api/users/me", token);
+        if (result?.Success != true || result.Data == null)
+        {
+            await LogoutAsync(ctx);
+            return new(SessionValidationState.LoggedOut, "Phiên đăng nhập đã hết hạn hoặc tài khoản không còn được phép truy cập.", "/Auth/Login");
+        }
+
+        var fresh = result.Data;
+        if (fresh.Status.Equals("Banned", StringComparison.OrdinalIgnoreCase))
+        {
+            await LogoutAsync(ctx);
+            return new(SessionValidationState.LoggedOut, "Tài khoản của bạn đã bị cấm. Vui lòng liên hệ quản trị viên nếu cần hỗ trợ.", "/Auth/Login");
+        }
+
+        if (current == null ||
+            !fresh.Role.Equals(current.Role, StringComparison.OrdinalIgnoreCase) ||
+            !fresh.Status.Equals(current.Status, StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(fresh.Username, current.Username, StringComparison.Ordinal) ||
+            !string.Equals(fresh.Email, current.Email, StringComparison.Ordinal) ||
+            !string.Equals(fresh.Avatar, current.Avatar, StringComparison.Ordinal))
+        {
+            var updatedUser = new AuthUser
+            {
+                Id = fresh.Id,
+                Username = fresh.Username,
+                Email = fresh.Email,
+                Avatar = fresh.Avatar,
+                Role = fresh.Role,
+                Status = fresh.Status,
+                AccessToken = token,
+                RefreshToken = ctx.Request.Cookies[RefreshCookie]
+            };
+
+            await SignInCookieAsync(ctx, new LoginResponse
+            {
+                AccessToken = token,
+                RefreshToken = updatedUser.RefreshToken,
+                ExpiresIn = 900,
+                User = updatedUser
+            });
+
+            var message = fresh.Role.Equals("Staff", StringComparison.OrdinalIgnoreCase) &&
+                current?.Role.Equals("Staff", StringComparison.OrdinalIgnoreCase) != true
+                    ? "Tài khoản của bạn đã được cấp quyền Staff. Bạn có thể truy cập Staff Dashboard."
+                    : null;
+
+            return new(SessionValidationState.Updated, message);
+        }
+
+        return new(SessionValidationState.Valid);
     }
 
     private static void SetTokenCookies(HttpContext ctx, string accessToken, string? refreshToken, int expiresIn)
@@ -136,7 +213,8 @@ public class AuthService : IAuthService
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Name, user.Username),
             new(ClaimTypes.Email, user.Email),
-            new(ClaimTypes.Role, string.IsNullOrWhiteSpace(user.Role) ? "User" : user.Role)
+            new(ClaimTypes.Role, string.IsNullOrWhiteSpace(user.Role) ? "User" : user.Role),
+            new("status", string.IsNullOrWhiteSpace(user.Status) ? "Online" : user.Status)
         };
 
         if (!string.IsNullOrWhiteSpace(user.Avatar))
@@ -164,6 +242,7 @@ public class AuthService : IAuthService
                 Username = jwt.Claims.FirstOrDefault(c => c.Type is "unique_name" or "name" || c.Type == ClaimTypes.Name)?.Value ?? "",
                 Email = jwt.Claims.FirstOrDefault(c => c.Type == "email" || c.Type == ClaimTypes.Email)?.Value ?? "",
                 Role = GetRoleFromClaims(jwt.Claims) ?? "User",
+                Status = jwt.Claims.FirstOrDefault(c => c.Type.Equals("status", StringComparison.OrdinalIgnoreCase))?.Value ?? "Online",
                 Avatar = jwt.Claims.FirstOrDefault(c => c.Type == "avatar")?.Value,
                 AccessToken = token
             };
