@@ -7,10 +7,32 @@
 
 <!-- SCR-01: Landing Page -->
 
+@if (Model.Announcements.Count > 0)
+{
+    <section class="home-announcements" aria-label="Announcements">
+        <div class="container">
+            <div class="home-announcements__list">
+                @foreach (var announcement in Model.Announcements)
+                {
+                    <article class="home-announcement">
+                        <div class="home-announcement__icon" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v2a2 2 0 0 0 2 2h2l4 4V5L7 9H5a2 2 0 0 0-2 2Z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19 6a9 9 0 0 1 0 12"/></svg>
+                        </div>
+                        <div class="home-announcement__body">
+                            <h2 class="home-announcement__title">@announcement.Title</h2>
+                            <div class="home-announcement__content">@Html.Raw(announcement.Content)</div>
+                        </div>
+                    </article>
+                }
+            </div>
+        </div>
+    </section>
+}
+
 <!-- Hero Section -->
 <section class="hero">
     <div class="hero__gradient"></div>
-    <div class="container" style="position:relative;">
+    <div class="container hero__inner">
         <div class="hero__badge">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             Nền tảng truyện chữ hàng đầu
@@ -25,9 +47,9 @@
 </section>
 
 <!-- Category Strip -->
-<section style="padding: var(--space-lg) 0; border-bottom: 1px solid var(--color-hairline); background: var(--color-canvas);">
+<section class="home-category-strip">
     <div class="container">
-        <div class="flex items-center gap-sm" style="overflow-x: auto; scrollbar-width: none; padding-bottom: 4px;">
+        <div class="home-category-strip__scroller">
             <a href="/Novels" class="tab-pill active">Tất cả</a>
             @foreach (var cat in Model.Categories)
             {
@@ -37,23 +59,66 @@
     </div>
 </section>
 
+@if (User.Identity?.IsAuthenticated == true && Model.ContinueReading.Count > 0)
+{
+    <!-- Continue Reading -->
+    <section class="section home-continue-section">
+        <div class="container">
+            <div class="home-section-header mb-xl">
+                <div>
+                    <h2 class="section-title">Tiếp tục đọc</h2>
+                    <p class="section-subtitle">Quay lại những truyện bạn đang đọc dở</p>
+                </div>
+                <a href="/Reading/History" class="btn btn-ghost">Lịch sử đọc →</a>
+            </div>
+            <div class="home-continue-grid">
+                @foreach (var item in Model.ContinueReading)
+                {
+                    var novel = item.Novel;
+                    var chapter = item.LastChapter;
+                    <a href="@(chapter != null ? $"/Novels/{novel?.Slug}/{chapter.Id}/read" : $"/Novels/{novel?.Slug}")" class="home-continue-card">
+                        @if (!string.IsNullOrEmpty(novel?.CoverImage))
+                        {
+                            <img src="@novel.CoverImage" alt="@novel.Title" class="home-continue-card__cover" loading="lazy" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
+                            <div class="home-continue-card__cover home-continue-card__cover--placeholder hidden">Sách</div>
+                        }
+                        else
+                        {
+                            <div class="home-continue-card__cover home-continue-card__cover--placeholder">Sách</div>
+                        }
+                        <div class="home-continue-card__body">
+                            <div class="text-body-sm font-medium text-ink truncate">@(novel?.Title ?? "Truyện đang đọc")</div>
+                            <div class="text-caption text-mute mt-sm">@(chapter?.Title ?? "Chưa có chương gần nhất")</div>
+                            <div class="home-progress mt-sm">
+                                <div class="home-progress__bar" style="width:@item.ProgressPercentage%;"></div>
+                            </div>
+                            <div class="text-caption text-mute mt-sm">@item.ProgressPercentage% · @TimeAgo(item.LastReadAt)</div>
+                        </div>
+                    </a>
+                }
+            </div>
+        </div>
+    </section>
+}
+
 <!-- Trending Novels -->
 <section class="section">
     <div class="container">
-        <div class="flex items-center justify-between mb-xl">
+        <div class="home-section-header mb-xl">
             <div>
                 <h2 class="section-title">🔥 Đang hot</h2>
                 <p class="section-subtitle">Những tiểu thuyết được đọc nhiều nhất</p>
             </div>
             <a href="/Novels?sort=viewCount&order=desc" class="btn btn-ghost">Xem tất cả →</a>
         </div>
-        <div class="grid-4" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
+        <div class="home-novel-grid">
             @foreach (var novel in Model.TrendingNovels)
             {
                 <a href="/Novels/@novel.Slug" class="novel-card">
                     @if (!string.IsNullOrEmpty(novel.CoverImage))
                     {
-                        <img class="novel-card__cover" src="@novel.CoverImage" alt="@novel.Title" loading="lazy" />
+                        <img class="novel-card__cover" src="@novel.CoverImage" alt="@novel.Title" loading="lazy" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
+                        <div class="novel-card__cover-placeholder hidden">📖</div>
                     }
                     else
                     {
@@ -74,32 +139,32 @@
 </section>
 
 <!-- New Updates -->
-<section class="section" style="background: var(--color-canvas); border-top: 1px solid var(--color-hairline); border-bottom: 1px solid var(--color-hairline);">
+<section class="section home-update-section">
     <div class="container">
-        <div class="flex items-center justify-between mb-xl">
+        <div class="home-section-header mb-xl">
             <div>
                 <h2 class="section-title">🆕 Mới cập nhật</h2>
                 <p class="section-subtitle">Chapter mới nhất từ các truyện đang ra</p>
             </div>
             <a href="/Novels?sort=updatedAt&order=desc&status=Ongoing" class="btn btn-ghost">Xem tất cả →</a>
         </div>
-        <div class="grid-2" style="gap: var(--space-md);">
+        <div class="home-update-grid">
             @foreach (var novel in Model.NewNovels)
             {
-                <a href="/Novels/@novel.Slug" class="flex gap-md" style="padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--color-hairline); background: var(--color-canvas); text-decoration: none; transition: box-shadow .15s; display:flex;">
+                <a href="/Novels/@novel.Slug" class="home-update-card">
                     @if (!string.IsNullOrEmpty(novel.CoverImage))
                     {
-                        <img src="@novel.CoverImage" alt="@novel.Title"
-                             style="width:60px; height:80px; object-fit:cover; border-radius:var(--radius-xs); flex-shrink:0;" loading="lazy" />
+                        <img src="@novel.CoverImage" alt="@novel.Title" class="home-update-card__cover" loading="lazy" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
+                        <div class="home-update-card__cover home-update-card__cover--placeholder hidden">Sách</div>
                     }
                     else
                     {
-                        <div style="width:60px; height:80px; background:var(--color-canvas-soft-2); border-radius:var(--radius-xs); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:24px;">📖</div>
+                        <div class="home-update-card__cover home-update-card__cover--placeholder">Sách</div>
                     }
-                    <div style="flex:1; min-width:0;">
+                    <div class="home-update-card__body">
                         <div class="text-body-sm font-medium text-ink truncate">@novel.Title</div>
                         <div class="text-caption text-mute mt-sm">@novel.Author?.Username</div>
-                        <div class="flex gap-sm mt-sm" style="flex-wrap:wrap;">
+                        <div class="home-update-card__badges mt-sm">
                             <span class="status-badge status-@novel.Status.ToLower()">@novel.Status</span>
                             @if (novel.Category != null)
                             {
@@ -119,20 +184,21 @@
 <!-- Top Rated -->
 <section class="section">
     <div class="container">
-        <div class="flex items-center justify-between mb-xl">
+        <div class="home-section-header mb-xl">
             <div>
                 <h2 class="section-title">⭐ Được đánh giá cao</h2>
                 <p class="section-subtitle">Tiểu thuyết được yêu thích nhất</p>
             </div>
             <a href="/Novels?sort=ratingAverage&order=desc" class="btn btn-ghost">Xem tất cả →</a>
         </div>
-        <div class="grid-4" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
+        <div class="home-novel-grid">
             @foreach (var novel in Model.TopRatedNovels)
             {
                 <a href="/Novels/@novel.Slug" class="novel-card">
                     @if (!string.IsNullOrEmpty(novel.CoverImage))
                     {
-                        <img class="novel-card__cover" src="@novel.CoverImage" alt="@novel.Title" loading="lazy" />
+                        <img class="novel-card__cover" src="@novel.CoverImage" alt="@novel.Title" loading="lazy" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
+                        <div class="novel-card__cover-placeholder hidden">📖</div>
                     }
                     else
                     {
@@ -154,17 +220,17 @@
 <!-- Call to action (unauthenticated) -->
 @if (!User.Identity!.IsAuthenticated)
 {
-    <section style="background: var(--color-primary); padding: var(--space-5xl) 0; text-align:center;">
+    <section class="home-cta">
         <div class="container">
-            <h2 style="font-size:var(--text-display-lg); font-weight:600; letter-spacing:var(--ls-display-lg); color:#fff; margin-bottom:var(--space-md);">
+            <h2 class="home-cta__title">
                 Bắt đầu hành trình của bạn.
             </h2>
-            <p style="font-size:var(--text-body-lg); color:rgba(255,255,255,0.7); margin-bottom:var(--space-2xl);">
+            <p class="home-cta__text">
                 Đăng ký miễn phí, đọc không giới hạn và chia sẻ câu chuyện của bạn.
             </p>
-            <div class="flex justify-center gap-sm">
+            <div class="home-cta__actions">
                 <a href="/Auth/Register" class="btn btn-secondary-lg">Đăng ký ngay</a>
-                <a href="/Auth/Login" style="font-size:var(--text-body-md); color:rgba(255,255,255,0.8); display:flex; align-items:center; text-decoration:none;">Đã có tài khoản? →</a>
+                <a href="/Auth/Login" class="home-cta__link">Đã có tài khoản? →</a>
             </div>
         </div>
     </section>
