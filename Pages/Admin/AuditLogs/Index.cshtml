@@ -1,23 +1,46 @@
 @page
 @model litnovel_frontend.Pages.Admin.AuditLogs.IndexModel
-@{ Layout = "_LayoutDashboard"; ViewData["Title"] = "Audit Logs"; }
-@section Sidebar {<a href="/Admin/Dashboard" class="sidebar__link">Tổng quan</a><div class="sidebar__section-label">Hệ thống</div><a href="/Admin/Settings" class="sidebar__link">Cài đặt</a><a href="/Admin/AuditLogs" class="sidebar__link active">Audit Logs</a>}
-<!-- SCR-58 -->
-<div class="page-header"><h1 class="page-header__title">📋 Audit Logs</h1></div>
+@{
+    Layout = "_LayoutDashboard";
+    ViewData["Title"] = "Audit Logs";
+}
+
+@section Sidebar { <partial name="~/Pages/Admin/_AdminSidebar.cshtml" /> }
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Audit Logs</h1>
+        <p class="page-header__subtitle">System-level record of administrative actions.</p>
+    </div>
+</div>
+
+<form class="admin-toolbar" method="get">
+    <input class="form-input" name="actorId" type="number" min="1" placeholder="Actor ID" />
+    <input class="form-input" name="entityType" placeholder="Entity type" />
+    <input class="form-input" name="fromDate" type="date" />
+    <input class="form-input" name="toDate" type="date" />
+    <button class="btn btn-secondary" type="submit">Filter</button>
+</form>
+
+@if (!string.IsNullOrWhiteSpace(Model.LoadError))
+{
+    <div class="card-soft mb-xl" style="border-color:var(--color-warning);">@Model.LoadError</div>
+}
+
 <div class="table-wrapper">
     <table class="table">
-        <thead><tr><th>Thời gian</th><th>Người dùng</th><th>Hành động</th><th>Đối tượng</th><th>IP</th></tr></thead>
+        <thead><tr><th>Timestamp</th><th>Actor</th><th>Action</th><th>Entity</th><th>IP</th></tr></thead>
         <tbody>
-            @foreach (var l in Model.Logs)
-            {
-                <tr>
-                    <td class="text-caption text-mute">@l.CreatedAt.ToString("dd/MM HH:mm:ss")</td>
-                    <td class="text-body-sm">@l.Username</td>
-                    <td><span class="badge badge-secondary">@l.Action</span></td>
-                    <td class="text-body-sm">@l.EntityType #@l.EntityId</td>
-                    <td class="text-caption text-mute" style="font-family:monospace;">@l.IpAddress</td>
-                </tr>
-            }
+        @foreach (var log in Model.Logs)
+        {
+            <tr>
+                <td class="text-caption text-mute">@log.CreatedAt.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                <td class="text-body-sm">@log.Actor?.Username</td>
+                <td><span class="badge badge-secondary">@log.Action</span></td>
+                <td class="text-body-sm">@log.EntityType #@log.EntityId</td>
+                <td class="text-caption text-mute text-mono">@log.IpAddress</td>
+            </tr>
+        }
         </tbody>
     </table>
 </div>

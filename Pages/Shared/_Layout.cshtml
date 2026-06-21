@@ -1,3 +1,13 @@
+@using Microsoft.AspNetCore.Http
+@{
+    var sessionNotice = Context.Session.GetString("SessionNotice");
+    var sessionNoticeType = Context.Session.GetString("SessionNoticeType") ?? "info";
+    if (!string.IsNullOrWhiteSpace(sessionNotice))
+    {
+        Context.Session.Remove("SessionNotice");
+        Context.Session.Remove("SessionNoticeType");
+    }
+}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -20,6 +30,10 @@
                 <a href="/Novels" class="navbar__link @(ViewData["ActiveNav"]?.ToString() == "catalog" ? "active" : "")">Thư viện</a>
                 <a href="/Novels/Search" class="navbar__link @(ViewData["ActiveNav"]?.ToString() == "search" ? "active" : "")">Tìm kiếm</a>
                 <a href="/Forum" class="navbar__link @(ViewData["ActiveNav"]?.ToString() == "forum" ? "active" : "")">Diễn đàn</a>
+                @if (Context.User.Identity?.IsAuthenticated == true)
+                {
+                    <a href="/Publish" class="navbar__link @(ViewData["ActiveNav"]?.ToString() == "publish" ? "active" : "")">Viết truyện</a>
+                }
                 @if (Context.User.IsInRole("Staff") || Context.User.IsInRole("Admin"))
                 {
                     <a href="/Staff/Dashboard" class="navbar__link @(ViewData["ActiveNav"]?.ToString() == "staff" ? "active" : "")">Kiểm duyệt</a>
@@ -168,6 +182,10 @@
 
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
+    @if (!string.IsNullOrWhiteSpace(sessionNotice))
+    {
+        <div id="serverToast" data-message="@sessionNotice" data-type="@sessionNoticeType" hidden></div>
+    }
 
     <!-- JS -->
     <script src="~/js/site.js" asp-append-version="true"></script>

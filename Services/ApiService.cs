@@ -57,14 +57,117 @@ public class ApiService : IApiService
             var content = await response.Content.ReadAsStringAsync();
 
             if (string.IsNullOrWhiteSpace(content))
-                return new ApiResponse<T> { Success = response.IsSuccessStatusCode };
+            {
+                return new ApiResponse<T>
+                {
+                    Success = response.IsSuccessStatusCode,
+                    Message = response.IsSuccessStatusCode ? null : BuildHttpErrorMessage(response)
+                };
+            }
 
-            return JsonSerializer.Deserialize<ApiResponse<T>>(content, _jsonOptions);
+            try
+            {
+                var result = JsonSerializer.Deserialize<ApiResponse<T>>(content, _jsonOptions);
+                if (result == null)
+                {
+                    return new ApiResponse<T>
+                    {
+                        Success = false,
+                        Message = BuildHttpErrorMessage(response)
+                    };
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    result.Success = false;
+                    result.Message = FirstNonEmpty(result.Message, ExtractErrorMessage(content), BuildHttpErrorMessage(response));
+                }
+
+                return result;
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogWarning(ex, "Unable to parse API response: {Method} {Endpoint}", method, endpoint);
+                return new ApiResponse<T>
+                {
+                    Success = false,
+                    Message = FirstNonEmpty(ExtractErrorMessage(content), BuildHttpErrorMessage(response))
+                };
+            }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "API call failed: {Method} {Endpoint}", method, endpoint);
-            return new ApiResponse<T> { Success = false, Message = "Không thể kết nối đến máy chủ." };
+            return new ApiResponse<T> { Success = false, Message = "Unable to connect to the server." };
         }
+    }
+
+    private static string BuildHttpErrorMessage(HttpResponseMessage response)
+        => $"Request failed with HTTP {(int)response.StatusCode} {response.ReasonPhrase}.";
+
+    private static string? FirstNonEmpty(params string?[] values)
+        => values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
+
+    private static string? ExtractErrorMessage(string content)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(content);
+            var root = document.RootElement;
+
+            if (TryGetString(root, "message", out var message)) return message;
+
+            if (root.TryGetProperty("errors", out var errors))
+            {
+                var messages = new List<string>();
+                if (errors.ValueKind == JsonValueKind.Object)
+                {
+                    foreach (var property in errors.EnumerateObject())
+                    {
+                        if (property.Value.ValueKind == JsonValueKind.Array)
+                        {
+                            messages.AddRange(property.Value.EnumerateArray()
+                                .Where(item => item.ValueKind == JsonValueKind.String)
+                                .Select(item => item.GetString())
+                                .Where(value => !string.IsNullOrWhiteSpace(value))!);
+                        }
+                        else if (property.Value.ValueKind == JsonValueKind.String)
+                        {
+                            messages.Add(property.Value.GetString()!);
+                        }
+                    }
+                }
+                else if (errors.ValueKind == JsonValueKind.Array)
+                {
+                    messages.AddRange(errors.EnumerateArray()
+                        .Where(item => item.ValueKind == JsonValueKind.String)
+                        .Select(item => item.GetString())
+                        .Where(value => !string.IsNullOrWhiteSpace(value))!);
+                }
+
+                if (messages.Count > 0) return string.Join(" ", messages.Take(3));
+            }
+
+            if (TryGetString(root, "detail", out var detail)) return detail;
+            if (TryGetString(root, "title", out var title)) return title;
+        }
+        catch (JsonException)
+        {
+            return content.Length <= 300 ? content : content[..300];
+        }
+
+        return null;
+    }
+
+    private static bool TryGetString(JsonElement root, string propertyName, out string? value)
+    {
+        value = null;
+        if (!root.TryGetProperty(propertyName, out var property) || property.ValueKind != JsonValueKind.String)
+        {
+            return false;
+        }
+
+        value = property.GetString();
+        return !string.IsNullOrWhiteSpace(value);
     }
 }

@@ -1,0 +1,62 @@
+@page "Volumes/{volumeId:int}/Chapters/Create"
+@model litnovel_frontend.Pages.Publish.ChapterCreateModel
+@{
+    ViewData["Title"] = "Create Chapter";
+}
+
+<div class="publish-editor-shell">
+    <form method="post" class="publish-editor">
+        <div class="publish-editor-bar">
+            <div class="breadcrumb">
+                <a asp-page="/Publish/Index">My Novels</a><span class="breadcrumb__sep">/</span>
+                <a asp-page="/Publish/Manage" asp-route-id="@Model.Novel.Id">@Model.Novel.Title</a><span class="breadcrumb__sep">/</span>
+                <a asp-page="/Publish/Chapters" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id">@Model.Volume.Title</a>
+            </div>
+            <div class="publish-editor-fields">
+                <input class="form-input publish-chapter-number" asp-for="Input.ChapterNumber" type="number" min="1" />
+                <input class="form-input" asp-for="Input.Title" maxlength="200" placeholder="Chapter title" />
+            </div>
+        </div>
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-error"></div>
+        <textarea class="hidden" asp-for="Input.Content" data-rich-editor-output></textarea>
+        <div class="publish-rich-editor" data-rich-editor>
+            <div class="publish-rich-toolbar" aria-label="Chapter formatting toolbar">
+                <select class="form-select form-input-sm publish-rich-format" data-rich-format title="Text style">
+                    <option value="p">Paragraph</option>
+                    <option value="h2">Heading</option>
+                    <option value="h3">Subheading</option>
+                    <option value="blockquote">Quote</option>
+                </select>
+                <button type="button" class="btn-icon" data-rich-command="bold" title="Bold"><strong>B</strong></button>
+                <button type="button" class="btn-icon" data-rich-command="italic" title="Italic"><em>I</em></button>
+                <button type="button" class="btn-icon" data-rich-command="underline" title="Underline"><u>U</u></button>
+                <button type="button" class="btn-icon" data-rich-command="insertUnorderedList" title="Bullet list">•</button>
+                <button type="button" class="btn-icon" data-rich-command="insertOrderedList" title="Numbered list">1.</button>
+                <button type="button" class="btn-icon" data-rich-command="justifyLeft" title="Align left">L</button>
+                <button type="button" class="btn-icon" data-rich-command="justifyCenter" title="Align center">C</button>
+                <button type="button" class="btn-icon" data-rich-command="justifyRight" title="Align right">R</button>
+                <button type="button" class="btn-icon" data-rich-command="undo" title="Undo">↶</button>
+                <button type="button" class="btn-icon" data-rich-command="redo" title="Redo">↷</button>
+            </div>
+            <div class="publish-editor-area publish-rich-surface" contenteditable="true" data-rich-editor-surface aria-label="Chapter content">@Html.Raw(Model.Input.Content)</div>
+        </div>
+
+        <div class="publish-editor-bottom">
+            <div class="publish-editor-meta">
+                <span><span data-rich-word-count>@Model.WordCount</span> words</span>
+                <label class="form-label">Release date</label>
+                <input class="form-input" asp-for="Input.ReleaseDate" type="datetime-local" />
+            </div>
+            <div class="publish-actions">
+                <a asp-page="/Publish/Chapters" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-secondary">Cancel</a>
+                <button class="btn btn-secondary" type="submit">Save Draft</button>
+                <button class="btn btn-primary" type="submit" name="submit" value="true">Submit for Review</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="~/js/publish-editor.js" asp-append-version="true"></script>
+}

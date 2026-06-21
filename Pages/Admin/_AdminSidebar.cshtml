@@ -1,0 +1,25 @@
+@{
+    var active = ViewData["AdminSection"]?.ToString() ?? "";
+}
+<div class="sidebar__section-label">Tổng quan</div>
+<a href="/Admin/Dashboard" class="sidebar__link @(active == "dashboard" ? "active" : "")">Dashboard</a>
+<a href="/Admin/Statistics" class="sidebar__link @(active == "statistics" ? "active" : "")">Thống kê</a>
+
+<div class="sidebar__section-label">Người dùng</div>
+<a href="/Admin/Users" class="sidebar__link @(active == "users" ? "active" : "")">Người dùng</a>
+<a href="/Admin/Staff" class="sidebar__link @(active == "staff" ? "active" : "")">Nhân viên</a>
+
+<div class="sidebar__section-label">Nội dung</div>
+<a href="/Admin/Categories" class="sidebar__link @(active == "categories" ? "active" : "")">Thể loại</a>
+<a href="/Admin/Tags" class="sidebar__link @(active == "tags" ? "active" : "")">Tags</a>
+<a href="/Admin/Badges" class="sidebar__link @(active == "badges" ? "active" : "")">Huy hiệu</a>
+<a href="/Admin/NovelOverride" class="sidebar__link @(active == "novel-override" ? "active" : "")">Novel override</a>
+<a href="/Admin/ChapterOverride" class="sidebar__link @(active == "chapter-override" ? "active" : "")">Chapter override</a>
+
+<div class="sidebar__section-label">Hệ thống</div>
+<a href="/Admin/Notifications" class="sidebar__link @(active == "notifications" ? "active" : "")">Thông báo</a>
+<a href="/Admin/Reports" class="sidebar__link @(active == "reports" ? "active" : "")">Reports</a>
+<a href="/Admin/AuditLogs" class="sidebar__link @(active == "audit" ? "active" : "")">Audit logs</a>
+<a href="/Admin/Settings" class="sidebar__link @(active == "settings" ? "active" : "")">Settings</a>
+<a href="/Admin/Announcements" class="sidebar__link @(active == "announcements" ? "active" : "")">Announcements</a>
+<a href="/Admin/Backup" class="sidebar__link @(active == "backup" ? "active" : "")">Backup</a>

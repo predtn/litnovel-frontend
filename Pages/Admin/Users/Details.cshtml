@@ -1,0 +1,121 @@
+@page "/Admin/Users/{id:int}"
+@model litnovel_frontend.Pages.Admin.Users.DetailsModel
+@{
+    Layout = "_LayoutDashboard";
+    ViewData["Title"] = "User Detail";
+    ViewData["ActiveNav"] = "admin";
+    var user = Model.UserDetail;
+    var hasUser = user.Id > 0;
+}
+
+@section Sidebar { <partial name="~/Pages/Admin/_AdminSidebar.cshtml" /> }
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">@(hasUser ? user.Username : "User detail")</h1>
+        <p class="page-header__subtitle">@(hasUser ? user.Email : "No user data loaded")</p>
+    </div>
+    <a class="btn btn-secondary" href="/Admin/Users">Back to users</a>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.LoadError))
+{
+    <div class="card-soft mb-xl" style="border-color:var(--color-warning);">@Model.LoadError</div>
+}
+
+@if (!hasUser)
+{
+    <div class="empty-state">
+        <div class="empty-state__title">User not loaded</div>
+        <p class="empty-state__text">The backend did not return a user record for this ID.</p>
+    </div>
+}
+else
+{
+    <div class="admin-detail-grid">
+        <section class="card">
+            <div class="flex gap-lg items-start admin-profile-header">
+                <div class="avatar-placeholder" style="width:72px;height:72px;font-size:24px;">@user.Username[..1].ToUpper()</div>
+                <div>
+                    <div class="flex gap-sm items-center mb-sm" style="flex-wrap:wrap;">
+                        <span class="badge role-@user.Role.ToLower()">@user.Role</span>
+                        <span class="status-badge status-@user.Status.ToLower()">@user.Status</span>
+                    </div>
+                    <p class="text-body">@user.Bio</p>
+                    <p class="text-caption text-mute mt-sm">Joined @user.CreatedAt.ToString("dd/MM/yyyy")</p>
+                </div>
+            </div>
+            <div class="grid-4 mt-xl">
+                <div class="card-soft"><div class="text-caption text-mute">Novels</div><div class="text-display-sm">@user.Stats.NovelsCreated</div></div>
+                <div class="card-soft"><div class="text-caption text-mute">Chapters</div><div class="text-display-sm">@user.Stats.ChaptersPublished</div></div>
+                <div class="card-soft"><div class="text-caption text-mute">Comments</div><div class="text-display-sm">@user.Stats.CommentsCount</div></div>
+                <div class="card-soft"><div class="text-caption text-mute">Reputation</div><div class="text-display-sm">@user.Reputation</div></div>
+            </div>
+            <div class="divider"></div>
+            <h2 class="text-display-sm mb-md">Warning history</h2>
+            @if (user.Warnings.Count == 0)
+            {
+                <div class="empty-state">
+                    <div class="empty-state__title">No warnings</div>
+                    <p class="empty-state__text">The API returned no warnings for this user.</p>
+                </div>
+            }
+            else
+            {
+                <div class="flex-col gap-sm">
+                    @foreach (var warning in user.Warnings)
+                    {
+                        <div class="card-soft">
+                            <div class="font-medium">@warning.Reason</div>
+                            <div class="text-caption text-mute">@warning.Severity - @warning.IssuedBy?.Username - @warning.IssuedAt.ToString("dd/MM/yyyy")</div>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+
+        <aside class="card">
+            <h2 class="text-display-sm mb-md">Admin controls</h2>
+            <form method="post" asp-page-handler="Save" class="flex-col gap-md">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@user.Id" />
+                <label class="form-group">
+                    <span class="form-label">Role</span>
+                    <select class="form-select" name="role">
+                        <option selected="@(user.Role == "User")">User</option>
+                        <option selected="@(user.Role == "Staff")">Staff</option>
+                        <option selected="@(user.Role == "Admin")">Admin</option>
+                    </select>
+                </label>
+                <label class="form-group">
+                    <span class="form-label">Status</span>
+                    <select class="form-select" name="status">
+                        <option selected="@(user.Status == "Offline")">Offline</option>
+                        <option selected="@(user.Status == "Online")">Online</option>
+                        <option selected="@(user.Status == "Banned")">Banned</option>
+                    </select>
+                </label>
+                <button class="btn btn-primary" type="submit">Save changes</button>
+            </form>
+
+            <div class="divider"></div>
+
+            <form method="post" asp-page-handler="Warn" class="flex-col gap-md">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@user.Id" />
+                <label class="form-group"><span class="form-label">Warning reason</span><textarea class="form-textarea" name="reason" required></textarea></label>
+                <select class="form-select" name="severity"><option>Minor</option><option>Major</option></select>
+                <button class="btn btn-secondary" type="submit">Issue warning</button>
+            </form>
+
+            <div class="divider"></div>
+
+            <form method="post" asp-page-handler="Ban">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@user.Id" />
+                <input class="form-input mb-sm" name="reason" placeholder="Ban reason" />
+                <button class="btn btn-danger w-full" type="submit">Ban account</button>
+            </form>
+        </aside>
+    </div>
+}
