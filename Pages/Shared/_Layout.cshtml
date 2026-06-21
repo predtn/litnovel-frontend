@@ -62,7 +62,10 @@
                         <div class="navbar__avatar" onclick="toggleDropdown()">
                             @if (ViewData["UserAvatar"] is string avatar && !string.IsNullOrEmpty(avatar))
                             {
-                                <img src="@avatar" alt="Avatar" />
+                                <img src="@avatar" alt="Avatar" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
+                                <div class="navbar__avatar-placeholder hidden">
+                                    @(ViewData["UserName"]?.ToString()?.Substring(0, 1).ToUpper() ?? "U")
+                                </div>
                             }
                             else
                             {
