@@ -1,3 +1,4 @@
+using litnovel_frontend.Filters;
 using litnovel_frontend.Services;
 using Microsoft.AspNetCore.DataProtection;
 
@@ -7,7 +8,12 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
 // ─── Services ───
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages(options =>
+{
+    options.Conventions.AddFolderApplicationModelConvention("/",
+        model => model.Filters.Add(new Microsoft.AspNetCore.Mvc.ServiceFilterAttribute(typeof(NotificationCountFilter))));
+});
+builder.Services.AddScoped<NotificationCountFilter>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, ".aspnet-data-protection-keys")));

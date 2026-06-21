@@ -1,0 +1,130 @@
+@page "/Notifications/{id:int}"
+@model litnovel_frontend.Pages.Notifications.DetailModel
+@{ ViewData["Title"] = "Chi tiết thông báo"; }
+<!-- SCR-37: Notification Detail -->
+<div class="container" style="padding-top:var(--space-xl);padding-bottom:var(--space-4xl);max-width:720px;">
+
+    <div class="breadcrumb mb-xl">
+        <a href="/">Home</a><span class="breadcrumb__sep">/</span>
+        <a href="/Notifications">Thông báo</a><span class="breadcrumb__sep">/</span>
+        <span class="breadcrumb__current">Chi tiết</span>
+    </div>
+
+    @if (Model.Notification == null)
+    {
+        <div class="empty-state">
+            <div class="empty-state__icon">🔍</div>
+            <div class="empty-state__title">Không tìm thấy thông báo</div>
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="text-caption text-mute mt-sm">@Model.ErrorMessage</div>
+            }
+            <a href="/Notifications" class="btn btn-primary mt-md">Quay lại</a>
+        </div>
+    }
+    else
+    {
+        var n = Model.Notification;
+        <div class="card">
+            <div class="card__body">
+                <!-- Icon + Type badge -->
+                <div class="flex items-center gap-md mb-lg">
+                    <div style="font-size:36px;width:60px;height:60px;border-radius:50%;background:var(--color-canvas-soft-2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        @NotifIcon(n.NotificationType ?? n.Type)
+                    </div>
+                    <div>
+                        <div class="text-display-sm font-medium text-ink">@NotifTitle(n)</div>
+                        <div class="text-caption text-mute mt-xs">@TimeAgo(n.CreatedAt) · @n.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                    </div>
+                </div>
+
+                <!-- Message content -->
+                <div style="padding:var(--space-lg);border-radius:var(--radius-md);background:var(--color-canvas-soft);border:1px solid var(--color-hairline);margin-bottom:var(--space-xl);">
+                    <p class="text-body-md text-ink" style="line-height:1.7;margin:0;">@n.Message</p>
+                </div>
+
+                <!-- Action button based on EntityType -->
+                @if (!string.IsNullOrEmpty(n.EntityType) && n.EntityId.HasValue)
+                {
+                    var link = GetEntityLink(n);
+                    if (!string.IsNullOrEmpty(link))
+                    {
+                        <a href="@link" class="btn btn-primary">@GetEntityLabel(n) →</a>
+                    }
+                }
+
+                <a href="/Notifications" class="btn btn-ghost" style="margin-left:var(--space-sm);">← Quay lại</a>
+            </div>
+        </div>
+    }
+</div>
+
+@functions {
+    string NotifIcon(string t) => t switch {
+        "NewChapter"   => "📖",
+        "NewComment"   => "💬",
+        "CommentReply" => "↩️",
+        "CommentLike"  => "👍",
+        "NewFollower"  => "👤",
+        "BadgeEarned"  => "🏅",
+        "ReportUpdate" => "⚠️",
+        "SystemAlert"  => "📢",
+        _              => "🔔"
+    };
+
+    string NotifTitle(NotificationDto n) => (n.NotificationType ?? n.Type) switch {
+        "NewChapter"   => "Chương mới được đăng",
+        "NewComment"   => "Bình luận mới trên chương của bạn",
+        "CommentReply" => "Có người trả lời bình luận",
+        "CommentLike"  => "Bình luận của bạn được thích",
+        "NewFollower"  => "Người theo dõi mới",
+        "BadgeEarned"  => "🎉 Bạn đã đạt huy hiệu mới!",
+        "ReportUpdate" => "Báo cáo của bạn đã được xử lý",
+        "SystemAlert"  => "Thông báo từ hệ thống",
+        _              => "Thông báo"
+    };
+
+    string GetEntityLink(NotificationDto n)
+    {
+        // Link dựa vào NotificationType vì có thể suy luận đích đến
+        var type = n.NotificationType ?? n.Type;
+        return type switch {
+            "NewChapter"   => n.EntityId.HasValue ? $"/Novels/read/{n.EntityId}" : "",
+            "NewComment"   => "/Notifications",
+            "CommentReply" => "/Notifications",
+            "CommentLike"  => "/Notifications",
+            "BadgeEarned"  => "/Profile",
+            "ReportUpdate" => "/Notifications",
+            "SystemAlert"  => "",
+            // Fallback theo EntityType nếu có
+            _ => n.EntityType switch {
+                "Novel"   => n.EntityId.HasValue ? $"/Novels/{n.EntityId}" : "",
+                "Chapter" => n.EntityId.HasValue ? $"/Novels/read/{n.EntityId}" : "",
+                _         => ""
+            }
+        };
+    }
+
+    string GetEntityLabel(NotificationDto n)
+    {
+        var type = n.NotificationType ?? n.Type;
+        return type switch {
+            "NewChapter"   => "Đọc chương ngay",
+            "BadgeEarned"  => "Xem huy hiệu",
+            "NewComment"   => "Xem bình luận",
+            "CommentReply" => "Xem phản hồi",
+            "CommentLike"  => "Xem bình luận",
+            "ReportUpdate" => "Xem chi tiết",
+            _              => "Xem thêm"
+        };
+    }
+
+    string TimeAgo(DateTime dt) {
+        var d = DateTime.UtcNow - dt;
+        if (d.TotalMinutes < 1)  return "Vừa xong";
+        if (d.TotalMinutes < 60) return $"{(int)d.TotalMinutes} phút trước";
+        if (d.TotalHours < 24)   return $"{(int)d.TotalHours} giờ trước";
+        if (d.TotalDays < 30)    return $"{(int)d.TotalDays} ngày trước";
+        return dt.ToString("dd/MM/yyyy");
+    }
+}
