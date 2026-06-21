@@ -1,17 +1,48 @@
-using litnovel_frontend.Services; using Microsoft.AspNetCore.Mvc; using Microsoft.AspNetCore.Mvc.RazorPages;
+using litnovel_frontend.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
 namespace litnovel_frontend.Pages.Staff;
+
 public class PendingNovelsModel : PageModel
 {
-    private readonly IApiService _api; private readonly IAuthService _auth;
-    public List<NovelSummaryDto> Novels { get; set; } = [];
+    private readonly IApiService _api;
+    private readonly IAuthService _auth;
+    public List<PendingNovelDto> Novels { get; set; } = [];
+    public new int Page { get; set; } = 1;
+    public int TotalPages { get; set; } = 1;
+    public int TotalElements { get; set; } = 0;
+    public StaffDashboardDto Dashboard { get; set; } = new();
+
     public PendingNovelsModel(IApiService api, IAuthService auth) { _api = api; _auth = auth; }
-    public async Task<IActionResult> OnGetAsync()
+
+    public async Task<IActionResult> OnGetAsync([FromQuery] int page = 1)
     {
         var token = _auth.GetToken(HttpContext);
+        if (string.IsNullOrEmpty(token)) return RedirectToPage("/Auth/Login");
         if (!_auth.IsInRole(HttpContext, "Staff")) return RedirectToPage("/Index");
-        var r = await _api.GetAsync<PagedData<NovelSummaryDto>>("/api/staff/novels/pending?page=1&size=50", token);
-        Novels = r?.Data?.Items ?? [new(){Id=10,Title="Kiếm Đạo Vô Song",Author=new(){Username="author_a"},UpdatedAt=DateTime.UtcNow.AddHours(-2),Category=new(){Name="Kiếm hiệp"}},new(){Id=11,Title="Thần Hoàng Tái Thế",Author=new(){Username="author_b"},UpdatedAt=DateTime.UtcNow.AddHours(-5)}];
-        var u = _auth.GetCurrentUser(HttpContext); if (u!=null){ViewData["UserName"]=u.Username;ViewData["UserEmail"]=u.Email;}
+
+        Page = page < 1 ? 1 : page;
+
+        var user = _auth.GetCurrentUser(HttpContext);
+        if (user != null)
+        {
+            ViewData["UserName"]  = user.Username;
+            ViewData["UserEmail"] = user.Email;
+        }
+        ViewData["ActiveNav"] = "staff";
+
+        // Sequential awaits — backend uses scoped DbContext (not thread-safe)
+        var dbResult    = await _api.GetAsync<StaffDashboardDto>($"/api/staff/dashboard", token);
+        var novelResult = await _api.GetAsync<PagedData<PendingNovelDto>>($"/api/staff/novels/pending?page={Page}&size=20", token);
+
+        Dashboard     = dbResult?.Data ?? new();
+        var data      = novelResult?.Data;
+        Novels        = data?.Items ?? [];
+        TotalPages    = data?.TotalPages ?? 1;
+        TotalElements = data?.TotalElements ?? 0;
+
         return Page();
     }
+
 }

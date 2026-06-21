@@ -1,0 +1,135 @@
+@page
+@model litnovel_frontend.Pages.Staff.ModerationHistoryModel
+@{ Layout = "_LayoutDashboard"; ViewData["Title"] = "Lịch sử kiểm duyệt"; }
+@section Sidebar {
+    <a href="/Staff/Dashboard" class="sidebar__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+        Tổng quan
+    </a>
+    <a href="/Staff/PendingNovels" class="sidebar__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        Tiểu thuyết chờ duyệt
+    </a>
+    <a href="/Staff/PendingChapters" class="sidebar__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Chương chờ duyệt
+    </a>
+    <a href="/Staff/Reports" class="sidebar__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Báo cáo vi phạm
+    </a>
+    <a href="/Staff/ModerationHistory" class="sidebar__link active">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Lịch sử kiểm duyệt
+    </a>
+}
+
+@functions {
+    // Map action code → (label VI, css-class)
+    static (string Label, string Css) GetActionInfo(string action) => action switch
+    {
+        "ApproveNovel"   => ("Duyệt truyện",   "status-published"),
+        "RejectNovel"    => ("Từ chối truyện",  "status-draft"),
+        "LockNovel"      => ("Khoá truyện",     "status-hiatus"),
+        "ApproveChapter" => ("Duyệt chương",    "status-published"),
+        "RejectChapter"  => ("Từ chối chương",  "status-draft"),
+        "LockChapter"    => ("Khoá chương",     "status-hiatus"),
+        "ResolveReport"  => ("Giải quyết BC",   "status-published"),
+        "RejectReport"   => ("Bác bỏ BC",       "status-draft"),
+        "WarnUser"       => ("Cảnh cáo user",   "status-pending"),
+        _                => (action,             "badge-secondary")
+    };
+
+    static (string Label, string Css) GetTargetInfo(string type) => type switch
+    {
+        "Novel"   => ("Truyện",  "badge-primary"),
+        "Chapter" => ("Chương",  "badge-info"),
+        "Report"  => ("Báo cáo", "badge-warning"),
+        "User"    => ("User",    "badge-secondary"),
+        _         => (type,      "badge-secondary")
+    };
+}
+
+<!-- SCR-46: Moderation History -->
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            Lịch sử kiểm duyệt
+        </h1>
+        <p class="page-header__subtitle">@Model.TotalElements hành động đã thực hiện</p>
+    </div>
+</div>
+
+@if (Model.History.Any())
+{
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Loại đối tượng</th>
+                    <th>Đối tượng</th>
+                    <th>Hành động</th>
+                    <th>Kiểm duyệt viên</th>
+                    <th>Ghi chú</th>
+                    <th>Thời gian</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var h in Model.History)
+                {
+                    var (actionLabel, actionCss) = GetActionInfo(h.Action);
+                    var (targetLabel, targetCss) = GetTargetInfo(h.TargetType);
+                    <tr>
+                        <td>
+                            <span class="badge @targetCss">@targetLabel</span>
+                        </td>
+                        <td class="text-body-sm font-medium">
+                            @(h.TargetTitle ?? $"#{h.TargetId}")
+                        </td>
+                        <td>
+                            <span class="status-badge @actionCss">
+                                @if (h.Action.StartsWith("Approve") || h.Action == "ResolveReport")
+                                {
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                }
+                                else if (h.Action == "WarnUser")
+                                {
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>
+                                }
+                                else
+                                {
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                }
+                                <span>@actionLabel</span>
+                            </span>
+                        </td>
+                        <td class="text-body-sm">@h.StaffUsername</td>
+                        <td class="text-body-sm text-mute">@(h.Notes?.Truncate(50) ?? "—")</td>
+                        <td class="text-caption text-mute">@h.PerformedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="empty-state">
+        <div class="empty-state__icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </div>
+        <div class="empty-state__title">Chưa có lịch sử kiểm duyệt</div>
+        <div class="empty-state__subtitle">Các hành động kiểm duyệt sẽ xuất hiện ở đây sau khi bạn approve, reject hoặc xử lý báo cáo</div>
+    </div>
+}
+
+@if (Model.TotalPages > 1)
+{
+    <div class="pagination">
+        @for (int i = 1; i <= Model.TotalPages; i++)
+        {
+            <a href="?page=@i" class="pagination__item @(i == Model.Page ? "active" : "")">@i</a>
+        }
+    </div>
+}

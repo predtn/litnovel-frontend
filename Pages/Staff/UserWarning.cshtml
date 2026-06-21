@@ -1,0 +1,89 @@
+﻿@page
+@model litnovel_frontend.Pages.Staff.UserWarningModel
+@{ Layout = "_LayoutDashboard"; ViewData["Title"] = "Cảnh báo người dùng"; }
+@section Sidebar {
+    <a href="/Staff/Dashboard" class="sidebar__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+        Tổng quan
+    </a>
+    <a href="/Staff/PendingNovels" class="sidebar__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        Tiểu thuyết chờ duyệt
+    </a>
+    <a href="/Staff/PendingChapters" class="sidebar__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Chương chờ duyệt
+    </a>
+    <a href="/Staff/Reports" class="sidebar__link active">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Báo cáo vi phạm
+    </a>
+    <a href="/Staff/ModerationHistory" class="sidebar__link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Lịch sử kiểm duyệt
+    </a>
+}
+<!-- SCR-45: User Warning -->
+<div class="page-header">
+    <div>
+        <a href="javascript:history.back()" class="btn btn-secondary btn-sm">← Quay lại</a>
+        <h1 class="page-header__title mt-sm"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Gửi cảnh báo người dùng</h1>
+    </div>
+</div>
+
+@if (Model.Success)
+{
+    <div class="alert alert-success">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Cảnh báo đã được gửi thành công đến người dùng!
+        <a href="/Staff/Reports" class="btn btn-sm btn-secondary ml-sm">Về danh sách báo cáo</a>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+@if (!Model.Success)
+{
+    <div class="form-card">
+        <div class="form-card__header">
+            <h2 class="form-card__title">Thông tin cảnh báo</h2>
+            <p class="form-card__subtitle">Cảnh báo sẽ được gửi dưới dạng thông báo hệ thống đến người dùng.</p>
+        </div>
+        <form method="post" class="form-card__body">
+            <div class="form-group">
+                <label class="form-label" for="userId">ID Người dùng *</label>
+                <input type="number" id="userId" name="userId" class="form-control"
+                       value="@Model.TargetUserId" placeholder="Nhập User ID..." required min="1" />
+                <span class="form-hint">Bạn có thể tìm ID người dùng trong trang quản lý users.</span>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="message">Nội dung cảnh báo *</label>
+                <textarea id="message" name="message" class="form-control" rows="5" required
+                          placeholder="Nhập nội dung cảnh báo...&#10;VD: Tài khoản của bạn đã vi phạm quy định cộng đồng về nội dung không phù hợp...">
+                </textarea>
+                <span class="form-hint">Nội dung này sẽ xuất hiện trong mục thông báo của người dùng.</span>
+            </div>
+
+            <div class="warning-preview">
+                <div class="warning-preview__header"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Xem trước thông báo</div>
+                <div class="warning-preview__body">
+                    <span class="warning-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+                    <div>
+                        <strong>Cảnh báo từ Ban kiểm duyệt</strong>
+                        <p class="text-mute text-caption">Nội dung sẽ hiển thị ở đây...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a href="javascript:history.back()" class="btn btn-secondary">Hủy</a>
+                <button type="submit" class="btn btn-warning"
+                        onclick="return confirm('Xác nhận gửi cảnh báo đến người dùng?')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Gửi cảnh báo
+                </button>
+            </div>
+        </form>
+    </div>
+}
