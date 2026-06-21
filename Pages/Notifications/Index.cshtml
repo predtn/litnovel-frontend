@@ -2,39 +2,147 @@
 @model litnovel_frontend.Pages.Notifications.IndexModel
 @{ ViewData["Title"] = "Thông báo"; }
 <!-- SCR-36: Notification Center -->
-<div class="container" style="padding-top:var(--space-xl);padding-bottom:var(--space-4xl);max-width:700px;">
-    <div class="page-header">
-        <h1 class="page-header__title">🔔 Thông báo</h1>
-        @if (Model.UnreadCount > 0)
-        {
-            <form method="post" asp-page-handler="MarkAll">@Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-ghost btn-sm">Đánh dấu tất cả đã đọc</button>
-            </form>
-        }
+<div class="container" style="padding-top:var(--space-xl);padding-bottom:var(--space-4xl);max-width:720px;">
+
+    <!-- Header -->
+    <div class="page-header" style="margin-bottom:var(--space-xl);">
+        <div>
+            <h1 class="page-header__title">🔔 Thông báo</h1>
+            @if (Model.UnreadCount > 0)
+            {
+                <p class="page-header__subtitle">Bạn có <strong>@Model.UnreadCount</strong> thông báo chưa đọc</p>
+            }
+            else
+            {
+                <p class="page-header__subtitle">Tất cả thông báo đã được đọc</p>
+            }
+        </div>
+        <div class="flex gap-sm">
+            @if (Model.UnreadCount > 0)
+            {
+                <form method="post" asp-page-handler="MarkAll">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-secondary btn-sm">✓ Đọc tất cả</button>
+                </form>
+            }
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="flex gap-xs mb-xl" style="border-bottom:1px solid var(--color-hairline); padding-bottom:0;">
+        <a href="/Notifications" class="tab-pill @(Model.Filter == null ? "active" : "")">Tất cả</a>
+        <a href="/Notifications?filter=unread" class="tab-pill @(Model.Filter == "unread" ? "active" : "")">
+            Chưa đọc @(Model.UnreadCount > 0 ? $"({Model.UnreadCount})" : "")
+        </a>
+        <a href="/Notifications?filter=read" class="tab-pill @(Model.Filter == "read" ? "active" : "")">Đã đọc</a>
     </div>
 
     @if (!Model.Notifications.Any())
-    { <div class="empty-state"><div class="empty-state__icon">🔔</div><div class="empty-state__title">Không có thông báo</div></div> }
+    {
+        <div class="empty-state" style="padding:var(--space-4xl);">
+            <div class="empty-state__icon">🔔</div>
+            <div class="empty-state__title">Không có thông báo nào</div>
+            <div class="empty-state__desc">Chúng tôi sẽ thông báo khi có điều gì đó mới!</div>
+        </div>
+    }
     else
     {
         <div style="display:flex;flex-direction:column;gap:var(--space-xs);">
             @foreach (var n in Model.Notifications)
             {
-                <a href="/Notifications/@n.Id" style="display:flex;gap:var(--space-md);padding:var(--space-md);border-radius:var(--radius-md);border:1px solid var(--color-hairline);background:@(n.IsRead ? "var(--color-canvas)" : "var(--color-canvas-soft)");text-decoration:none;transition:box-shadow .15s;" onmouseenter="this.style.boxShadow='var(--shadow-2)'" onmouseleave="this.style.boxShadow=''">
-                    <div style="font-size:24px;flex-shrink:0;">@NotifIcon(n.Type)</div>
-                    <div style="flex:1;min-width:0;">
-                        <div class="text-body-sm font-medium text-ink">@n.Title</div>
-                        <div class="text-caption text-mute mt-xs">@n.Body</div>
-                        <div class="text-caption text-mute mt-xs">@TimeAgo(n.CreatedAt)</div>
+                <div style="display:flex;gap:var(--space-md);padding:var(--space-md);border-radius:var(--radius-md);border:1px solid var(--color-hairline);background:@(n.IsRead ? "var(--color-canvas)" : "color-mix(in srgb, var(--color-link) 6%, var(--color-canvas))");transition:box-shadow .15s;"
+                     onmouseenter="this.style.boxShadow='var(--shadow-2)'"
+                     onmouseleave="this.style.boxShadow=''">
+                    <!-- Icon -->
+                    <div style="font-size:22px;flex-shrink:0;width:40px;height:40px;border-radius:50%;background:var(--color-canvas-soft-2);display:flex;align-items:center;justify-content:center;">
+                        @NotifIcon(n.NotificationType ?? n.Type)
                     </div>
-                    @if (!n.IsRead)
-                    { <div style="width:8px;height:8px;border-radius:50%;background:var(--color-link);flex-shrink:0;margin-top:6px;"></div> }
-                </a>
+                    <!-- Body -->
+                    <div style="flex:1;min-width:0;">
+                        <a href="@NotifLink(n)" style="text-decoration:none;color:inherit;" onclick="markRead(@n.Id)">
+                            <div class="text-body-sm font-medium text-ink">@NotifTitle(n)</div>
+                            <div class="text-caption text-mute mt-xs" style="line-height:1.5;">@n.Message</div>
+                            <div class="text-caption text-mute mt-xs">@TimeAgo(n.CreatedAt)</div>
+                        </a>
+                    </div>
+                    <!-- Actions -->
+                    <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:var(--space-xs);">
+                        @if (!n.IsRead)
+                        {
+                            <div style="width:8px;height:8px;border-radius:50%;background:var(--color-link);margin-top:4px;" title="Chưa đọc"></div>
+                            <form method="post" asp-page-handler="MarkOne" style="margin:0;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@n.Id" />
+                                <button type="submit" class="btn-icon" style="font-size:11px;color:var(--color-mute);" title="Đánh dấu đã đọc">✓</button>
+                            </form>
+                        }
+                    </div>
+                </div>
             }
         </div>
+
+        <!-- Pagination -->
+        @if (Model.TotalPages > 1)
+        {
+            <div class="flex justify-center gap-xs mt-xl">
+                @for (int p = 1; p <= Model.TotalPages; p++)
+                {
+                    <a href="/Notifications?page=@p@(Model.Filter != null ? $"&filter={Model.Filter}" : "")"
+                       class="btn @(p == Model.CurrentPage ? "btn-primary" : "btn-secondary")"
+                       style="min-width:40px;padding:0 var(--space-sm);">@p</a>
+                }
+            </div>
+        }
     }
 </div>
+
 @functions {
-    string NotifIcon(string t) => t switch { "NewChapter"=>"📖","NewComment"=>"💬","CommentReply"=>"↩️","CommentLike"=>"👍","BadgeEarned"=>"🏅","ReportUpdate"=>"⚠️",_=>"🔔" };
-    string TimeAgo(DateTime dt) { var d = DateTime.UtcNow - dt; return d.TotalMinutes < 60 ? $"{(int)d.TotalMinutes}p" : d.TotalHours < 24 ? $"{(int)d.TotalHours}h" : $"{(int)d.TotalDays}d"; }
+    string NotifIcon(string t) => t switch {
+        "NewChapter"   => "📖",
+        "NewComment"   => "💬",
+        "CommentReply" => "↩️",
+        "CommentLike"  => "👍",
+        "NewFollower"  => "👤",
+        "BadgeEarned"  => "🏅",
+        "ReportUpdate" => "⚠️",
+        "SystemAlert"  => "📢",
+        _              => "🔔"
+    };
+
+    string NotifTitle(NotificationDto n) => (n.NotificationType ?? n.Type) switch {
+        "NewChapter"   => "Chương mới được đăng",
+        "NewComment"   => "Bình luận mới",
+        "CommentReply" => "Có người trả lời bình luận",
+        "CommentLike"  => "Bình luận được thích",
+        "NewFollower"  => "Người theo dõi mới",
+        "BadgeEarned"  => "Huy hiệu mới!",
+        "ReportUpdate" => "Cập nhật báo cáo",
+        "SystemAlert"  => "Thông báo hệ thống",
+        _              => "Thông báo"
+    };
+
+    string NotifLink(NotificationDto n) {
+        if (n.EntityType == "Chapter" && n.EntityId.HasValue)
+            return $"/Notifications/{n.Id}";
+        if (n.EntityType == "Novel" && n.EntityId.HasValue)
+            return $"/Notifications/{n.Id}";
+        return $"/Notifications/{n.Id}";
+    }
+
+    string TimeAgo(DateTime dt) {
+        var d = DateTime.UtcNow - dt;
+        if (d.TotalMinutes < 1)  return "Vừa xong";
+        if (d.TotalMinutes < 60) return $"{(int)d.TotalMinutes} phút trước";
+        if (d.TotalHours < 24)   return $"{(int)d.TotalHours} giờ trước";
+        if (d.TotalDays < 30)    return $"{(int)d.TotalDays} ngày trước";
+        return dt.ToString("dd/MM/yyyy");
+    }
+}
+
+@section Scripts {
+<script>
+function markRead(id) {
+    // Không cần làm gì thêm — link click → redirect SCR-37 → page model sẽ mark as read
+}
+</script>
 }

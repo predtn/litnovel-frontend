@@ -70,7 +70,7 @@
                 <div class="card__body chapter-content-preview">
                     @if (!string.IsNullOrEmpty(c.Content))
                     {
-                        @Html.Raw(System.Web.HttpUtility.HtmlEncode(c.Content).Replace("\n", "<br/>"))
+                        @Html.Raw(c.Content)
                     }
                     else
                     {
