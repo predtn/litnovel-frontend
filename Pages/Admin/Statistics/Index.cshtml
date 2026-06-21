@@ -1,44 +1,81 @@
 @page
 @model litnovel_frontend.Pages.Admin.Statistics.IndexModel
-@{ Layout = "_LayoutDashboard"; ViewData["Title"] = "Thống kê hệ thống"; var s = Model.Stats; }
-@section Sidebar {
-    <a href="/Admin/Dashboard" class="sidebar__link">Tổng quan</a>
-    <a href="/Admin/Statistics" class="sidebar__link active">Thống kê</a>
-    <div class="sidebar__section-label">Nội dung</div>
-    <a href="/Admin/Users" class="sidebar__link">Người dùng</a>
-    <a href="/Admin/Categories" class="sidebar__link">Thể loại</a>
+@{
+    Layout = "_LayoutDashboard";
+    ViewData["Title"] = "Statistics Charts";
+    ViewData["ActiveNav"] = "admin";
 }
-<!-- SCR-59: Statistics Dashboard -->
-<div class="page-header"><h1 class="page-header__title">📊 Thống kê hệ thống</h1></div>
 
-<div class="grid-4 mb-xl">
-    <div class="stat-card"><div class="stat-card__label">Người dùng mới (30d)</div><div class="stat-card__value">@s.NewUsers</div><div class="stat-card__change up">▲ +@s.UserGrowthPercent%</div></div>
-    <div class="stat-card"><div class="stat-card__label">Truyện mới (30d)</div><div class="stat-card__value">@s.NewNovels</div></div>
-    <div class="stat-card"><div class="stat-card__label">Chương đăng (7d)</div><div class="stat-card__value">@s.ChaptersThisWeek</div></div>
-    <div class="stat-card"><div class="stat-card__label">Tổng lượt xem</div><div class="stat-card__value">@FormatNum(s.TotalViews)</div></div>
+@section Sidebar { <partial name="~/Pages/Admin/_AdminSidebar.cshtml" /> }
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Statistics Charts</h1>
+        <p class="page-header__subtitle">Chart-only analytics. Numeric summaries stay on the Admin Dashboard.</p>
+    </div>
+    <form class="admin-toolbar admin-toolbar--inline" method="get">
+        <input class="form-input" type="date" name="from" value="@Model.FromDate" />
+        <input class="form-input" type="date" name="to" value="@Model.ToDate" />
+        <button class="btn btn-secondary" type="submit">Apply</button>
+    </form>
 </div>
 
-<div class="grid-2 mb-xl">
-    <div class="card">
-        <h3 class="text-body-sm font-semibold mb-md">📚 Top truyện lượt xem</h3>
-        @foreach (var n in s.TopNovels)
-        {
-            <div class="flex items-center gap-sm mb-sm">
-                <div style="width:24px;height:24px;border-radius:50%;background:var(--color-canvas-soft-2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">@n.Rank</div>
-                <div style="flex:1;min-width:0;"><div class="text-body-sm truncate">@n.Title</div><div class="text-caption text-mute">@FormatNum(n.ViewCount) lượt xem</div></div>
-            </div>
-        }
+@if (!string.IsNullOrWhiteSpace(Model.LoadError))
+{
+    <div class="card-soft mb-xl" style="border-color:var(--color-warning);">
+        <div class="font-semibold mb-sm">Khong tai duoc bieu do</div>
+        <p class="text-body-sm text-body">@Model.LoadError</p>
     </div>
-    <div class="card">
-        <h3 class="text-body-sm font-semibold mb-md">👤 Tác giả tích cực nhất</h3>
-        @foreach (var a in s.TopAuthors)
-        {
-            <div class="flex items-center gap-sm mb-sm">
-                <div class="avatar-placeholder" style="width:28px;height:28px;border-radius:50%;background:var(--color-canvas-soft-2);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">@a.Username.Substring(0,1).ToUpper()</div>
-                <div style="flex:1;min-width:0;"><div class="text-body-sm">@a.Username</div><div class="text-caption text-mute">@a.NovelsCreated truyện · @FormatNum(a.TotalViews) views</div></div>
-            </div>
-        }
-    </div>
-</div>
+}
 
-@functions { string FormatNum(int n) => n >= 1000000 ? $"{n/1000000.0:0.#}M" : n >= 1000 ? $"{n/1000.0:0.#}K" : n.ToString(); }
+<div class="admin-chart-grid">
+    <section class="card admin-chart-card">
+        <h2 class="text-display-sm mb-md">User growth</h2>
+        @if (Model.UserGrowth.Points.Count == 0)
+        {
+            <div class="empty-state">
+                <div class="empty-state__title">No chart data</div>
+                <p class="empty-state__text">The chart API returned no points for this range.</p>
+            </div>
+        }
+        else
+        {
+            var max = Math.Max(1, Model.UserGrowth.Points.Max(p => p.Value));
+            <div class="admin-chart">
+                @foreach (var point in Model.UserGrowth.Points)
+                {
+                    <div class="admin-chart__row">
+                        <span class="admin-chart__date">@point.Date</span>
+                        <div class="admin-chart__track"><div class="admin-chart__bar" style="width:@(point.Value * 100 / max)%"></div></div>
+                        <span class="admin-chart__value">@point.Value</span>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+
+    <section class="card admin-chart-card">
+        <h2 class="text-display-sm mb-md">Novel publish rate</h2>
+        @if (Model.NovelPublishRate.Points.Count == 0)
+        {
+            <div class="empty-state">
+                <div class="empty-state__title">No chart data</div>
+                <p class="empty-state__text">The chart API returned no points for this range.</p>
+            </div>
+        }
+        else
+        {
+            var max = Math.Max(1, Model.NovelPublishRate.Points.Max(p => p.Value));
+            <div class="admin-chart">
+                @foreach (var point in Model.NovelPublishRate.Points)
+                {
+                    <div class="admin-chart__row">
+                        <span class="admin-chart__date">@point.Date</span>
+                        <div class="admin-chart__track"><div class="admin-chart__bar" style="width:@(point.Value * 100 / max)%"></div></div>
+                        <span class="admin-chart__value">@point.Value</span>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+</div>

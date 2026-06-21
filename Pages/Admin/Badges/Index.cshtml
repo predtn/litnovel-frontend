@@ -1,27 +1,218 @@
 @page
 @model litnovel_frontend.Pages.Admin.Badges.IndexModel
-@{ Layout = "_LayoutDashboard"; ViewData["Title"] = "Quản lý huy hiệu"; }
-@section Sidebar {<a href="/Admin/Dashboard" class="sidebar__link">Tổng quan</a><div class="sidebar__section-label">Nội dung</div><a href="/Admin/Users" class="sidebar__link">Người dùng</a><a href="/Admin/Categories" class="sidebar__link">Thể loại</a><a href="/Admin/Tags" class="sidebar__link">Tag</a><a href="/Admin/Badges" class="sidebar__link active">Huy hiệu</a>}
-<!-- SCR-51 -->
-<div class="page-header"><h1 class="page-header__title">🏅 Quản lý huy hiệu</h1><button class="btn btn-primary" onclick="openModal('addModal')">+ Thêm huy hiệu</button></div>
-@if (TempData["Success"] is string ok) { <div class="alert alert-success mb-md alert-auto-close">@ok</div> }
-<div class="grid-4" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:var(--space-md);">
-    @foreach (var b in Model.Badges)
-    {
-        <div class="card" style="text-align:center;padding:var(--space-xl);">
-            <div style="font-size:40px;margin-bottom:var(--space-sm);">@b.Icon</div>
-            <div class="text-body-sm font-semibold">@b.Name</div>
-            <div class="text-caption text-mute mt-xs">@b.Description</div>
-            <div class="text-caption text-mute mt-xs">@b.EarnedCount người đạt</div>
-        </div>
-    }
+@{
+    Layout = "_LayoutDashboard";
+    ViewData["Title"] = "Badge Management";
+    ViewData["ActiveNav"] = "admin";
+}
+
+@section Sidebar { <partial name="~/Pages/Admin/_AdminSidebar.cshtml" /> }
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Badge Management</h1>
+        <p class="page-header__subtitle">Create, edit, delete, and award achievement badges.</p>
+    </div>
+    <button class="btn btn-primary" type="button" onclick="openModal('addModal')">Create badge</button>
 </div>
-<div class="modal-overlay" id="addModal"><div class="modal">
-    <div class="modal__header"><div class="modal__title">Thêm huy hiệu</div><button class="modal__close" onclick="closeModal('addModal')">✕</button></div>
-    <form method="post" asp-page-handler="Add">@Html.AntiForgeryToken()
-        <div class="form-group"><label class="form-label">Icon (emoji)</label><input name="icon" class="form-input" placeholder="🏅" maxlength="4" /></div>
-        <div class="form-group"><label class="form-label">Tên huy hiệu</label><input name="name" class="form-input" required /></div>
-        <div class="form-group"><label class="form-label">Mô tả</label><input name="description" class="form-input" /></div>
-        <div class="modal__footer"><button type="button" class="btn btn-secondary" onclick="closeModal('addModal')">Hủy</button><button type="submit" class="btn btn-primary">Thêm</button></div>
-    </form>
-</div></div>
+
+@if (TempData["Success"] is string ok)
+{
+    <div class="alert alert-success mb-md alert-auto-close">@ok</div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="alert alert-error mb-md">@error</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.LoadError))
+{
+    <div class="card-soft mb-xl" style="border-color:var(--color-warning);">
+        <div class="font-semibold mb-sm">Khong tai duoc huy hieu</div>
+        <p class="text-body-sm text-body">@Model.LoadError</p>
+    </div>
+}
+
+@if (Model.Badges.Count == 0)
+{
+    <div class="empty-state">
+        <div class="empty-state__title">No badges found</div>
+        <p class="empty-state__text">Create the first badge or check the admin badge API.</p>
+    </div>
+}
+else
+{
+    <div class="admin-card-grid">
+        @foreach (var badge in Model.Badges)
+        {
+            var owners = Model.GetBadgeOwners(badge);
+            <article class="card admin-badge-card">
+                <div class="admin-badge-card__icon" style="background:@(string.IsNullOrWhiteSpace(badge.Color) ? "var(--color-canvas-soft-2)" : badge.Color)">
+                    @if (IsImageIcon(badge.Icon))
+                    {
+                        <img src="@badge.Icon" alt="@badge.Name" />
+                    }
+                    else if (!string.IsNullOrWhiteSpace(badge.Icon))
+                    {
+                        <span>@badge.Icon</span>
+                    }
+                    else
+                    {
+                        <span>@badge.Name[..1].ToUpper()</span>
+                    }
+                </div>
+                <div class="admin-badge-card__body">
+                    <div class="font-semibold">@badge.Name</div>
+                    <div class="text-caption text-mute text-mono">@badge.Key</div>
+                    <p class="text-body-sm text-body mt-sm">@badge.Description</p>
+                    <div class="text-caption text-mute mt-sm">@Model.GetAwardedCount(badge) awarded</div>
+                    @if (owners.Count > 0)
+                    {
+                        <details class="mt-sm">
+                            <summary class="text-caption text-link">Xem người đang sở hữu</summary>
+                            <div class="admin-owner-list">
+                                @foreach (var owner in owners.Take(12))
+                                {
+                                    <a href="/Admin/Users/@owner.Id" class="admin-owner-pill">
+                                        <span>@owner.Username</span>
+                                        <small>@owner.Email</small>
+                                    </a>
+                                }
+                                @if (owners.Count > 12)
+                                {
+                                    <div class="text-caption text-mute">+@(owners.Count - 12) người khác</div>
+                                }
+                            </div>
+                        </details>
+                    }
+                </div>
+                <div class="admin-badge-card__forms">
+                    <details>
+                        <summary class="btn btn-secondary btn-sm">Edit</summary>
+                        <form method="post" asp-page-handler="Edit" class="admin-mini-form" enctype="multipart/form-data">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@badge.Id" />
+                            <input type="hidden" name="icon" value="@badge.Icon" />
+                            <input class="form-input form-input-sm" name="name" value="@badge.Name" required />
+                            <input class="form-input form-input-sm" name="EditIconValue" value="@(IsImageIcon(badge.Icon) ? "" : badge.Icon)" list="badgeIconOptions" placeholder="Emoji badge" />
+                            <input class="form-input form-input-sm" name="EditIconFile" type="file" accept="image/svg+xml,image/png,image/jpeg,image/webp" />
+                            <div class="admin-color-swatches">
+                                @foreach (var color in BadgeColors)
+                                {
+                                    <label class="admin-color-swatch" title="@color">
+                                        <input type="radio" name="color" value="@color" checked="@(string.Equals(badge.Color, color, StringComparison.OrdinalIgnoreCase))" />
+                                        <span style="background:@color"></span>
+                                    </label>
+                                }
+                            </div>
+                            <textarea class="form-textarea" name="description" required>@badge.Description</textarea>
+                            <button class="btn btn-primary btn-sm" type="submit">Save</button>
+                        </form>
+                    </details>
+                    <form method="post" asp-page-handler="Award" class="admin-inline-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@badge.Id" />
+                        <select class="form-select form-input-sm admin-user-select" name="userId" required>
+                            <option value="">Chọn người nhận</option>
+                            @foreach (var user in Model.AwardUsers)
+                            {
+                                <option value="@user.Id">@user.Username (@user.Email) - @user.Role</option>
+                            }
+                        </select>
+                        <button class="btn btn-secondary btn-sm" type="submit">Award</button>
+                    </form>
+                    <form method="post" asp-page-handler="Delete" onsubmit="return confirm('Delete this badge?')">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@badge.Id" />
+                        <button class="btn btn-danger btn-sm w-full" type="submit">Delete</button>
+                    </form>
+                </div>
+            </article>
+        }
+    </div>
+}
+
+<div class="modal-overlay" id="addModal">
+    <div class="modal">
+        <div class="modal__header">
+            <div class="modal__title">Create badge</div>
+            <button class="modal__close" type="button" onclick="closeModal('addModal')">x</button>
+        </div>
+        <form method="post" asp-page-handler="Add" class="flex-col gap-md" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <label class="form-group"><span class="form-label">Name</span><input name="name" class="form-input" required /></label>
+            <label class="form-group">
+                <span class="form-label">Icon emoji</span>
+                <input class="form-input" asp-for="CreateIconValue" list="badgeIconOptions" placeholder="Chọn hoặc nhập emoji" />
+                <span class="form-hint">Khuyến nghị dùng emoji để badge đồng nhất và nhẹ.</span>
+            </label>
+            <label class="form-group">
+                <span class="form-label">Icon image tùy chọn</span>
+                <input class="form-input" asp-for="CreateIconFile" type="file" accept="image/svg+xml,image/png,image/jpeg,image/webp" />
+                <span class="form-hint">Chỉ dùng ảnh cho badge đặc biệt. SVG, PNG, JPG, hoặc WEBP. Max 1MB.</span>
+            </label>
+            <label class="form-group"><span class="form-label">Description</span><textarea name="description" class="form-textarea" required></textarea></label>
+            <label class="form-group">
+                <span class="form-label">Color</span>
+                <span class="admin-color-swatches">
+                    @foreach (var color in BadgeColors)
+                    {
+                        <label class="admin-color-swatch" title="@color">
+                            <input type="radio" name="color" value="@color" checked="@(color == BadgeColors[0])" />
+                            <span style="background:@color"></span>
+                        </label>
+                    }
+                </span>
+            </label>
+            <div class="modal__footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<datalist id="badgeIconOptions">
+    @foreach (var icon in BadgeIcons)
+    {
+        <option value="@icon"></option>
+    }
+</datalist>
+
+@functions {
+    private static bool IsImageIcon(string? icon)
+    {
+        if (string.IsNullOrWhiteSpace(icon)) return false;
+        return Uri.TryCreate(icon, UriKind.Absolute, out _)
+            || icon.StartsWith("/", StringComparison.Ordinal)
+            || icon.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static readonly string[] BadgeIcons =
+    [
+        "🏅",
+        "⭐",
+        "📚",
+        "✍️",
+        "🔥",
+        "💎",
+        "🎯",
+        "🏆",
+        "🌟",
+        "🚀",
+        "💬",
+        "❤️"
+    ];
+
+    private static readonly string[] BadgeColors =
+    [
+        "#FFD700",
+        "#3B82F6",
+        "#10B981",
+        "#8B5CF6",
+        "#EF4444",
+        "#F97316",
+        "#14B8A6",
+        "#111827"
+    ];
+}

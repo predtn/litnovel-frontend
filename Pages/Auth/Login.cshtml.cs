@@ -15,7 +15,10 @@ public class LoginModel : PageModel
 
     public IActionResult OnGet(string? returnUrl = null)
     {
-        if (_auth.IsAuthenticated(HttpContext)) return RedirectToPage("/Index");
+        if (_auth.IsAuthenticated(HttpContext))
+        {
+            return Redirect(GetRoleHome(_auth.GetCurrentUser(HttpContext)?.Role));
+        }
         ReturnUrl = returnUrl;
         return Page();
     }
@@ -27,9 +30,24 @@ public class LoginModel : PageModel
             TempData["Error"] = "Vui lòng điền đầy đủ thông tin.";
             return Page();
         }
-        var (success, error) = await _auth.LoginAsync(HttpContext, Identifier, Password);
-        if (success) return Redirect(returnUrl ?? "/");
+        var (success, error, user) = await _auth.LoginAsync(HttpContext, Identifier, Password);
+        if (success)
+        {
+            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+
+            return Redirect(GetRoleHome(user?.Role));
+        }
         TempData["Error"] = error;
         return Page();
     }
+
+    private static string GetRoleHome(string? role) => role?.Trim().ToLowerInvariant() switch
+    {
+        "admin" => "/Admin/Dashboard",
+        "staff" => "/Staff/Dashboard",
+        _ => "/"
+    };
 }

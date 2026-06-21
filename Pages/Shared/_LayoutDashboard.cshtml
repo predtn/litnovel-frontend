@@ -1,128 +1,54 @@
+@using Microsoft.AspNetCore.Http
+@{
+    var sessionNotice = Context.Session.GetString("SessionNotice");
+    var sessionNoticeType = Context.Session.GetString("SessionNoticeType") ?? "info";
+    var activeNav = ViewData["ActiveNav"]?.ToString() ?? "";
+    var isStaffArea = activeNav.StartsWith("staff", StringComparison.OrdinalIgnoreCase) ||
+        Context.Request.Path.StartsWithSegments("/Staff");
+    var dashboardHome = isStaffArea ? "/Staff/Dashboard" : "/Admin/Dashboard";
+    var dashboardLabel = isStaffArea ? "Staff Console" : "Admin Console";
+    if (!string.IsNullOrWhiteSpace(sessionNotice))
+    {
+        Context.Session.Remove("SessionNotice");
+        Context.Session.Remove("SessionNoticeType");
+    }
+}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@(ViewData["Title"] != null ? ViewData["Title"] + " — LitNovel" : "LitNovel")</title>
+    <title>@(ViewData["Title"] != null ? ViewData["Title"] + " - LitNovel" : "LitNovel")</title>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body>
-    <!-- Navbar (giống _Layout) -->
-    <nav class="navbar" id="navbar">
-        <div class="navbar__inner">
-            <!-- Logo -->
-            <a href="/" class="navbar__logo">Lit<span>Novel</span></a>
-
-            <!-- Desktop Links -->
-            <div class="navbar__links">
-                <a href="/Novels" class="navbar__link">Thư viện</a>
-                <a href="/Novels/Search" class="navbar__link">Tìm kiếm</a>
-                @if (Context.User.IsInRole("Staff") || Context.User.IsInRole("Admin"))
-                {
-                    <a href="/Staff/Dashboard" class="navbar__link @(ViewData["ActiveNav"]?.ToString()?.StartsWith("staff") == true ? "active" : "")">Kiểm duyệt</a>
-                }
-                @if (Context.User.IsInRole("Admin"))
-                {
-                    <a href="/Admin/Dashboard" class="navbar__link @(ViewData["ActiveNav"]?.ToString()?.StartsWith("admin") == true ? "active" : "")">Quản trị</a>
-                }
+<body class="admin-body">
+    <div class="dashboard-shell dashboard-shell--admin">
+        <aside class="sidebar admin-sidebar" id="dashSidebar">
+            <div class="admin-brand">
+                <a href="@dashboardHome" class="admin-brand__logo">Lit<span>Novel</span></a>
+                <div class="admin-brand__label">@dashboardLabel</div>
             </div>
-
-            <!-- Actions -->
-            <div class="navbar__actions">
-                <!-- Notification Bell -->
-                <a href="/Notifications" class="navbar__bell" id="notifBell" title="Thông báo">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                    @if (ViewData["UnreadCount"] is int count && count > 0)
-                    {
-                        <span class="navbar__bell-count">@(count > 9 ? "9+" : count)</span>
-                    }
-                </a>
-
-                <!-- User Avatar Dropdown -->
-                <div class="dropdown" id="userDropdown">
-                    <div class="navbar__avatar" onclick="toggleDropdown()">
-                        @if (ViewData["UserAvatar"] is string avatar && !string.IsNullOrEmpty(avatar))
-                        {
-                            <img src="@avatar" alt="Avatar" />
-                        }
-                        else
-                        {
-                            <div class="navbar__avatar-placeholder">
-                                @(ViewData["UserName"]?.ToString()?.Substring(0, 1).ToUpper() ?? "U")
-                            </div>
-                        }
-                    </div>
-                    <div class="dropdown__menu">
-                        <div style="padding: var(--space-xs) var(--space-sm); margin-bottom: var(--space-xs);">
-                            <div style="font-size: 14px; font-weight: 500; color: var(--color-ink);">@ViewData["UserName"]</div>
-                            <div style="font-size: 12px; color: var(--color-mute);">@ViewData["UserEmail"]</div>
-                        </div>
-                        <div class="dropdown__divider"></div>
-                        <a href="/Profile" class="dropdown__item">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            Hồ sơ cá nhân
-                        </a>
-                        <a href="/Publish" class="dropdown__item">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7-7 7 7"/></svg>
-                            Tiểu thuyết của tôi
-                        </a>
-                        <a href="/Reading/History" class="dropdown__item">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-                            Lịch sử đọc
-                        </a>
-                        <a href="/Reading/Favorites" class="dropdown__item">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                            Yêu thích
-                        </a>
-                        <div class="dropdown__divider"></div>
-                        <a href="/Profile/ChangePassword" class="dropdown__item">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                            Đổi mật khẩu
-                        </a>
-                        <form method="post" action="/Auth/Logout" style="display:contents">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="dropdown__item danger">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                                Đăng xuất
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Hamburger -->
-                <button class="navbar__hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
-                    <span></span><span></span><span></span>
-                </button>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Mobile Menu -->
-    <div class="mobile-menu" id="mobileMenu">
-        <button class="mobile-menu__close" onclick="toggleMobileMenu()">✕</button>
-        <a href="/Novels" class="mobile-menu__link">Thư viện</a>
-        <a href="/Novels/Search" class="mobile-menu__link">Tìm kiếm</a>
-        <a href="/Profile" class="mobile-menu__link">Hồ sơ</a>
-        <a href="/Publish" class="mobile-menu__link">Tiểu thuyết của tôi</a>
-        <a href="/Notifications" class="mobile-menu__link">Thông báo</a>
-    </div>
-
-
-    <!-- Dashboard shell: sidebar + content -->
-    <div class="dashboard-shell">
-        <!-- Sidebar -->
-        <aside class="sidebar" id="dashSidebar">
             @await RenderSectionAsync("Sidebar", required: false)
+            <div class="admin-sidebar__footer">
+                <div class="text-caption text-mute">@ViewData["UserName"]</div>
+                <form method="post" action="/Auth/Logout">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-secondary btn-sm w-full">Đăng xuất</button>
+                </form>
+            </div>
         </aside>
 
-        <!-- Main content -->
-        <div class="dashboard-content">
+        <main class="dashboard-content admin-content">
             @RenderBody()
-        </div>
+        </main>
     </div>
 
     <div class="toast-container" id="toastContainer"></div>
+    @if (!string.IsNullOrWhiteSpace(sessionNotice))
+    {
+        <div id="serverToast" data-message="@sessionNotice" data-type="@sessionNoticeType" hidden></div>
+    }
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
