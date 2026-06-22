@@ -14,7 +14,13 @@ public class ManageModel : PublishPageModel
         var guard = RequireAuthor();
         if (guard != null) return guard;
         var result = await Api.GetAsync<NovelDetailDto>($"/api/novels/{id}", Token);
-        Novel = result?.Data ?? MockNovel(id);
+        if (!IsApiSuccess(result) || result?.Data == null)
+        {
+            TempData["Error"] = ApiFailureMessage(result, "Unable to load novel.");
+            return RedirectToPage("/Publish/Index");
+        }
+
+        Novel = result.Data;
         return Page();
     }
 

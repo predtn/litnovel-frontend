@@ -1,8 +1,9 @@
-@page "/Novels/{novelSlug}/{chapterId:int}/read"
+@page "/Novels/{novelSlug}/{chapterSlug}/read"
 @model litnovel_frontend.Pages.Novels.ReadModel
 @{
     ViewData["Title"] = Model.Chapter?.Title ?? "Đọc chương";
     var ch = Model.Chapter;
+    var novelUrl = !string.IsNullOrWhiteSpace(ch?.Novel?.Slug) ? ch.Novel.Slug : ch?.Novel?.Id.ToString();
 }
 @if (ch == null)
 {
@@ -15,7 +16,7 @@
     <div class="container" style="display:flex; align-items:center; justify-content:space-between;">
         <div class="breadcrumb" style="margin:0;">
             <a href="/">Home</a><span class="breadcrumb__sep">/</span>
-            <a href="/Novels/@ch.Novel?.Slug">@ch.Novel?.Title</a><span class="breadcrumb__sep">/</span>
+            <a href="/Novels/@novelUrl">@ch.Novel?.Title</a><span class="breadcrumb__sep">/</span>
             <span class="breadcrumb__current">Ch.@ch.ChapterNumber</span>
         </div>
         <div class="flex gap-sm items-center">
@@ -30,7 +31,7 @@
 <div class="reader-layout" id="readerLayout">
     <div class="reader-header">
         <div class="reader-novel-title">
-            <a href="/Novels/@ch.Novel?.Slug" style="color:var(--color-mute); text-decoration:none;">@ch.Novel?.Title</a>
+            <a href="/Novels/@novelUrl" style="color:var(--color-mute); text-decoration:none;">@ch.Novel?.Title</a>
         </div>
         <h1 class="reader-chapter-title">@ch.Title</h1>
         <div class="text-caption text-mute mt-xs">Chương @ch.ChapterNumber · @ch.CreatedAt.ToString("dd/MM/yyyy")</div>
@@ -45,17 +46,19 @@
     <div class="reader-nav">
         @if (ch.PrevChapter != null)
         {
-            <a href="/Novels/@ch.Novel?.Slug/@ch.PrevChapter.Id/read" class="btn btn-secondary">
+            var prevUrl = !string.IsNullOrWhiteSpace(ch.PrevChapter.Slug) ? ch.PrevChapter.Slug : ch.PrevChapter.Id.ToString();
+            <a href="/Novels/@novelUrl/@prevUrl/read" class="btn btn-secondary">
                 ← Ch.@ch.PrevChapter.ChapterNumber
             </a>
         }
         else { <span></span> }
 
-        <a href="/Novels/@ch.Novel?.Slug" class="btn btn-ghost">Danh sách chương</a>
+        <a href="/Novels/@novelUrl" class="btn btn-ghost">Danh sách chương</a>
 
         @if (ch.NextChapter != null)
         {
-            <a href="/Novels/@ch.Novel?.Slug/@ch.NextChapter.Id/read" class="btn btn-primary">
+            var nextUrl = !string.IsNullOrWhiteSpace(ch.NextChapter.Slug) ? ch.NextChapter.Slug : ch.NextChapter.Id.ToString();
+            <a href="/Novels/@novelUrl/@nextUrl/read" class="btn btn-primary">
                 Ch.@ch.NextChapter.ChapterNumber →
             </a>
         }
@@ -72,6 +75,7 @@
         {
             <form method="post" asp-page-handler="Comment" class="mb-xl">
                 @Html.AntiForgeryToken()
+                <input type="hidden" name="chapterId" value="@ch.Id" />
                 <div class="flex gap-md">
                     <div class="avatar-placeholder avatar-sm" style="flex-shrink:0;">@(ViewData["UserName"]?.ToString()?.Substring(0,1).ToUpper() ?? "U")</div>
                     <div style="flex:1;">
@@ -109,6 +113,7 @@
                     {
                         <form method="post" asp-page-handler="Reply" id="replyForm-@comment.Id" class="hidden mt-sm" style="margin-left:0;">
                             @Html.AntiForgeryToken()
+                            <input type="hidden" name="chapterId" value="@ch.Id" />
                             <input type="hidden" name="parentCommentId" value="@comment.Id" />
                             <div class="flex gap-sm">
                                 <textarea class="form-textarea" name="content" placeholder="Trả lời..." rows="2" style="min-height:60px;"></textarea>

@@ -87,7 +87,8 @@
                 <div class="grid-4" style="grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:var(--space-md);">
                     @foreach (var novel in Model.Novels)
                     {
-                        <a href="/Novels/@novel.Slug" class="novel-card">
+                        var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
+                        <a href="/Novels/@novelUrl" class="novel-card">
                             @if (!string.IsNullOrEmpty(novel.CoverImage))
                             {
                                 <img class="novel-card__cover" src="@novel.CoverImage" alt="@novel.Title" loading="lazy" />

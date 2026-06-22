@@ -4,7 +4,7 @@
 <!-- SCR-14: Reading History -->
 <div class="container" style="padding-top:var(--space-xl);padding-bottom:var(--space-4xl);">
     <div class="page-header">
-        <h1 class="page-header__title">📖 Lịch sử đọc</h1>
+        <h1 class="page-header__title">Lịch sử đọc</h1>
     </div>
     @if (!Model.History.Any())
     {
@@ -15,10 +15,12 @@
         <div style="display:flex;flex-direction:column;gap:var(--space-sm);">
             @foreach (var h in Model.History)
             {
+                var novelUrl = !string.IsNullOrWhiteSpace(h.Novel?.Slug) ? h.Novel.Slug : h.Novel?.Id.ToString();
+                var chapterUrl = !string.IsNullOrWhiteSpace(h.LastChapter?.Slug) ? h.LastChapter.Slug : h.LastChapter?.Id.ToString();
                 <div class="flex gap-md" style="background:var(--color-canvas);border-radius:var(--radius-md);padding:var(--space-md);border:1px solid var(--color-hairline);">
                     <div style="width:56px;height:76px;background:var(--color-canvas-soft-2);border-radius:var(--radius-xs);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">📖</div>
                     <div style="flex:1;min-width:0;">
-                        <a href="/Novels/@h.Novel?.Slug" class="text-body-sm font-medium text-ink">@h.Novel?.Title</a>
+                        <a href="/Novels/@novelUrl" class="text-body-sm font-medium text-ink">@h.Novel?.Title</a>
                         <div class="text-caption text-mute mt-xs">Đọc đến: @h.LastChapter?.Title</div>
                         <div style="margin-top:var(--space-xs);">
                             <div class="progress" style="margin-bottom:4px;"><div class="progress__bar" style="width:@h.ProgressPercentage%;"></div></div>
@@ -26,7 +28,7 @@
                         </div>
                     </div>
                     <div style="flex-shrink:0;">
-                        <a href="/Novels/@h.Novel?.Slug/@h.LastChapter?.Id/read" class="btn btn-primary btn-sm" style="border-radius:var(--radius-sm);">Tiếp tục</a>
+                        <a href="/Novels/@novelUrl/@chapterUrl/read" class="btn btn-primary btn-sm" style="border-radius:var(--radius-sm);">Tiếp tục</a>
                     </div>
                 </div>
             }

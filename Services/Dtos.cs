@@ -131,6 +131,7 @@ public class VolumeWithChaptersDto : VolumeDto
 public class ChapterNavDto
 {
     public int Id { get; set; }
+    public string Slug { get; set; } = "";
     public int VolumeId { get; set; }
     public int ChapterNumber { get; set; }
     public string Title { get; set; } = "";

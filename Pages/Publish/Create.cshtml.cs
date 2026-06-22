@@ -222,8 +222,8 @@ public class CreateModel : PublishPageModel
         var catTask = Api.GetAsync<List<CategoryDto>>("/api/categories", Token);
         var tagTask = Api.GetAsync<List<TagDto>>("/api/tags", Token);
         await Task.WhenAll(catTask, tagTask);
-        Categories = catTask.Result?.Data ?? MockCategories();
-        Tags = tagTask.Result?.Data ?? MockTags();
+        Categories = catTask.Result?.Data ?? [];
+        Tags = tagTask.Result?.Data ?? [];
     }
 }
 

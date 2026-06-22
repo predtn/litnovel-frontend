@@ -89,7 +89,7 @@
         // Link dựa vào NotificationType vì có thể suy luận đích đến
         var type = n.NotificationType ?? n.Type;
         return type switch {
-            "NewChapter"   => n.EntityId.HasValue ? $"/Novels/read/{n.EntityId}" : "",
+            "NewChapter"   => "",
             "NewComment"   => "/Notifications",
             "CommentReply" => "/Notifications",
             "CommentLike"  => "/Notifications",
@@ -98,8 +98,8 @@
             "SystemAlert"  => "",
             // Fallback theo EntityType nếu có
             _ => n.EntityType switch {
-                "Novel"   => n.EntityId.HasValue ? $"/Novels/{n.EntityId}" : "",
-                "Chapter" => n.EntityId.HasValue ? $"/Novels/read/{n.EntityId}" : "",
+                "Novel"   => "",
+                "Chapter" => "",
                 _         => ""
             }
         };

@@ -23,7 +23,8 @@ public class EditModel : PublishPageModel
     {
         var guard = RequireAuthor();
         if (guard != null) return guard;
-        await LoadAsync(id);
+        var loaded = await LoadAsync(id);
+        if (!loaded) return RedirectToPage("/Publish/Index");
         Input = new()
         {
             Title = Novel.Title,
@@ -99,14 +100,21 @@ public class EditModel : PublishPageModel
         Input.CoverImage = $"{Request.Scheme}://{Request.Host}/{relativePath.Replace('\\', '/')}";
     }
 
-    private async Task LoadAsync(int id)
+    private async Task<bool> LoadAsync(int id)
     {
         var novelTask = Api.GetAsync<NovelDetailDto>($"/api/novels/{id}", Token);
         var catTask = Api.GetAsync<List<CategoryDto>>("/api/categories", Token);
         var tagTask = Api.GetAsync<List<TagDto>>("/api/tags", Token);
         await Task.WhenAll(novelTask, catTask, tagTask);
-        Novel = novelTask.Result?.Data ?? MockNovel(id);
-        Categories = catTask.Result?.Data ?? MockCategories();
-        Tags = tagTask.Result?.Data ?? MockTags();
+        if (!IsApiSuccess(novelTask.Result) || novelTask.Result?.Data == null)
+        {
+            TempData["Error"] = ApiFailureMessage(novelTask.Result, "Unable to load novel.");
+            return false;
+        }
+
+        Novel = novelTask.Result.Data;
+        Categories = catTask.Result?.Data ?? [];
+        Tags = tagTask.Result?.Data ?? [];
+        return true;
     }
 }

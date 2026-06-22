@@ -16,14 +16,9 @@ public class SearchModel : PageModel
         if (!string.IsNullOrWhiteSpace(keyword))
         {
             var r = await _api.GetAsync<PagedData<NovelSummaryDto>>($"/api/novels?keyword={Uri.EscapeDataString(keyword)}&page={page}&size=15&sort=viewCount&order=desc");
-            Results = r?.Data?.Items ?? MockSearch(keyword);
+            Results = r?.Data?.Items ?? [];
             TotalPages = r?.Data?.TotalPages ?? 1;
             TotalElements = r?.Data?.TotalElements ?? Results.Count;
         }
     }
-    private List<NovelSummaryDto> MockSearch(string kw) =>
-    [
-        new() { Title = $"{kw} - Kết quả 1", Slug = "result-1", Author = new() { Username = "author1" }, Status = "Ongoing", RatingAverage = 4.5, ViewCount = 12000, TotalChapters = 120 },
-        new() { Title = $"{kw} - Kết quả 2", Slug = "result-2", Author = new() { Username = "author2" }, Status = "Ended",   RatingAverage = 4.2, ViewCount = 8500,  TotalChapters = 280 },
-    ];
 }

@@ -40,7 +40,9 @@
                 @{ var firstChapter = novel.Volumes.SelectMany(v => v.Chapters).FirstOrDefault(); }
                 @if (firstChapter != null)
                 {
-                    <a href="/Novels/@novel.Slug/@firstChapter.Id/read" class="btn btn-primary" style="border-radius:var(--radius-sm); width:100%;">
+                    var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
+                    var firstChapterUrl = !string.IsNullOrWhiteSpace(firstChapter.Slug) ? firstChapter.Slug : firstChapter.Id.ToString();
+                    <a href="/Novels/@novelUrl/@firstChapterUrl/read" class="btn btn-primary" style="border-radius:var(--radius-sm); width:100%;">
                         📖 Đọc ngay
                     </a>
                 }
@@ -127,7 +129,9 @@
                 <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:var(--space-xs);">
                     @foreach (var ch in vol.Chapters)
                     {
-                        <a href="/Novels/@novel.Slug/@ch.Id/read" style="display:flex; align-items:center; gap:var(--space-sm); padding:var(--space-xs) var(--space-sm); border-radius:var(--radius-sm); font-size:var(--text-body-sm); color:var(--color-body); text-decoration:none; transition:background .15s;">
+                        var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
+                        var chapterUrl = !string.IsNullOrWhiteSpace(ch.Slug) ? ch.Slug : ch.Id.ToString();
+                        <a href="/Novels/@novelUrl/@chapterUrl/read" style="display:flex; align-items:center; gap:var(--space-sm); padding:var(--space-xs) var(--space-sm); border-radius:var(--radius-sm); font-size:var(--text-body-sm); color:var(--color-body); text-decoration:none; transition:background .15s;">
                             <span style="color:var(--color-mute); min-width:40px; font-size:var(--text-caption);">Ch.@ch.ChapterNumber</span>
                             <span class="truncate">@ch.Title</span>
                             @if (ch.Status == "Published")
@@ -166,6 +170,7 @@
                 <h3 class="text-body-sm font-semibold mb-md">Viết đánh giá của bạn</h3>
                 <form method="post" asp-page-handler="Review">
                     @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@novel.Id" />
                     <div class="star-rating mb-md" id="starRating">
                         @for (int s = 1; s <= 5; s++) { <span class="star" data-val="@s">★</span> }
                     </div>

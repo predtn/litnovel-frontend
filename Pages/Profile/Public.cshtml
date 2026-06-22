@@ -88,7 +88,8 @@
         <div class="grid-4" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr));">
             @foreach (var n in Model.Novels)
             {
-                <a href="/Novels/@n.Slug" class="novel-card">
+                var novelUrl = !string.IsNullOrWhiteSpace(n.Slug) ? n.Slug : n.Id.ToString();
+                <a href="/Novels/@novelUrl" class="novel-card">
                     <div class="novel-card__cover-placeholder">📖</div>
                     <div class="novel-card__body">
                         <div class="novel-card__title">@n.Title</div>

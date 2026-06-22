@@ -33,7 +33,7 @@ public class IndexModel : PublishPageModel
             filters: [ODataQuery.Eq("Status", status)]);
         var result = await Api.GetAsync<PagedData<NovelSummaryDto>>(endpoint, Token);
         var data = result?.Data;
-        Novels = data?.Items ?? MockMyNovels();
+        Novels = data?.Items ?? [];
         TotalPages = data?.TotalPages ?? 1;
         TotalElements = data?.TotalElements ?? Novels.Count;
         return Page();

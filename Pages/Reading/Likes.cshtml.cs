@@ -10,7 +10,7 @@ public class LikesModel : PageModel
         var token = _auth.GetToken(HttpContext);
         if (string.IsNullOrEmpty(token)) return RedirectToPage("/Auth/Login");
         var r = await _api.GetAsync<List<NovelSummaryDto>>("/api/users/me/likes", token);
-        Novels = r?.Data ?? [new() { Title = "Thiên Đạo Thư Viện", Slug = "thien-dao", RatingAverage = 4.8 }];
+        Novels = r?.Data ?? [];
         var u = _auth.GetCurrentUser(HttpContext); if (u != null) { ViewData["UserName"] = u.Username; ViewData["UserAvatar"] = u.Avatar; }
         return Page();
     }

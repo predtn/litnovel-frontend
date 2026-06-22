@@ -16,7 +16,8 @@ public class ChaptersModel : PublishPageModel
     {
         var guard = RequireAuthor();
         if (guard != null) return guard;
-        await LoadAsync(volumeId, novelId);
+        var loaded = await LoadAsync(volumeId, novelId);
+        if (!loaded) return RedirectToPage("/Publish/Manage", new { id = novelId });
         return Page();
     }
 
@@ -38,13 +39,26 @@ public class ChaptersModel : PublishPageModel
         return RedirectToPage(new { volumeId, novelId });
     }
 
-    private async Task LoadAsync(int volumeId, int novelId)
+    private async Task<bool> LoadAsync(int volumeId, int novelId)
     {
         var novelTask = Api.GetAsync<NovelDetailDto>($"/api/novels/{novelId}", Token);
         var chapterTask = Api.GetAsync<PagedData<ChapterNavDto>>($"/api/volumes/{volumeId}/chapters" + ODataQuery.Build(size: 50, orderBy: "ChapterNumber asc"), Token);
         await Task.WhenAll(novelTask, chapterTask);
-        Novel = novelTask.Result?.Data ?? MockNovel(novelId);
-        Volume = Novel.Volumes.FirstOrDefault(v => v.Id == volumeId) ?? Novel.Volumes.First();
+        if (!IsApiSuccess(novelTask.Result) || novelTask.Result?.Data == null)
+        {
+            TempData["Error"] = ApiFailureMessage(novelTask.Result, "Unable to load novel.");
+            return false;
+        }
+
+        Novel = novelTask.Result.Data;
+        var volume = Novel.Volumes.FirstOrDefault(v => v.Id == volumeId);
+        if (volume == null)
+        {
+            TempData["Error"] = "Unable to load volume.";
+            return false;
+        }
+
+        Volume = volume;
         if (chapterTask.Result?.Success == false)
         {
             TempData["Error"] = ApiFailureMessage(chapterTask.Result, "Unable to load chapters.");
@@ -52,6 +66,7 @@ public class ChaptersModel : PublishPageModel
 
         Chapters = chapterTask.Result?.Data?.Items ?? Novel.Volumes.FirstOrDefault(v => v.Id == volumeId)?.Chapters ?? [];
         await FillMissingWordCountsAsync();
+        return true;
     }
 
     private async Task FillMissingWordCountsAsync()
@@ -68,11 +83,6 @@ public class ChaptersModel : PublishPageModel
         foreach (var chapter in missing)
         {
             var detail = detailTasks[chapter.Id].Result?.Data;
-            if (detail == null && chapter.WordCount <= 0)
-            {
-                detail = MockChapter(chapter.Id);
-            }
-
             chapter.WordCount = CountWords(detail?.Content);
         }
     }

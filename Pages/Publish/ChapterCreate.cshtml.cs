@@ -17,7 +17,8 @@ public class ChapterCreateModel : PublishPageModel
     {
         var guard = RequireAuthor();
         if (guard != null) return guard;
-        await LoadAsync(volumeId, novelId);
+        var loaded = await LoadAsync(volumeId, novelId);
+        if (!loaded) return RedirectToPage("/Publish/Manage", new { id = novelId });
         Input.ChapterNumber = (Novel.Volumes.FirstOrDefault(v => v.Id == volumeId)?.Chapters.Count ?? 0) + 1;
         return Page();
     }
@@ -71,11 +72,25 @@ public class ChapterCreateModel : PublishPageModel
     private static bool IsDraft(string? status)
         => string.Equals(status, "Draft", StringComparison.OrdinalIgnoreCase);
 
-    private async Task LoadAsync(int volumeId, int novelId)
+    private async Task<bool> LoadAsync(int volumeId, int novelId)
     {
         var result = await Api.GetAsync<NovelDetailDto>($"/api/novels/{novelId}", Token);
-        Novel = result?.Data ?? MockNovel(novelId);
-        Volume = Novel.Volumes.FirstOrDefault(v => v.Id == volumeId) ?? Novel.Volumes.First();
+        if (!IsApiSuccess(result) || result?.Data == null)
+        {
+            TempData["Error"] = ApiFailureMessage(result, "Unable to load novel.");
+            return false;
+        }
+
+        Novel = result.Data;
+        var volume = Novel.Volumes.FirstOrDefault(v => v.Id == volumeId);
+        if (volume == null)
+        {
+            TempData["Error"] = "Unable to load volume.";
+            return false;
+        }
+
+        Volume = volume;
+        return true;
     }
 
     private static int CountWords(string? value)

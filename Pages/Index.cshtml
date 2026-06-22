@@ -76,7 +76,9 @@
                 {
                     var novel = item.Novel;
                     var chapter = item.LastChapter;
-                    <a href="@(chapter != null ? $"/Novels/{novel?.Slug}/{chapter.Id}/read" : $"/Novels/{novel?.Slug}")" class="home-continue-card">
+                    var novelUrl = !string.IsNullOrWhiteSpace(novel?.Slug) ? novel.Slug : novel?.Id.ToString();
+                    var chapterUrl = !string.IsNullOrWhiteSpace(chapter?.Slug) ? chapter.Slug : chapter?.Id.ToString();
+                    <a href="@(chapter != null ? $"/Novels/{novelUrl}/{chapterUrl}/read" : $"/Novels/{novelUrl}")" class="home-continue-card">
                         @if (!string.IsNullOrEmpty(novel?.CoverImage))
                         {
                             <img src="@novel.CoverImage" alt="@novel.Title" class="home-continue-card__cover" loading="lazy" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
@@ -114,7 +116,8 @@
         <div class="home-novel-grid">
             @foreach (var novel in Model.TrendingNovels)
             {
-                <a href="/Novels/@novel.Slug" class="novel-card">
+                var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
+                <a href="/Novels/@novelUrl" class="novel-card">
                     @if (!string.IsNullOrEmpty(novel.CoverImage))
                     {
                         <img class="novel-card__cover" src="@novel.CoverImage" alt="@novel.Title" loading="lazy" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
@@ -151,7 +154,8 @@
         <div class="home-update-grid">
             @foreach (var novel in Model.NewNovels)
             {
-                <a href="/Novels/@novel.Slug" class="home-update-card">
+                var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
+                <a href="/Novels/@novelUrl" class="home-update-card">
                     @if (!string.IsNullOrEmpty(novel.CoverImage))
                     {
                         <img src="@novel.CoverImage" alt="@novel.Title" class="home-update-card__cover" loading="lazy" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
@@ -194,7 +198,8 @@
         <div class="home-novel-grid">
             @foreach (var novel in Model.TopRatedNovels)
             {
-                <a href="/Novels/@novel.Slug" class="novel-card">
+                var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
+                <a href="/Novels/@novelUrl" class="novel-card">
                     @if (!string.IsNullOrEmpty(novel.CoverImage))
                     {
                         <img class="novel-card__cover" src="@novel.CoverImage" alt="@novel.Title" loading="lazy" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
