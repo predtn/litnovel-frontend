@@ -2,7 +2,7 @@
 @model litnovel_frontend.Pages.Admin.DashboardModel
 @{
     Layout = "_LayoutDashboard";
-    ViewData["Title"] = "Admin Dashboard";
+    ViewData["Title"] = "Bảng điều khiển quản trị";
     ViewData["ActiveNav"] = "admin";
     var s = Model.Stats;
 }
@@ -20,7 +20,7 @@
 @if (!string.IsNullOrWhiteSpace(Model.LoadError))
 {
     <div class="card-soft mb-xl" style="border-color:var(--color-warning);">
-        <div class="font-semibold mb-sm">Khong tai duoc du lieu thong ke</div>
+        <div class="font-semibold mb-sm">Không tải được dữ liệu thống kê</div>
         <p class="text-body-sm text-body">@Model.LoadError</p>
     </div>
 }
@@ -93,7 +93,7 @@
     <div class="card">
         <h3 class="text-body-sm font-semibold mb-md">⚙️ Hệ thống</h3>
         <div class="flex gap-sm" style="flex-wrap:wrap;">
-            <a href="/Admin/AuditLogs" class="btn btn-secondary btn-sm">Audit Logs</a>
+            <a href="/Admin/AuditLogs" class="btn btn-secondary btn-sm">Nhật ký kiểm toán</a>
             <a href="/Admin/Announcements" class="btn btn-secondary btn-sm">Thông báo trang</a>
         </div>
     </div>

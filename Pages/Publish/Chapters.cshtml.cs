@@ -26,7 +26,7 @@ public class ChaptersModel : PublishPageModel
         var guard = RequireAuthor();
         if (guard != null) return guard;
         var result = await Api.PostAsync<object>($"/api/chapters/{id}/submit", null, Token);
-        SetApiResultMessage(result, "Chapter submitted.", "Unable to submit chapter.");
+        SetApiResultMessage(result, "Chương đã được gửi duyệt.", "Không thể gửi duyệt chương.");
         return RedirectToPage(new { volumeId, novelId });
     }
 
@@ -35,7 +35,7 @@ public class ChaptersModel : PublishPageModel
         var guard = RequireAuthor();
         if (guard != null) return guard;
         var result = await Api.DeleteAsync<object>($"/api/chapters/{id}", Token);
-        SetApiResultMessage(result, "Chapter deleted.", "Unable to delete chapter.");
+        SetApiResultMessage(result, "Đã xóa chương.", "Không thể xóa chương.");
         return RedirectToPage(new { volumeId, novelId });
     }
 
@@ -46,7 +46,7 @@ public class ChaptersModel : PublishPageModel
         await Task.WhenAll(novelTask, chapterTask);
         if (!IsApiSuccess(novelTask.Result) || novelTask.Result?.Data == null)
         {
-            TempData["Error"] = ApiFailureMessage(novelTask.Result, "Unable to load novel.");
+            TempData["Error"] = ApiFailureMessage(novelTask.Result, "Không thể tải truyện.");
             return false;
         }
 
@@ -54,14 +54,14 @@ public class ChaptersModel : PublishPageModel
         var volume = Novel.Volumes.FirstOrDefault(v => v.Id == volumeId);
         if (volume == null)
         {
-            TempData["Error"] = "Unable to load volume.";
+            TempData["Error"] = "Không thể tải tập.";
             return false;
         }
 
         Volume = volume;
         if (chapterTask.Result?.Success == false)
         {
-            TempData["Error"] = ApiFailureMessage(chapterTask.Result, "Unable to load chapters.");
+            TempData["Error"] = ApiFailureMessage(chapterTask.Result, "Không thể tải danh sách chương.");
         }
 
         Chapters = chapterTask.Result?.Data?.Items ?? Novel.Volumes.FirstOrDefault(v => v.Id == volumeId)?.Chapters ?? [];

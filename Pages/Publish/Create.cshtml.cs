@@ -38,7 +38,7 @@ public class CreateModel : PublishPageModel
 
         if (string.IsNullOrWhiteSpace(Input.Title))
         {
-            ModelState.AddModelError("Input.Title", "Title is required.");
+            ModelState.AddModelError("Input.Title", "Cần nhập tiêu đề.");
         }
 
         if (!ModelState.IsValid)
@@ -50,7 +50,7 @@ public class CreateModel : PublishPageModel
         var created = await Api.PostAsync<NovelSummaryDto>("/api/novels", Input, Token);
         if (!IsApiSuccess(created))
         {
-            SetResponseError(ApiFailureMessage(created, "Unable to create novel."));
+            SetResponseError(ApiFailureMessage(created, "Không thể tạo truyện."));
             await LoadLookupsAsync();
             return Page();
         }
@@ -67,7 +67,7 @@ public class CreateModel : PublishPageModel
             var draftResult = await Api.PutAsync<NovelSummaryDto>($"/api/novels/{id}", Input, Token);
             if (!IsApiSuccess(draftResult))
             {
-                SetResponseError(ApiFailureMessage(draftResult, "Novel was created, but could not be kept as a draft."));
+                SetResponseError(ApiFailureMessage(draftResult, "Truyện đã được tạo nhưng không thể giữ ở bản nháp."));
                 await LoadLookupsAsync();
                 return Page();
             }
@@ -78,13 +78,13 @@ public class CreateModel : PublishPageModel
             var submitResult = await Api.PostAsync<object>($"/api/novels/{id}/submit", null, Token);
             if (!IsApiSuccess(submitResult))
             {
-                SetResponseError(ApiFailureMessage(submitResult, "Novel was saved as a draft, but could not be submitted."));
+                SetResponseError(ApiFailureMessage(submitResult, "Truyện đã được lưu bản nháp nhưng không thể gửi duyệt."));
                 await LoadLookupsAsync();
                 return Page();
             }
         }
 
-        TempData["Success"] = submit ? "Novel saved and submitted for review." : "Novel draft created.";
+        TempData["Success"] = submit ? "Truyện đã được lưu và gửi duyệt." : "Đã tạo bản nháp truyện.";
         return id.HasValue ? RedirectToPage("/Publish/Manage", new { id }) : RedirectToPage("/Publish/Index");
     }
 
@@ -93,7 +93,7 @@ public class CreateModel : PublishPageModel
 
     private void SetResponseError(string message)
     {
-        ResponseMessage = "Please check the highlighted fields and try again.";
+        ResponseMessage = "Vui lòng kiểm tra các trường được đánh dấu và thử lại.";
         ResponseErrors = ParseFeedbackItems(message);
 
         if (ResponseErrors.Count == 0)
@@ -151,11 +151,11 @@ public class CreateModel : PublishPageModel
 
     private static string ToFriendlyFieldName(string field) => field.Trim() switch
     {
-        "CategoryId" => "Category",
+        "CategoryId" => "Thể loại",
         "TagIds" => "Tags",
-        "Title" => "Title",
-        "Description" => "Description",
-        "CoverImage" => "Cover image",
+        "Title" => "Tiêu đề",
+        "Description" => "Mô tả",
+        "CoverImage" => "Ảnh bìa",
         _ => field.Trim()
     };
 
@@ -191,14 +191,14 @@ public class CreateModel : PublishPageModel
 
         if (CoverImageFile.Length > 2 * 1024 * 1024)
         {
-            ModelState.AddModelError("CoverImageFile", "Cover image must be 2MB or smaller.");
+            ModelState.AddModelError("CoverImageFile", "Ảnh bìa phải có dung lượng từ 2MB trở xuống.");
             return;
         }
 
         var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp" };
         if (!allowedTypes.Contains(CoverImageFile.ContentType))
         {
-            ModelState.AddModelError("CoverImageFile", "Cover image must be JPG, PNG, or WEBP.");
+            ModelState.AddModelError("CoverImageFile", "Ảnh bìa phải là tệp JPG, PNG hoặc WEBP.");
             return;
         }
 

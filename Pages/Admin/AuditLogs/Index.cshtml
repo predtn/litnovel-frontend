@@ -2,25 +2,25 @@
 @model litnovel_frontend.Pages.Admin.AuditLogs.IndexModel
 @{
     Layout = "_LayoutDashboard";
-    ViewData["Title"] = "Audit Logs";
+    ViewData["Title"] = "Nhật ký kiểm toán";
 }
 
 @section Sidebar { <partial name="~/Pages/Admin/_AdminSidebar.cshtml" /> }
 
 <div class="page-header">
     <div>
-        <h1 class="page-header__title">Audit Logs</h1>
-        <p class="page-header__subtitle">@Model.TotalElements system-level administrative actions.</p>
+        <h1 class="page-header__title">Nhật ký kiểm toán</h1>
+        <p class="page-header__subtitle">@Model.TotalElements hành động quản trị cấp hệ thống.</p>
     </div>
 </div>
 
 <form class="admin-toolbar" method="get">
     <input class="form-input" name="fromDate" type="date" value="@Model.FromDate" />
     <input class="form-input" name="toDate" type="date" value="@Model.ToDate" />
-    <button class="btn btn-secondary" type="submit">Filter</button>
+    <button class="btn btn-secondary" type="submit">Lọc</button>
     @if (!string.IsNullOrWhiteSpace(Model.FromDate) || !string.IsNullOrWhiteSpace(Model.ToDate))
     {
-        <a class="btn btn-secondary" href="/Admin/AuditLogs">Clear</a>
+        <a class="btn btn-secondary" href="/Admin/AuditLogs">Xóa lọc</a>
     }
 </form>
 
@@ -35,7 +35,7 @@
 
 <div class="table-wrapper">
     <table class="table">
-        <thead><tr><th>Timestamp</th><th>Actor</th><th>Action</th><th>Entity</th><th>IP</th></tr></thead>
+        <thead><tr><th>Thời gian</th><th>Người thực hiện</th><th>Hành động</th><th>Thực thể</th><th>IP</th></tr></thead>
         <tbody>
         @foreach (var log in Model.Logs)
         {

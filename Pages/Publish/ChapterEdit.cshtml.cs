@@ -36,7 +36,7 @@ public class ChapterEditModel : PublishPageModel
         if (guard != null) return guard;
         if (string.IsNullOrWhiteSpace(Input.Title) || !HasText(Input.Content))
         {
-            ModelState.AddModelError("", "Chapter title and content are required.");
+            ModelState.AddModelError("", "Cần nhập tiêu đề và nội dung chương.");
             await LoadAsync(id, volumeId, novelId);
             return Page();
         }
@@ -44,12 +44,12 @@ public class ChapterEditModel : PublishPageModel
         var result = await Api.PutAsync<ChapterNavDto>($"/api/chapters/{id}", Input, Token);
         if (!IsApiSuccess(result))
         {
-            ModelState.AddModelError("", ApiFailureMessage(result, "Unable to update chapter."));
+            ModelState.AddModelError("", ApiFailureMessage(result, "Không thể cập nhật chương."));
             await LoadAsync(id, volumeId, novelId);
             return Page();
         }
 
-        TempData["Success"] = "Chapter updated.";
+        TempData["Success"] = "Đã cập nhật chương.";
         return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
     }
 
@@ -60,7 +60,7 @@ public class ChapterEditModel : PublishPageModel
         var result = await Api.GetAsync<ChapterDetailDto>($"/api/chapters/{id}", Token);
         if (!IsApiSuccess(result) || result?.Data == null)
         {
-            TempData["Error"] = ApiFailureMessage(result, "Unable to load chapter.");
+            TempData["Error"] = ApiFailureMessage(result, "Không thể tải chương.");
             return false;
         }
 

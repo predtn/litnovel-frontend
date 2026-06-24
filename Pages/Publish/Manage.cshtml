@@ -1,12 +1,12 @@
 @page "{id:int}/Manage"
 @model litnovel_frontend.Pages.Publish.ManageModel
 @{
-    ViewData["Title"] = "Manage Novel";
+    ViewData["Title"] = "Quản lý truyện";
 }
 
 <div class="publish-shell">
     <div class="breadcrumb">
-        <a asp-page="/Publish/Index">My Novels</a><span class="breadcrumb__sep">/</span><span class="breadcrumb__current">@Model.Novel.Title</span>
+        <a asp-page="/Publish/Index">Truyện của tôi</a><span class="breadcrumb__sep">/</span><span class="breadcrumb__current">@Model.Novel.Title</span>
     </div>
 <section class="publish-hero-card">
         @if (!string.IsNullOrEmpty(Model.Novel.CoverImage))
@@ -19,20 +19,20 @@
         }
         <div class="publish-hero-main">
             <div class="flex gap-sm items-center mb-sm">
-                <span class="status-badge status-@Model.Novel.Status.ToLowerInvariant()">@Model.Novel.Status</span>
-                <span class="text-caption text-mute">Updated @Model.Novel.UpdatedAt.ToString("dd/MM/yyyy")</span>
+                <span class="status-badge status-@Model.Novel.Status.ToLowerInvariant()">@DisplayText.Status(Model.Novel.Status)</span>
+                <span class="text-caption text-mute">Cập nhật @Model.Novel.UpdatedAt.ToString("dd/MM/yyyy")</span>
             </div>
             <h1 class="page-header__title">@Model.Novel.Title</h1>
             <div class="publish-meta-row">
-                <span>@Model.Novel.TotalVolumes volumes</span>
-                <span>@Model.Novel.TotalChapters chapters</span>
-                <span>@Model.Novel.ViewCount.ToString("N0") views</span>
-                <span>@Model.Novel.RatingAverage.ToString("0.0") rating</span>
+                <span>@Model.Novel.TotalVolumes tập</span>
+                <span>@Model.Novel.TotalChapters chương</span>
+                <span>@Model.Novel.ViewCount.ToString("N0") lượt xem</span>
+                <span>@Model.Novel.RatingAverage.ToString("0.0") điểm</span>
             </div>
             <div class="publish-hero-actions">
-                <a asp-page="/Publish/Edit" asp-route-id="@Model.Novel.Id" class="btn btn-secondary">Edit Novel Info</a>
-                <a asp-page="/Publish/Volumes" asp-route-novelId="@Model.Novel.Id" class="btn btn-primary">Manage Volumes</a>
-                <a asp-page="/Publish/Statistics" asp-route-id="@Model.Novel.Id" class="btn btn-secondary">Statistics</a>
+                <a asp-page="/Publish/Edit" asp-route-id="@Model.Novel.Id" class="btn btn-secondary">Chỉnh sửa thông tin truyện</a>
+                <a asp-page="/Publish/Volumes" asp-route-novelId="@Model.Novel.Id" class="btn btn-primary">Quản lý tập</a>
+                <a asp-page="/Publish/Statistics" asp-route-id="@Model.Novel.Id" class="btn btn-secondary">Thống kê</a>
             </div>
         </div>
     </section>
@@ -40,10 +40,10 @@
     <div class="publish-detail-grid">
         <section class="card">
             <div class="tabs">
-                <a href="#overview" class="tab active">Overview</a>
-                <a asp-page="/Publish/Volumes" asp-route-novelId="@Model.Novel.Id" class="tab">Volumes & Chapters</a>
-                <a asp-page="/Publish/Statistics" asp-route-id="@Model.Novel.Id" class="tab">Statistics</a>
-                <a href="#settings" class="tab">Settings</a>
+                <a href="#overview" class="tab active">Tổng quan</a>
+                <a asp-page="/Publish/Volumes" asp-route-novelId="@Model.Novel.Id" class="tab">Tập & chương</a>
+                <a asp-page="/Publish/Statistics" asp-route-id="@Model.Novel.Id" class="tab">Thống kê</a>
+                <a href="#settings" class="tab">Cài đặt</a>
             </div>
             <div id="overview" class="publish-richtext">@Html.Raw(Model.Novel.Description)</div>
             <div class="divider"></div>
@@ -56,13 +56,13 @@
         </section>
 
         <aside class="card publish-side-panel" id="settings">
-            <h2 class="text-display-sm mb-md">Publishing Controls</h2>
+            <h2 class="text-display-sm mb-md">Điều khiển đăng truyện</h2>
             <form method="post" asp-page-handler="Submit" asp-route-id="@Model.Novel.Id" class="mb-sm">
-                <button class="btn btn-primary w-full" type="submit">Submit for Review</button>
+                <button class="btn btn-primary w-full" type="submit">Gửi duyệt</button>
             </form>
-            <a asp-page="/Publish/Moderation" class="btn btn-secondary w-full mb-sm">Moderation Status</a>
-            <form method="post" asp-page-handler="Delete" asp-route-id="@Model.Novel.Id" onsubmit="return confirm('Delete this novel and all chapters?');">
-                <button class="btn btn-danger w-full" type="submit">Delete Novel</button>
+            <a asp-page="/Publish/Moderation" class="btn btn-secondary w-full mb-sm">Trạng thái xét duyệt</a>
+            <form method="post" asp-page-handler="Delete" asp-route-id="@Model.Novel.Id" onsubmit="return confirm('Xóa truyện này và toàn bộ chương?');">
+                <button class="btn btn-danger w-full" type="submit">Xóa truyện</button>
             </form>
         </aside>
     </div>

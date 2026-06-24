@@ -16,7 +16,7 @@ public class ManageModel : PublishPageModel
         var result = await Api.GetAsync<NovelDetailDto>($"/api/novels/{id}", Token);
         if (!IsApiSuccess(result) || result?.Data == null)
         {
-            TempData["Error"] = ApiFailureMessage(result, "Unable to load novel.");
+            TempData["Error"] = ApiFailureMessage(result, "Không thể tải truyện.");
             return RedirectToPage("/Publish/Index");
         }
 
@@ -29,7 +29,7 @@ public class ManageModel : PublishPageModel
         var guard = RequireAuthor();
         if (guard != null) return guard;
         var result = await Api.PostAsync<object>($"/api/novels/{id}/submit", null, Token);
-        SetApiResultMessage(result, "Novel submitted for review.", "Unable to submit novel.");
+        SetApiResultMessage(result, "Truyện đã được gửi duyệt.", "Không thể gửi duyệt truyện.");
         return RedirectToPage(new { id });
     }
 
@@ -38,7 +38,7 @@ public class ManageModel : PublishPageModel
         var guard = RequireAuthor();
         if (guard != null) return guard;
         var result = await Api.DeleteAsync<object>($"/api/novels/{id}", Token);
-        SetApiResultMessage(result, "Novel deleted.", "Unable to delete novel.");
+        SetApiResultMessage(result, "Đã xóa truyện.", "Không thể xóa truyện.");
         return RedirectToPage("/Publish/Index");
     }
 }

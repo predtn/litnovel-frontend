@@ -47,7 +47,7 @@ public class EditModel : PublishPageModel
 
         if (string.IsNullOrWhiteSpace(Input.Title))
         {
-            ModelState.AddModelError("Input.Title", "Title is required.");
+            ModelState.AddModelError("Input.Title", "Cần nhập tiêu đề.");
         }
 
         if (!ModelState.IsValid)
@@ -59,12 +59,12 @@ public class EditModel : PublishPageModel
         var result = await Api.PutAsync<NovelSummaryDto>($"/api/novels/{id}", Input, Token);
         if (!IsApiSuccess(result))
         {
-            ModelState.AddModelError("", ApiFailureMessage(result, "Unable to update novel."));
+            ModelState.AddModelError("", ApiFailureMessage(result, "Không thể cập nhật truyện."));
             await LoadAsync(id);
             return Page();
         }
 
-        TempData["Success"] = "Novel updated.";
+        TempData["Success"] = "Đã cập nhật truyện.";
         return RedirectToPage("/Publish/Manage", new { id });
     }
 
@@ -74,14 +74,14 @@ public class EditModel : PublishPageModel
 
         if (CoverImageFile.Length > 2 * 1024 * 1024)
         {
-            ModelState.AddModelError("CoverImageFile", "Cover image must be 2MB or smaller.");
+            ModelState.AddModelError("CoverImageFile", "Ảnh bìa phải có dung lượng từ 2MB trở xuống.");
             return;
         }
 
         var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp" };
         if (!allowedTypes.Contains(CoverImageFile.ContentType))
         {
-            ModelState.AddModelError("CoverImageFile", "Cover image must be JPG, PNG, or WEBP.");
+            ModelState.AddModelError("CoverImageFile", "Ảnh bìa phải là tệp JPG, PNG hoặc WEBP.");
             return;
         }
 
@@ -108,7 +108,7 @@ public class EditModel : PublishPageModel
         await Task.WhenAll(novelTask, catTask, tagTask);
         if (!IsApiSuccess(novelTask.Result) || novelTask.Result?.Data == null)
         {
-            TempData["Error"] = ApiFailureMessage(novelTask.Result, "Unable to load novel.");
+            TempData["Error"] = ApiFailureMessage(novelTask.Result, "Không thể tải truyện.");
             return false;
         }
 

@@ -1,22 +1,22 @@
 @page "Volumes/{volumeId:int}/Chapters"
 @model litnovel_frontend.Pages.Publish.ChaptersModel
 @{
-    ViewData["Title"] = "Chapter Management";
+    ViewData["Title"] = "Quản lý chương";
 }
 
 <div class="publish-shell">
     <div class="breadcrumb">
-        <a asp-page="/Publish/Index">My Novels</a><span class="breadcrumb__sep">/</span>
+        <a asp-page="/Publish/Index">Truyện của tôi</a><span class="breadcrumb__sep">/</span>
         <a asp-page="/Publish/Manage" asp-route-id="@Model.Novel.Id">@Model.Novel.Title</a><span class="breadcrumb__sep">/</span>
-        <a asp-page="/Publish/Volumes" asp-route-novelId="@Model.Novel.Id">Volumes</a><span class="breadcrumb__sep">/</span>
+        <a asp-page="/Publish/Volumes" asp-route-novelId="@Model.Novel.Id">Tập</a><span class="breadcrumb__sep">/</span>
         <span class="breadcrumb__current">@Model.Volume.Title</span>
     </div>
 <div class="page-header">
         <div>
-            <h1 class="page-header__title">Chapter Management</h1>
+            <h1 class="page-header__title">Quản lý chương</h1>
             <p class="page-header__subtitle">@Model.Volume.Title</p>
         </div>
-        <a asp-page="/Publish/ChapterCreate" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-primary">Add Chapter</a>
+        <a asp-page="/Publish/ChapterCreate" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-primary">Thêm chương</a>
     </div>
 
     <div class="publish-table-card">
@@ -24,11 +24,11 @@
             <thead>
                 <tr>
                     <th class="publish-col-center">#</th>
-                    <th>Title</th>
-                    <th>Status</th>
-                    <th class="publish-col-center">Words</th>
-                    <th class="publish-col-center">Created</th>
-                    <th class="publish-col-actions">Actions</th>
+                    <th>Tiêu đề</th>
+                    <th>Trạng thái</th>
+                    <th class="publish-col-center">Số từ</th>
+                    <th class="publish-col-center">Ngày tạo</th>
+                    <th class="publish-col-actions">Hành động</th>
                 </tr>
             </thead>
             <tbody>
@@ -37,22 +37,22 @@
                     var chapterStatus = chapter.Status ?? "Draft";
                     <tr>
                         <td data-label="#" class="publish-col-center">@chapter.ChapterNumber</td>
-                        <td data-label="Title"><span class="font-medium">@chapter.Title</span></td>
-                        <td data-label="Status"><span class="status-badge status-@chapterStatus.ToLowerInvariant()">@chapterStatus</span></td>
-                        <td data-label="Words" class="publish-col-center">@(chapter.WordCount > 0 ? chapter.WordCount.ToString("N0") : "—")</td>
-                        <td data-label="Created" class="publish-col-center">@chapter.CreatedAt.ToString("dd/MM/yyyy")</td>
-                        <td data-label="Actions" class="publish-col-actions">
+                        <td data-label="Tiêu đề"><span class="font-medium">@chapter.Title</span></td>
+                        <td data-label="Trạng thái"><span class="status-badge status-@chapterStatus.ToLowerInvariant()">@DisplayText.Status(chapterStatus)</span></td>
+                        <td data-label="Số từ" class="publish-col-center">@(chapter.WordCount > 0 ? chapter.WordCount.ToString("N0") : "—")</td>
+                        <td data-label="Ngày tạo" class="publish-col-center">@chapter.CreatedAt.ToString("dd/MM/yyyy")</td>
+                        <td data-label="Hành động" class="publish-col-actions">
                             <div class="publish-actions">
-                                <a asp-page="/Publish/ChapterPreview" asp-route-id="@chapter.Id" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-secondary btn-sm">View</a>
-                                <a asp-page="/Publish/ChapterEdit" asp-route-id="@chapter.Id" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-secondary btn-sm">Edit</a>
+                                <a asp-page="/Publish/ChapterPreview" asp-route-id="@chapter.Id" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-secondary btn-sm">Xem</a>
+                                <a asp-page="/Publish/ChapterEdit" asp-route-id="@chapter.Id" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-secondary btn-sm">Sửa</a>
                                 @if (chapterStatus.Equals("Draft", StringComparison.OrdinalIgnoreCase) || chapterStatus.Equals("Rejected", StringComparison.OrdinalIgnoreCase))
                                 {
                                     <form method="post" asp-page-handler="Submit" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" asp-route-id="@chapter.Id">
-                                        <button class="btn btn-primary btn-sm" type="submit">Submit</button>
+                                        <button class="btn btn-primary btn-sm" type="submit">Gửi duyệt</button>
                                     </form>
                                 }
-                                <form method="post" asp-page-handler="Delete" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" asp-route-id="@chapter.Id" onsubmit="return confirm('Delete this chapter?');">
-                                    <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+                                <form method="post" asp-page-handler="Delete" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" asp-route-id="@chapter.Id" onsubmit="return confirm('Xóa chương này?');">
+                                    <button class="btn btn-danger btn-sm" type="submit">Xóa</button>
                                 </form>
                             </div>
                         </td>

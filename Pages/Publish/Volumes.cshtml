@@ -1,32 +1,32 @@
 @page "{novelId:int}/Volumes"
 @model litnovel_frontend.Pages.Publish.VolumesModel
 @{
-    ViewData["Title"] = "Volume Management";
+    ViewData["Title"] = "Quản lý tập";
 }
 
 <div class="publish-shell">
     <div class="breadcrumb">
-        <a asp-page="/Publish/Index">My Novels</a><span class="breadcrumb__sep">/</span>
+        <a asp-page="/Publish/Index">Truyện của tôi</a><span class="breadcrumb__sep">/</span>
         <a asp-page="/Publish/Manage" asp-route-id="@Model.Novel.Id">@Model.Novel.Title</a><span class="breadcrumb__sep">/</span>
-        <span class="breadcrumb__current">Volumes</span>
+        <span class="breadcrumb__current">Tập</span>
     </div>
 <div class="page-header">
         <div>
-            <h1 class="page-header__title">Volume Management</h1>
+            <h1 class="page-header__title">Quản lý tập</h1>
             <p class="page-header__subtitle">@Model.Novel.Title</p>
         </div>
     </div>
 
     <form method="post" asp-page-handler="Create" class="card publish-inline-form">
         <div class="form-group">
-            <label class="form-label" asp-for="Input.VolumeNumber">Number</label>
+            <label class="form-label" asp-for="Input.VolumeNumber">Số thứ tự</label>
             <input class="form-input" asp-for="Input.VolumeNumber" min="1" type="number" />
         </div>
         <div class="form-group publish-inline-grow">
-            <label class="form-label" asp-for="Input.Title">Volume title</label>
-            <input class="form-input" asp-for="Input.Title" maxlength="200" placeholder="Volume 2: The Rising Storm" />
+            <label class="form-label" asp-for="Input.Title">Tiêu đề tập</label>
+            <input class="form-input" asp-for="Input.Title" maxlength="200" placeholder="Tập 2: Cơn bão nổi lên" />
         </div>
-        <button class="btn btn-primary" type="submit">Add Volume</button>
+        <button class="btn btn-primary" type="submit">Thêm tập</button>
     </form>
 
     <div class="publish-volume-list">
@@ -34,17 +34,17 @@
         {
             <article class="card publish-volume-card">
                 <div>
-                    <div class="text-caption text-mute">Volume @volume.VolumeNumber</div>
+                    <div class="text-caption text-mute">Tập @volume.VolumeNumber</div>
                     <h2 class="text-display-sm">@volume.Title</h2>
                     <div class="publish-meta-row">
-                        <span>@volume.ChapterCount chapters</span>
-                        <span>Created @volume.CreatedAt.ToString("dd/MM/yyyy")</span>
+                        <span>@volume.ChapterCount chương</span>
+                        <span>Tạo ngày @volume.CreatedAt.ToString("dd/MM/yyyy")</span>
                     </div>
                 </div>
                 <div class="publish-actions">
-                    <a asp-page="/Publish/Chapters" asp-route-volumeId="@volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-primary btn-sm">Manage Chapters</a>
-                    <form method="post" asp-page-handler="Delete" asp-route-novelId="@Model.Novel.Id" asp-route-id="@volume.Id" onsubmit="return confirm('Delete this volume and all chapters?');">
-                        <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+                    <a asp-page="/Publish/Chapters" asp-route-volumeId="@volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-primary btn-sm">Quản lý chương</a>
+                    <form method="post" asp-page-handler="Delete" asp-route-novelId="@Model.Novel.Id" asp-route-id="@volume.Id" onsubmit="return confirm('Xóa tập này và toàn bộ chương?');">
+                        <button class="btn btn-danger btn-sm" type="submit">Xóa</button>
                     </form>
                 </div>
             </article>

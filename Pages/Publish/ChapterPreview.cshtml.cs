@@ -22,7 +22,7 @@ public class ChapterPreviewModel : PublishPageModel
         var result = await Api.GetAsync<ChapterDetailDto>($"/api/chapters/{id}", Token);
         if (!IsApiSuccess(result))
         {
-            TempData["Error"] = ApiFailureMessage(result, "Unable to load chapter preview.");
+            TempData["Error"] = ApiFailureMessage(result, "Không thể tải bản xem trước chương.");
             return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
         }
 
