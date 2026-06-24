@@ -11,6 +11,7 @@ public class DetailModel : PageModel
 
     public NovelDetailDto? Novel { get; set; }
     public List<ReviewDto> Reviews { get; set; } = [];
+    public int CurrentUserId { get; set; }
 
     public DetailModel(IApiService api, IAuthService auth) { _api = api; _auth = auth; }
 
@@ -27,7 +28,7 @@ public class DetailModel : PageModel
         }
 
         var user = _auth.GetCurrentUser(HttpContext);
-        if (user != null) { ViewData["UserName"] = user.Username; ViewData["UserAvatar"] = user.Avatar; }
+        if (user != null) { ViewData["UserName"] = user.Username; ViewData["UserAvatar"] = user.Avatar; CurrentUserId = user.Id; }
     }
 
     public async Task<IActionResult> OnPostReviewAsync([FromRoute] string slug, [FromForm] int id, [FromForm] byte rating, [FromForm] string? reviewText)
