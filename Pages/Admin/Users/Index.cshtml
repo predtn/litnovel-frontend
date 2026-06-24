@@ -22,28 +22,22 @@
     </div>
 }
 
-<div class="admin-toolbar">
+<form class="admin-toolbar" method="get" id="userQuickFilter">
     <div class="search-bar" style="width:min(320px, 100%);">
         <svg class="search-bar__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <form method="get">
-            <input type="text" name="keyword" value="@Model.Keyword" placeholder="Tên, email..." onchange="this.form.submit()" />
-            <input type="hidden" name="role" value="@Model.RoleFilter" />
-            <input type="hidden" name="status" value="@Model.StatusFilter" />
-        </form>
+        <input type="text" name="keyword" value="@Model.Keyword" placeholder="Tên, email..." data-quick-filter-input />
     </div>
-    <select class="form-select" onchange="updateQueryParam('role', this.value)">
-        <option value="">Tất cả vai trò</option>
-        <option value="User" selected="@(Model.RoleFilter == "User")">User</option>
-        <option value="Staff" selected="@(Model.RoleFilter == "Staff")">Staff</option>
-        <option value="Admin" selected="@(Model.RoleFilter == "Admin")">Admin</option>
-    </select>
-    <select class="form-select" onchange="updateQueryParam('status', this.value)">
+    <select class="form-select" name="status" data-quick-filter-select>
         <option value="">Tất cả trạng thái</option>
         <option value="Online" selected="@(Model.StatusFilter == "Online")">Online</option>
         <option value="Offline" selected="@(Model.StatusFilter == "Offline")">Offline</option>
         <option value="Banned" selected="@(Model.StatusFilter == "Banned")">Banned</option>
     </select>
-</div>
+    @if (!string.IsNullOrWhiteSpace(Model.Keyword) || !string.IsNullOrWhiteSpace(Model.StatusFilter))
+    {
+        <a class="btn btn-secondary" href="/Admin/Users">Xóa lọc</a>
+    }
+</form>
 
 <div class="table-wrapper">
     <table class="table">
@@ -63,14 +57,14 @@
                 <tr>
                     <td data-label="Người dùng">
                         <div class="flex gap-sm items-center">
-                            <div class="avatar-placeholder avatar-sm" style="flex-shrink:0;">@(user.Username[..1].ToUpper())</div>
+                            <div class="avatar-placeholder avatar-sm" style="flex-shrink:0;">@((string.IsNullOrWhiteSpace(user.Username) ? "?" : user.Username[..1]).ToUpper())</div>
                             <div class="text-body-sm font-medium truncate">@user.Username</div>
                         </div>
                     </td>
                     <td data-label="Email" class="text-body-sm text-mute">@user.Email</td>
                     <td data-label="Vai trò"><span class="badge badge-secondary role-@user.Role.ToLowerInvariant()">@user.Role</span></td>
                     <td data-label="Trạng thái"><span class="status-badge status-@user.Status.ToLowerInvariant()">@user.Status</span></td>
-                    <td data-label="Ngày tham gia" class="text-caption text-mute">@user.CreatedAt.ToString("dd/MM/yyyy")</td>
+                    <td data-label="Ngày tham gia" class="text-caption text-mute">@(user.JoinedDate == default ? "-" : user.JoinedDate.ToString("dd/MM/yyyy"))</td>
                     <td data-label="Hành động" class="col-actions">
                         <div class="flex gap-xs justify-end">
                             <a href="/Admin/Users/@user.Id" class="btn btn-secondary btn-sm">Chi tiết</a>
@@ -102,11 +96,37 @@
 {
     <div class="flex justify-center mt-xl">
         <div class="pagination">
+            <a href="?page=@Math.Max(1, Model.Page - 1)&keyword=@Model.Keyword&status=@Model.StatusFilter"
+               class="pagination__btn @(Model.Page <= 1 ? "disabled" : "")">‹</a>
             @for (int i = 1; i <= Model.TotalPages; i++)
             {
-                <a href="?page=@i&keyword=@Model.Keyword&role=@Model.RoleFilter&status=@Model.StatusFilter"
+                <a href="?page=@i&keyword=@Model.Keyword&status=@Model.StatusFilter"
                    class="pagination__btn @(i == Model.Page ? "active" : "")">@i</a>
             }
+            <a href="?page=@Math.Min(Model.TotalPages, Model.Page + 1)&keyword=@Model.Keyword&status=@Model.StatusFilter"
+               class="pagination__btn @(Model.Page >= Model.TotalPages ? "disabled" : "")">›</a>
         </div>
     </div>
+}
+
+@section Scripts {
+    <script>
+        (() => {
+            const form = document.getElementById('userQuickFilter');
+            if (!form) return;
+
+            let timer;
+            const submit = () => {
+                const page = form.querySelector('input[name="page"]');
+                if (page) page.remove();
+                form.requestSubmit();
+            };
+
+            form.querySelector('[data-quick-filter-input]')?.addEventListener('input', () => {
+                clearTimeout(timer);
+                timer = setTimeout(submit, 400);
+            });
+            form.querySelector('[data-quick-filter-select]')?.addEventListener('change', submit);
+        })();
+    </script>
 }

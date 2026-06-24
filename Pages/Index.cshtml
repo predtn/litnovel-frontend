@@ -7,27 +7,24 @@
 
 <!-- SCR-01: Landing Page -->
 
-@if (Model.Announcements.Count > 0)
-{
-    <section class="home-announcements" aria-label="Announcements">
-        <div class="container">
-            <div class="home-announcements__list">
-                @foreach (var announcement in Model.Announcements)
-                {
-                    <article class="home-announcement">
-                        <div class="home-announcement__icon" aria-hidden="true">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v2a2 2 0 0 0 2 2h2l4 4V5L7 9H5a2 2 0 0 0-2 2Z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19 6a9 9 0 0 1 0 12"/></svg>
-                        </div>
-                        <div class="home-announcement__body">
-                            <h2 class="home-announcement__title">@announcement.Title</h2>
-                            <div class="home-announcement__content">@Html.Raw(announcement.Content)</div>
-                        </div>
-                    </article>
-                }
-            </div>
+<section class="home-announcements @(Model.Announcements.Count == 0 ? "hidden" : "")" aria-label="Announcements" id="homeAnnouncements">
+    <div class="container">
+        <div class="home-announcements__list" id="homeAnnouncementsList">
+            @foreach (var announcement in Model.Announcements)
+            {
+                <article class="home-announcement" data-announcement-id="@announcement.Id">
+                    <div class="home-announcement__icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v2a2 2 0 0 0 2 2h2l4 4V5L7 9H5a2 2 0 0 0-2 2Z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19 6a9 9 0 0 1 0 12"/></svg>
+                    </div>
+                    <div class="home-announcement__body">
+                        <h2 class="home-announcement__title">@announcement.Title</h2>
+                        <div class="home-announcement__content">@Html.Raw(announcement.Content)</div>
+                    </div>
+                </article>
+            }
         </div>
-    </section>
-}
+    </div>
+</section>
 
 <!-- Hero Section -->
 <section class="hero">

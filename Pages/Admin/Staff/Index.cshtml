@@ -26,7 +26,7 @@
     <section class="card admin-card">
         <div class="flex justify-between items-center gap-md mb-md">
             <h2 class="text-display-sm">Current staff</h2>
-            <span class="badge badge-secondary">@Model.StaffUsers.Count accounts</span>
+            <span class="badge badge-secondary">@Model.StaffTotalElements accounts</span>
         </div>
         @if (Model.StaffUsers.Count == 0)
         {
@@ -49,7 +49,7 @@
                                 <div class="text-caption text-mute truncate">@user.Email</div>
                             </td>
                             <td><span class="status-badge status-@user.Status.ToLower()">@user.Status</span></td>
-                            <td>@user.Stats.CommentsCount</td>
+                            <td>@Model.StaffModerationCounts.GetValueOrDefault(user.Id)</td>
                             <td class="col-actions">
                                 <form method="post" asp-page-handler="Revoke">
                                     @Html.AntiForgeryToken()
@@ -62,13 +62,27 @@
                     </tbody>
                 </table>
             </div>
+            @if (Model.StaffTotalPages > 1)
+            {
+                <div class="pagination mt-md">
+                    <a class="pagination__btn @(Model.StaffPage <= 1 ? "disabled" : "")"
+                       href="?staffPage=@Math.Max(1, Model.StaffPage - 1)&candidatePage=@Model.CandidatePage">‹</a>
+                    @for (int i = 1; i <= Model.StaffTotalPages; i++)
+                    {
+                        <a class="pagination__btn @(i == Model.StaffPage ? "active" : "")"
+                           href="?staffPage=@i&candidatePage=@Model.CandidatePage">@i</a>
+                    }
+                    <a class="pagination__btn @(Model.StaffPage >= Model.StaffTotalPages ? "disabled" : "")"
+                       href="?staffPage=@Math.Min(Model.StaffTotalPages, Model.StaffPage + 1)&candidatePage=@Model.CandidatePage">›</a>
+                </div>
+            }
         }
     </section>
 
     <section class="card admin-card">
         <div class="flex justify-between items-center gap-md mb-md">
             <h2 class="text-display-sm">Promote user</h2>
-            <span class="badge badge-secondary">@Model.CandidateUsers.Count candidates</span>
+            <span class="badge badge-secondary">@Model.CandidateTotalElements candidates</span>
         </div>
         @if (Model.CandidateUsers.Count == 0)
         {
@@ -85,7 +99,7 @@
                     <form class="admin-list-row" method="post" asp-page-handler="Assign">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="userId" value="@user.Id" />
-                        <div class="avatar-placeholder avatar-sm">@user.Username[..1].ToUpper()</div>
+                        <div class="avatar-placeholder avatar-sm">@((string.IsNullOrWhiteSpace(user.Username) ? "?" : user.Username[..1]).ToUpper())</div>
                         <div class="admin-list-row__body">
                             <div class="font-medium truncate">@user.Username</div>
                             <div class="text-caption text-mute truncate">@user.Email</div>
@@ -94,6 +108,20 @@
                     </form>
                 }
             </div>
+            @if (Model.CandidateTotalPages > 1)
+            {
+                <div class="pagination mt-md">
+                    <a class="pagination__btn @(Model.CandidatePage <= 1 ? "disabled" : "")"
+                       href="?staffPage=@Model.StaffPage&candidatePage=@Math.Max(1, Model.CandidatePage - 1)">‹</a>
+                    @for (int i = 1; i <= Model.CandidateTotalPages; i++)
+                    {
+                        <a class="pagination__btn @(i == Model.CandidatePage ? "active" : "")"
+                           href="?staffPage=@Model.StaffPage&candidatePage=@i">@i</a>
+                    }
+                    <a class="pagination__btn @(Model.CandidatePage >= Model.CandidateTotalPages ? "disabled" : "")"
+                       href="?staffPage=@Model.StaffPage&candidatePage=@Math.Min(Model.CandidateTotalPages, Model.CandidatePage + 1)">›</a>
+                </div>
+            }
         }
     </section>
 </div>

@@ -14,9 +14,8 @@
 <div class="page-header">
     <div>
         <h1 class="page-header__title">Reports Overview</h1>
-        <p class="page-header__subtitle">Novel and user reports across the platform.</p>
+        <p class="page-header__subtitle">Read-only overview of novel and user reports across the platform.</p>
     </div>
-    <button class="btn btn-secondary" type="button">Export CSV</button>
 </div>
 
 <div class="grid-3 mb-xl">
@@ -25,27 +24,51 @@
     <div class="stat-card"><div class="stat-card__label">Rejected</div><div class="stat-card__value">@rejected</div></div>
 </div>
 
-<form class="admin-toolbar" method="get">
-    <select class="form-select" name="type"><option value="">All types</option><option value="novel" selected="@(Model.Type == "novel")">Novel reports</option><option value="user" selected="@(Model.Type == "user")">User reports</option></select>
-    <select class="form-select" name="status"><option value="">All statuses</option><option selected="@(Model.Status == "Pending")">Pending</option><option selected="@(Model.Status == "Resolved")">Resolved</option><option selected="@(Model.Status == "Rejected")">Rejected</option></select>
-    <button class="btn btn-secondary" type="submit">Filter</button>
+<form class="admin-toolbar" method="get" id="reportQuickFilter">
+    <select class="form-select" name="type" data-quick-filter-select><option value="">All types</option><option value="novel" selected="@(Model.Type == "novel")">Novel reports</option><option value="user" selected="@(Model.Type == "user")">User reports</option></select>
+    <select class="form-select" name="status" data-quick-filter-select><option value="">All statuses</option><option selected="@(Model.Status == "Pending")">Pending</option><option selected="@(Model.Status == "Resolved")">Resolved</option><option selected="@(Model.Status == "Rejected")">Rejected</option></select>
+    @if (!string.IsNullOrWhiteSpace(Model.Type) || !string.IsNullOrWhiteSpace(Model.Status))
+    {
+        <a class="btn btn-secondary" href="/Admin/Reports">Clear</a>
+    }
 </form>
 
-<div class="table-wrapper">
-    <table class="table">
-        <thead><tr><th>Target</th><th>Type</th><th>Reporter</th><th>Submitted</th><th>Status</th><th class="col-actions">Actions</th></tr></thead>
-        <tbody>
-        @foreach (var report in Model.Reports)
-        {
-            <tr>
-                <td><div class="font-medium">@report.TargetTitle</div><div class="text-caption text-mute">@report.TargetSubtitle</div></td>
-                <td><span class="badge badge-secondary">@report.ReportType</span></td>
-                <td>@report.ReporterName</td>
-                <td class="text-caption text-mute">@report.CreatedAt.ToString("dd/MM/yyyy")</td>
-                <td><span class="status-badge status-@report.Status.ToLower()">@report.Status</span></td>
-                <td class="col-actions"><a class="btn btn-secondary btn-sm" href="/Staff/Reports">Process</a></td>
-            </tr>
-        }
-        </tbody>
-    </table>
-</div>
+@if (Model.Reports.Count == 0)
+{
+    <div class="empty-state">
+        <div class="empty-state__title">Không có report nào</div>
+        <p class="empty-state__text">Không có report nào hoặc không có report nào khớp với bộ lọc hiện tại.</p>
+    </div>
+}
+else
+{
+    <div class="table-wrapper">
+        <table class="table">
+            <thead><tr><th>Target</th><th>Type</th><th>Reporter</th><th>Submitted</th><th>Status</th></tr></thead>
+            <tbody>
+            @foreach (var report in Model.Reports)
+            {
+                <tr>
+                    <td><div class="font-medium">@report.TargetTitle</div><div class="text-caption text-mute">@report.TargetSubtitle</div></td>
+                    <td><span class="badge badge-secondary">@report.ReportType</span></td>
+                    <td>@report.ReporterName</td>
+                    <td class="text-caption text-mute">@report.CreatedAt.ToString("dd/MM/yyyy")</td>
+                    <td><span class="status-badge status-@report.Status.ToLower()">@report.Status</span></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        (() => {
+            const form = document.getElementById('reportQuickFilter');
+            if (!form) return;
+            form.querySelectorAll('[data-quick-filter-select]').forEach(select => {
+                select.addEventListener('change', () => form.requestSubmit());
+            });
+        })();
+    </script>
+}
