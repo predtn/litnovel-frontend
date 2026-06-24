@@ -49,7 +49,7 @@
                                 <div class="text-caption text-mute truncate">@user.Email</div>
                             </td>
                             <td><span class="status-badge status-@user.Status.ToLower()">@user.Status</span></td>
-                            <td>@user.Stats.CommentsCount</td>
+                            <td>@Model.StaffModerationCounts.GetValueOrDefault(user.Id)</td>
                             <td class="col-actions">
                                 <form method="post" asp-page-handler="Revoke">
                                     @Html.AntiForgeryToken()
@@ -65,11 +65,15 @@
             @if (Model.StaffTotalPages > 1)
             {
                 <div class="pagination mt-md">
+                    <a class="pagination__btn @(Model.StaffPage <= 1 ? "disabled" : "")"
+                       href="?staffPage=@Math.Max(1, Model.StaffPage - 1)&candidatePage=@Model.CandidatePage">‹</a>
                     @for (int i = 1; i <= Model.StaffTotalPages; i++)
                     {
                         <a class="pagination__btn @(i == Model.StaffPage ? "active" : "")"
                            href="?staffPage=@i&candidatePage=@Model.CandidatePage">@i</a>
                     }
+                    <a class="pagination__btn @(Model.StaffPage >= Model.StaffTotalPages ? "disabled" : "")"
+                       href="?staffPage=@Math.Min(Model.StaffTotalPages, Model.StaffPage + 1)&candidatePage=@Model.CandidatePage">›</a>
                 </div>
             }
         }
@@ -107,11 +111,15 @@
             @if (Model.CandidateTotalPages > 1)
             {
                 <div class="pagination mt-md">
+                    <a class="pagination__btn @(Model.CandidatePage <= 1 ? "disabled" : "")"
+                       href="?staffPage=@Model.StaffPage&candidatePage=@Math.Max(1, Model.CandidatePage - 1)">‹</a>
                     @for (int i = 1; i <= Model.CandidateTotalPages; i++)
                     {
                         <a class="pagination__btn @(i == Model.CandidatePage ? "active" : "")"
                            href="?staffPage=@Model.StaffPage&candidatePage=@i">@i</a>
                     }
+                    <a class="pagination__btn @(Model.CandidatePage >= Model.CandidateTotalPages ? "disabled" : "")"
+                       href="?staffPage=@Model.StaffPage&candidatePage=@Math.Min(Model.CandidateTotalPages, Model.CandidatePage + 1)">›</a>
                 </div>
             }
         }

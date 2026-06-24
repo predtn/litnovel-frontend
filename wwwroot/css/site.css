@@ -985,7 +985,15 @@ ul, ol { list-style: none; }
 }
 .admin-sidebar {
   top: 0;
+  left: 0;
+  bottom: 0;
+  position: fixed;
   height: 100vh;
+  z-index: 20;
+}
+.dashboard-shell--admin .admin-content {
+  margin-left: 240px;
+  width: calc(100% - 240px);
 }
 .admin-brand {
   padding: var(--space-xs) var(--space-sm) var(--space-lg);
@@ -1396,7 +1404,12 @@ ul, ol { list-style: none; }
   color: var(--color-on-primary);
   font-weight: 500;
 }
-.pagination__btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.pagination__btn:disabled,
+.pagination__btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 
 /* ─── 14. Alert / Toast / Feedback ─── */
 .alert {
@@ -3126,6 +3139,12 @@ ul, ol { list-style: none; }
     overflow-x: auto;
     max-width: 100vw;
     white-space: nowrap;
+    position: static;
+    height: auto;
+  }
+  .dashboard-shell--admin .admin-content {
+    margin-left: 0;
+    width: 100%;
   }
   .admin-brand,
   .admin-sidebar__footer {

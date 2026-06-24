@@ -8,14 +8,11 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
 {
     public StatisticsChartDto DailyGrowth { get; set; } = new();
     public StatisticsChartDto MonthlyGrowth { get; set; } = new();
-    public StatisticsChartDto YearlyGrowth { get; set; } = new();
     public string DayRange { get; set; } = "30";
     public string? SelectedMonth { get; set; }
-    public int? SelectedYear { get; set; }
-    public List<int> YearOptions { get; set; } = [];
     public string? LoadError { get; set; }
 
-    public async Task<IActionResult> OnGetAsync(string? dayRange, string? month, int? year)
+    public async Task<IActionResult> OnGetAsync(string? dayRange, string? month)
     {
         var token = auth.GetToken(HttpContext);
         if (!auth.IsInRole(HttpContext, "Admin")) return RedirectToPage("/Index");
@@ -31,8 +28,6 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
         var today = DateTime.UtcNow.Date;
         DayRange = NormalizeDayRange(dayRange);
         SelectedMonth = string.IsNullOrWhiteSpace(month) ? null : month;
-        SelectedYear = year;
-        YearOptions = Enumerable.Range(today.Year - 2, 3).Reverse().ToList();
 
         var dailyFrom = today.AddDays(-int.Parse(DayRange) + 1);
         var dailyTask = LoadChartAsync("userGrowth", dailyFrom, today, "day", token);
@@ -40,12 +35,8 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
         var (monthlyFrom, monthlyTo, monthlyGranularity) = ResolveMonthlyRange(SelectedMonth, today);
         var monthlyTask = LoadChartAsync("userGrowth", monthlyFrom, monthlyTo, monthlyGranularity, token);
 
-        var (yearlyFrom, yearlyTo, yearlyGranularity) = ResolveYearlyRange(SelectedYear, today);
-        var yearlyTask = LoadChartAsync("userGrowth", yearlyFrom, yearlyTo, yearlyGranularity, token);
-
         DailyGrowth = await dailyTask;
         MonthlyGrowth = await monthlyTask;
-        YearlyGrowth = await yearlyTask;
 
         return Page();
     }
@@ -78,15 +69,4 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
         return (from, today, "month");
     }
 
-    private static (DateTime From, DateTime To, string Granularity) ResolveYearlyRange(int? selectedYear, DateTime today)
-    {
-        if (selectedYear.HasValue)
-        {
-            var start = new DateTime(selectedYear.Value, 1, 1);
-            return (start, start.AddYears(1).AddDays(-1), "month");
-        }
-
-        var from = new DateTime(today.Year - 2, 1, 1);
-        return (from, today, "year");
-    }
 }

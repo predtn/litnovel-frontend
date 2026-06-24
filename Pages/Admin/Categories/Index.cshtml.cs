@@ -7,19 +7,39 @@ namespace litnovel_frontend.Pages.Admin.Categories;
 public class IndexModel(IApiService api, IAuthService auth) : PageModel
 {
     public List<CategoryDto> Categories { get; set; } = [];
+    public List<TaxonomyListItemDto> Items { get; set; } = [];
+    public new int Page { get; set; } = 1;
+    public int TotalPages { get; set; } = 1;
+    public int TotalElements { get; set; }
     public string? LoadError { get; set; }
+    private const int PageSize = 10;
 
-    public async Task<IActionResult> OnGetAsync()
+    public async Task<IActionResult> OnGetAsync([FromQuery(Name = "page")] int pageNumber = 1)
     {
         var token = auth.GetToken(HttpContext);
         if (!auth.IsInRole(HttpContext, "Admin")) return RedirectToPage("/Index");
         SetShell();
+        Page = Math.Max(1, pageNumber);
 
         var result = await api.GetAsync<List<CategoryDto>>("/api/admin/categories", token);
         if (result?.Success == true && result.Data != null)
         {
             Categories = result.Data;
             await EnrichNovelCountsAsync(token);
+            TotalElements = Categories.Count;
+            TotalPages = Math.Max(1, (int)Math.Ceiling(TotalElements / (double)PageSize));
+            Page = Math.Min(Page, TotalPages);
+            Items = Categories
+                .Skip((Page - 1) * PageSize)
+                .Take(PageSize)
+                .Select(category => new TaxonomyListItemDto
+                {
+                    Id = category.Id,
+                    Name = category.Name,
+                    Slug = category.Slug,
+                    NovelCount = category.NovelCount
+                })
+                .ToList();
         }
         else
         {

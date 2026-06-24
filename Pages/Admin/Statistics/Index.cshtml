@@ -13,7 +13,7 @@
 <div class="page-header">
     <div>
         <h1 class="page-header__title">Statistics Charts</h1>
-        <p class="page-header__subtitle">Daily, monthly, and yearly growth snapshots.</p>
+        <p class="page-header__subtitle">Daily and monthly growth snapshots.</p>
     </div>
 </div>
 
@@ -30,16 +30,6 @@
         <span class="form-label">Month detail</span>
         <input class="form-input" type="month" name="month" value="@Model.SelectedMonth" onchange="this.form.submit()" />
     </label>
-    <label class="form-group">
-        <span class="form-label">Year detail</span>
-        <select class="form-select" name="year" onchange="this.form.submit()">
-            <option value="">Last 3 years</option>
-            @foreach (var year in Model.YearOptions)
-            {
-                <option value="@year" selected="@(Model.SelectedYear == year)">@year</option>
-            }
-        </select>
-    </label>
     <button class="btn btn-secondary" type="submit">Apply</button>
 </form>
 
@@ -51,7 +41,7 @@
     </div>
 }
 
-<div class="admin-chart-grid admin-chart-grid--three">
+<div class="admin-chart-grid">
     <section class="card admin-chart-card">
         <div class="admin-chart-card__header">
             <h2 class="text-display-sm">Daily growth</h2>
@@ -114,48 +104,6 @@
             var coordinates = BuildCoordinates(points, max, pointCount);
 
             <div class="admin-line-chart" role="img" aria-label="Monthly user growth">
-                <svg viewBox="0 0 500 200" preserveAspectRatio="none">
-                    <line x1="24" y1="172" x2="476" y2="172" class="admin-line-chart__axis" />
-                    <line x1="24" y1="40" x2="24" y2="172" class="admin-line-chart__axis" />
-                    <polyline points="@coordinates" class="admin-line-chart__line" />
-                    @foreach (var point in points.Select((value, index) => new { value, index }))
-                    {
-                        var x = 24 + (point.index * 452.0 / pointCount);
-                        var y = 172 - (point.value.Value * 132.0 / max);
-                        <circle cx="@SvgNumber(x)" cy="@SvgNumber(y)" r="4" class="admin-line-chart__dot" tabindex="0">
-                            <title>@point.value.Date: @point.value.Value</title>
-                        </circle>
-                    }
-                </svg>
-            </div>
-            <div class="admin-chart__legend">
-                <span>@points.First().Date</span>
-                <span>Max @max</span>
-                <span>@points.Last().Date</span>
-            </div>
-        }
-    </section>
-
-    <section class="card admin-chart-card">
-        <div class="admin-chart-card__header">
-            <h2 class="text-display-sm">Yearly growth</h2>
-            <span class="text-caption text-mute">@(Model.SelectedYear?.ToString() ?? "3 years")</span>
-        </div>
-        @if (Model.YearlyGrowth.Points.Count == 0)
-        {
-            <div class="empty-state">
-                <div class="empty-state__title">No chart data</div>
-                <p class="empty-state__text">The chart API returned no points for this range.</p>
-            </div>
-        }
-        else
-        {
-            var points = Model.YearlyGrowth.Points;
-            var max = Math.Max(1, points.Max(p => p.Value));
-            var pointCount = Math.Max(1, points.Count - 1);
-            var coordinates = BuildCoordinates(points, max, pointCount);
-
-            <div class="admin-line-chart" role="img" aria-label="Yearly user growth">
                 <svg viewBox="0 0 500 200" preserveAspectRatio="none">
                     <line x1="24" y1="172" x2="476" y2="172" class="admin-line-chart__axis" />
                     <line x1="24" y1="40" x2="24" y2="172" class="admin-line-chart__axis" />

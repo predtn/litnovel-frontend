@@ -7,35 +7,7 @@
     var s = Model.Stats;
 }
 
-@section Sidebar {
-    <div class="sidebar__section-label">Quản trị</div>
-    <a href="/Admin/Dashboard" class="sidebar__link active">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        Tổng quan
-    </a>
-    <a href="/Admin/Statistics" class="sidebar__link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        Thống kê
-    </a>
-    <div class="sidebar__section-label">Nội dung</div>
-    <a href="/Admin/Users" class="sidebar__link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Người dùng
-    </a>
-    <a href="/Admin/Staff" class="sidebar__link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        Nhân viên
-    </a>
-    <a href="/Admin/Categories" class="sidebar__link">Thể loại</a>
-    <a href="/Admin/Tags" class="sidebar__link">Tag</a>
-    <a href="/Admin/Badges" class="sidebar__link">Huy hiệu</a>
-    <div class="sidebar__section-label">Hệ thống</div>
-    <a href="/Admin/Notifications" class="sidebar__link">Thông báo hệ thống</a>
-    <a href="/Admin/AuditLogs" class="sidebar__link">Audit Logs</a>
-    <a href="/Admin/Settings" class="sidebar__link">Cài đặt</a>
-    <a href="/Admin/Announcements" class="sidebar__link">Thông báo trang</a>
-    <a href="/Admin/Backup" class="sidebar__link">Backup & Restore</a>
-}
+@section Sidebar { <partial name="~/Pages/Admin/_AdminSidebar.cshtml" /> }
 
 <!-- SCR-47: Admin Dashboard -->
 <div class="page-header">
@@ -121,9 +93,8 @@
     <div class="card">
         <h3 class="text-body-sm font-semibold mb-md">⚙️ Hệ thống</h3>
         <div class="flex gap-sm" style="flex-wrap:wrap;">
-            <a href="/Admin/Settings" class="btn btn-secondary btn-sm">Cài đặt</a>
             <a href="/Admin/AuditLogs" class="btn btn-secondary btn-sm">Audit Logs</a>
-            <a href="/Admin/Backup" class="btn btn-secondary btn-sm">Backup</a>
+            <a href="/Admin/Announcements" class="btn btn-secondary btn-sm">Thông báo trang</a>
         </div>
     </div>
 </div>

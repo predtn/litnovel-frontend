@@ -66,10 +66,12 @@
         @if (Model.TotalPages > 1)
         {
             <div class="pagination mt-md">
+                <a class="pagination__btn @(Model.Page <= 1 ? "disabled" : "")" href="/Admin/NovelOverride?q=@Uri.EscapeDataString(Model.Query ?? "")&page=@Math.Max(1, Model.Page - 1)">‹</a>
                 @for (var i = 1; i <= Model.TotalPages; i++)
                 {
                     <a class="pagination__btn @(i == Model.Page ? "active" : "")" href="/Admin/NovelOverride?q=@Uri.EscapeDataString(Model.Query ?? "")&page=@i">@i</a>
                 }
+                <a class="pagination__btn @(Model.Page >= Model.TotalPages ? "disabled" : "")" href="/Admin/NovelOverride?q=@Uri.EscapeDataString(Model.Query ?? "")&page=@Math.Min(Model.TotalPages, Model.Page + 1)">›</a>
             </div>
         }
     }

@@ -130,6 +130,112 @@ async function markNotifRead(id) {
     try { await fetch(`/api/notifications/${id}/read`, { method: 'PUT', headers: getHeaders() }); } catch(e){}
 }
 
+// ─── Lightweight realtime fallback ───
+let lastUnreadCount = null;
+
+async function loadUnreadNotificationSnapshot() {
+    const bell = document.getElementById('notifBell');
+    if (!bell || bell.dataset.authenticated !== 'true') return;
+
+    try {
+        const res = await fetch('/api/notifications?isRead=false&page=1&size=1', { headers: getHeaders() });
+        if (!res.ok) return;
+        const payload = await res.json();
+        const data = payload?.data ?? payload;
+        const unreadCount = Number(data?.unreadCount ?? data?.totalElements ?? (Array.isArray(data) ? data.length : data?.items?.length ?? 0));
+        const latest = Array.isArray(data?.items) ? data.items[0] : Array.isArray(data) ? data[0] : null;
+
+        updateNotificationBadge(unreadCount);
+        if (lastUnreadCount !== null && unreadCount > lastUnreadCount) {
+            const message = latest?.message || latest?.body || latest?.title || 'Bạn có thông báo mới.';
+            showToast(message, 'info', 5000);
+        }
+        lastUnreadCount = unreadCount;
+    } catch (e) {
+        // Ignore transient polling failures.
+    }
+}
+
+function updateNotificationBadge(count) {
+    const badge = document.getElementById('notifBellCount');
+    if (!badge) return;
+
+    if (count > 0) {
+        badge.textContent = count > 9 ? '9+' : String(count);
+        badge.classList.remove('hidden');
+    } else {
+        badge.textContent = '';
+        badge.classList.add('hidden');
+    }
+}
+
+async function loadHomepageAnnouncements() {
+    const root = document.getElementById('homeAnnouncements');
+    const list = document.getElementById('homeAnnouncementsList');
+    if (!root || !list) return;
+
+    try {
+        const res = await fetch('/api/announcements', { headers: getHeaders() });
+        if (!res.ok) return;
+        const payload = await res.json();
+        const announcements = (payload?.data ?? payload ?? [])
+            .filter(item => item?.isActive)
+            .filter(item => {
+                const now = Date.now();
+                const start = item.startDate ? Date.parse(item.startDate) : 0;
+                const end = item.endDate ? Date.parse(item.endDate) : Number.POSITIVE_INFINITY;
+                return start <= now && end >= now;
+            })
+            .sort((a, b) => Date.parse(b.startDate || 0) - Date.parse(a.startDate || 0))
+            .slice(0, 3);
+
+        renderHomepageAnnouncements(root, list, announcements);
+    } catch (e) {
+        // Ignore transient polling failures.
+    }
+}
+
+function renderHomepageAnnouncements(root, list, announcements) {
+    if (!announcements.length) {
+        list.replaceChildren();
+        root.classList.add('hidden');
+        return;
+    }
+
+    const currentIds = Array.from(list.querySelectorAll('[data-announcement-id]')).map(item => item.dataset.announcementId).join(',');
+    const nextIds = announcements.map(item => String(item.id)).join(',');
+    if (currentIds === nextIds) return;
+
+    const fragment = document.createDocumentFragment();
+    announcements.forEach(item => {
+        const article = document.createElement('article');
+        article.className = 'home-announcement';
+        article.dataset.announcementId = item.id;
+        article.innerHTML = `
+            <div class="home-announcement__icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v2a2 2 0 0 0 2 2h2l4 4V5L7 9H5a2 2 0 0 0-2 2Z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19 6a9 9 0 0 1 0 12"/></svg>
+            </div>
+            <div class="home-announcement__body">
+                <h2 class="home-announcement__title"></h2>
+                <div class="home-announcement__content"></div>
+            </div>`;
+        article.querySelector('.home-announcement__title').textContent = item.title || '';
+        article.querySelector('.home-announcement__content').innerHTML = item.content || '';
+        fragment.appendChild(article);
+    });
+
+    list.replaceChildren(fragment);
+    root.classList.remove('hidden');
+}
+
+function initRealtimeFallbacks() {
+    loadUnreadNotificationSnapshot();
+    setInterval(loadUnreadNotificationSnapshot, 15000);
+
+    loadHomepageAnnouncements();
+    setInterval(loadHomepageAnnouncements, 30000);
+}
+
 // ─── Helpers ───
 function getHeaders() {
     const token = getCookie('litnovel_token');
@@ -185,8 +291,13 @@ function initSiteFeedback() {
     });
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initSiteFeedback);
-} else {
+function initSite() {
     initSiteFeedback();
+    initRealtimeFallbacks();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSite);
+} else {
+    initSite();
 }

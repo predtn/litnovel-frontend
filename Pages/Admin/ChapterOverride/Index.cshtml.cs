@@ -14,12 +14,12 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
     public new int Page { get; set; } = 1;
     public int TotalPages { get; set; } = 1;
 
-    public async Task<IActionResult> OnGetAsync(string? q, int? novelId, int? chapterId, int page = 1)
+    public async Task<IActionResult> OnGetAsync(string? q, int? novelId, int? chapterId, [FromQuery(Name = "page")] int pageNumber = 1)
     {
         if (!auth.IsInRole(HttpContext, "Admin")) return RedirectToPage("/Index");
         SetShell();
         Query = q;
-        Page = Math.Max(1, page);
+        Page = Math.Max(1, pageNumber);
         var token = auth.GetToken(HttpContext);
         await LoadNovelListAsync(token);
 
