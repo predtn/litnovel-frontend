@@ -17,8 +17,14 @@ public class StatisticsModel : PublishPageModel
         var novelTask = Api.GetAsync<NovelDetailDto>($"/api/novels/{id}", Token);
         var analyticsTask = Api.GetAsync<NovelAnalyticsDto>($"/api/novels/{id}/analytics", Token);
         await Task.WhenAll(novelTask, analyticsTask);
-        Novel = novelTask.Result?.Data ?? MockNovel(id);
-        Analytics = analyticsTask.Result?.Data ?? MockAnalytics(id);
+        if (!IsApiSuccess(novelTask.Result) || novelTask.Result?.Data == null)
+        {
+            TempData["Error"] = ApiFailureMessage(novelTask.Result, "Unable to load novel.");
+            return RedirectToPage("/Publish/Index");
+        }
+
+        Novel = novelTask.Result.Data;
+        Analytics = analyticsTask.Result?.Data ?? new() { NovelId = id };
         return Page();
     }
 }

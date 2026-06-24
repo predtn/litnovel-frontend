@@ -16,12 +16,16 @@ public class LogoutModel : PageModel
     public async Task<IActionResult> OnGetAsync()
     {
         await _auth.LogoutAsync(HttpContext);
+        TempData["ToastMessage"] = "Đăng xuất thành công.";
+        TempData["ToastType"] = "success";
         return RedirectToPage("/Index");
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
         await _auth.LogoutAsync(HttpContext);
+        TempData["ToastMessage"] = "Đăng xuất thành công.";
+        TempData["ToastType"] = "success";
         return RedirectToPage("/Index");
     }
 }

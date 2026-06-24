@@ -24,26 +24,35 @@ public class IndexModel : PageModel
         _auth = auth;
     }
 
-    public async Task<IActionResult> OnGetAsync(string? keyword, string? role, string? status, int page = 1)
+    public async Task<IActionResult> OnGetAsync(string? keyword, string? role, string? status, [FromQuery(Name = "page")] int pageNumber = 1)
     {
         var token = _auth.GetToken(HttpContext);
         if (!_auth.IsInRole(HttpContext, "Admin")) return RedirectToPage("/Index");
 
         Keyword = keyword;
-        RoleFilter = role;
+        RoleFilter = "User";
         StatusFilter = status;
-        Page = page;
+        Page = Math.Max(1, pageNumber);
 
-        var qs = $"/api/admin/users?page={page}&size=20"
-            + (string.IsNullOrEmpty(keyword) ? "" : $"&keyword={Uri.EscapeDataString(keyword)}")
-            + (string.IsNullOrEmpty(role) ? "" : $"&role={role}")
-            + (string.IsNullOrEmpty(status) ? "" : $"&status={status}");
+        var qs = "/api/admin/users" + ODataQuery.Build(
+            page: Page,
+            size: 5,
+            filters:
+            [
+                ODataQuery.Eq("Role", RoleFilter),
+                ODataQuery.Eq("Status", StatusFilter),
+                ODataQuery.ContainsAny(Keyword ?? "", "Username", "Email")
+            ]);
 
         var result = await _api.GetAsync<PagedData<UserDetailDto>>(qs, token);
         if (result?.Success == true && result.Data != null)
         {
-            Users = result.Data.Items;
-            TotalPages = result.Data.TotalPages;
+            Users = result.Data.Items
+                .Where(user => user.Role.Equals("User", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            TotalPages = result.Data.TotalPages > 0
+                ? result.Data.TotalPages
+                : Math.Max(1, (int)Math.Ceiling(result.Data.TotalElements / 5.0));
             TotalElements = result.Data.TotalElements;
         }
         else
@@ -83,9 +92,9 @@ public class IndexModel : PageModel
         return RedirectToPage();
     }
 
-    private async Task SendUserNotificationAsync(int userId, string message, string? token)
+    private async Task<ApiResponse<object>?> SendUserNotificationAsync(int userId, string message, string? token)
     {
-        await _api.PostAsync<object>("/api/admin/notifications", new
+        return await _api.PostAsync<object>("/api/admin/notifications", new
         {
             notificationType = "SystemAlert",
             message,

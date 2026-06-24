@@ -27,8 +27,13 @@ public class ChapterPreviewModel : PublishPageModel
         }
 
         Chapter = result?.Data ?? new();
-        Chapter.Novel ??= MockNovel(novelId);
-        Chapter.Volume ??= MockNovel(novelId).Volumes.FirstOrDefault(v => v.Id == volumeId);
+        if (Chapter.Novel == null || Chapter.Volume == null)
+        {
+            var novelResult = await Api.GetAsync<NovelDetailDto>($"/api/novels/{novelId}", Token);
+            var novel = novelResult?.Data;
+            Chapter.Novel ??= novel;
+            Chapter.Volume ??= novel?.Volumes.FirstOrDefault(v => v.Id == volumeId);
+        }
         return Page();
     }
 }

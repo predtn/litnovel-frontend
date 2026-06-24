@@ -31,6 +31,7 @@ public class DashboardModel : PageModel
 
         var user = _auth.GetCurrentUser(HttpContext);
         if (user != null) { ViewData["UserName"] = user.Username; ViewData["UserEmail"] = user.Email; }
+        ViewData["AdminSection"] = "dashboard";
         return Page();
     }
 }

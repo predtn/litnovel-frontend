@@ -44,30 +44,5 @@ public class IndexModel : PageModel
         TotalPages    = data?.TotalPages ?? 1;
         TotalElements = data?.TotalElements ?? Novels.Count;
         Categories    = catTask.Result?.Data ?? [];
-
-        // Mock fallback
-        if (!Novels.Any())
-        {
-            Novels = GetMockNovels();
-            TotalElements = Novels.Count;
-            Categories = GetMockCategories();
-        }
     }
-
-    private List<NovelSummaryDto> GetMockNovels() =>
-    [
-        new() { Id = 1, Title = "Long Vương Truyền Thuyết", Slug = "long-vuong-truyen-thuyet", Author = new() { Username = "tác_giả_1" }, Status = "Ongoing", ViewCount = 128432, RatingAverage = 4.5 },
-        new() { Id = 2, Title = "Thiên Đạo Thư Viện", Slug = "thien-dao-thu-vien", Author = new() { Username = "tác_giả_2" }, Status = "Ongoing", ViewCount = 98120, RatingAverage = 4.8 },
-        new() { Id = 3, Title = "Vô Hạn Phục Hồi", Slug = "vo-han-phuc-hoi", Author = new() { Username = "tác_giả_3" }, Status = "Ended", ViewCount = 85200, RatingAverage = 4.3 },
-        new() { Id = 4, Title = "Mộng Tình Thiên Hạ", Slug = "mong-tinh-thien-ha", Author = new() { Username = "tác_giả_4" }, Status = "Ended", ViewCount = 76400, RatingAverage = 4.6 },
-        new() { Id = 5, Title = "Chiến Thần Tái Lâm", Slug = "chien-than-tai-lam", Author = new() { Username = "tác_giả_5" }, Status = "Ongoing", ViewCount = 65800, RatingAverage = 4.2 },
-        new() { Id = 6, Title = "Đô Thị Chi Vương", Slug = "do-thi-chi-vuong", Author = new() { Username = "tác_giả_6" }, Status = "Hiatus", ViewCount = 54300, RatingAverage = 4.1 },
-    ];
-
-    private List<CategoryDto> GetMockCategories() =>
-    [
-        new() { Id = 1, Name = "Tiên hiệp" }, new() { Id = 2, Name = "Kiếm hiệp" },
-        new() { Id = 3, Name = "Lãng mạn" },  new() { Id = 4, Name = "Huyền huyễn" },
-        new() { Id = 5, Name = "Đô thị" },    new() { Id = 6, Name = "Khoa huyễn" },
-    ];
 }

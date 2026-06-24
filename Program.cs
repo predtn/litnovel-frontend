@@ -1,3 +1,4 @@
+using litnovel_frontend.Filters;
 using litnovel_frontend.Services;
 using Microsoft.AspNetCore.DataProtection;
 
@@ -7,7 +8,12 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
 // ─── Services ───
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages(options =>
+{
+    options.Conventions.AddFolderApplicationModelConvention("/",
+        model => model.Filters.Add(new Microsoft.AspNetCore.Mvc.ServiceFilterAttribute(typeof(NotificationCountFilter))));
+});
+builder.Services.AddScoped<NotificationCountFilter>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, ".aspnet-data-protection-keys")));
@@ -92,6 +98,38 @@ app.Use(async (context, next) =>
     await next();
 });
 app.UseAuthorization();
+
+app.MapPost("/api/novels/{id:int}/favorites", async (
+    int id,
+    HttpContext context,
+    IApiService api,
+    IAuthService auth) =>
+{
+    var token = auth.GetToken(context);
+    if (string.IsNullOrWhiteSpace(token))
+    {
+        return Results.Unauthorized();
+    }
+
+    var result = await api.PostAsync<object>($"/api/novels/{id}/favorites", null, token);
+    return Results.Json(result, statusCode: result?.Success == true ? StatusCodes.Status200OK : StatusCodes.Status400BadRequest);
+});
+
+app.MapDelete("/api/novels/{id:int}/favorites", async (
+    int id,
+    HttpContext context,
+    IApiService api,
+    IAuthService auth) =>
+{
+    var token = auth.GetToken(context);
+    if (string.IsNullOrWhiteSpace(token))
+    {
+        return Results.Unauthorized();
+    }
+
+    var result = await api.DeleteAsync<object>($"/api/novels/{id}/favorites", token);
+    return Results.Json(result, statusCode: result?.Success == true ? StatusCodes.Status200OK : StatusCodes.Status400BadRequest);
+});
 
 app.MapRazorPages();
 

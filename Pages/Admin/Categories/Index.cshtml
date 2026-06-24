@@ -19,39 +19,19 @@
 {
     <div class="card-soft mb-xl" style="border-color:var(--color-warning);">@Model.LoadError</div>
 }
-@if (TempData["Error"] is string error)
-{
-    <div class="alert alert-error mb-md">@error</div>
-}
-@if (TempData["Success"] is string ok)
-{
-    <div class="alert alert-success mb-md alert-auto-close">@ok</div>
-}
+<partial name="~/Pages/Admin/_TaxonomyList.cshtml" model="Model.Items" />
 
-<div class="table-wrapper">
-    <table class="table table--compact">
-        <thead><tr><th>Name</th><th>Novels using</th><th class="col-actions">Actions</th></tr></thead>
-        <tbody>
-        @foreach (var c in Model.Categories)
+@if (Model.TotalPages > 1)
+{
+    <div class="pagination mt-md">
+        <a class="pagination__btn @(Model.Page <= 1 ? "disabled" : "")" href="?page=@Math.Max(1, Model.Page - 1)">‹</a>
+        @for (int i = 1; i <= Model.TotalPages; i++)
         {
-            <tr>
-                <td class="font-medium">@c.Name</td>
-                <td>@c.NovelCount</td>
-                <td class="col-actions">
-                    <div class="publish-actions">
-                        <button class="btn btn-secondary btn-sm" type="button" onclick="openEdit(@c.Id, '@System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(c.Name)', '@System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(c.Slug)')">Edit</button>
-                        <form method="post" asp-page-handler="Delete" onsubmit="return confirm('Delete this category?')">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="id" value="@c.Id" />
-                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
+            <a class="pagination__btn @(i == Model.Page ? "active" : "")" href="?page=@i">@i</a>
         }
-        </tbody>
-    </table>
-</div>
+        <a class="pagination__btn @(Model.Page >= Model.TotalPages ? "disabled" : "")" href="?page=@Math.Min(Model.TotalPages, Model.Page + 1)">›</a>
+    </div>
+}
 
 <div class="modal-overlay" id="addModal">
     <div class="modal">

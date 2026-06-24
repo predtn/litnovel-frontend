@@ -14,12 +14,12 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
     public new int Page { get; set; } = 1;
     public int TotalPages { get; set; } = 1;
 
-    public async Task<IActionResult> OnGetAsync(string? q, int? novelId, int page = 1)
+    public async Task<IActionResult> OnGetAsync(string? q, int? novelId, [FromQuery(Name = "page")] int pageNumber = 1)
     {
         if (!auth.IsInRole(HttpContext, "Admin")) return RedirectToPage("/Index");
         SetShell();
         Query = q;
-        Page = Math.Max(1, page);
+        Page = Math.Max(1, pageNumber);
         var token = auth.GetToken(HttpContext);
         await LoadAuthorCandidatesAsync(token);
         await LoadNovelListAsync(token);
@@ -50,8 +50,9 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
 
     public async Task<IActionResult> OnPostDeleteAsync(int id)
     {
-        await api.DeleteAsync<object>($"/api/novels/{id}", auth.GetToken(HttpContext));
-        TempData["Success"] = "Novel deleted.";
+        var result = await api.DeleteAsync<object>($"/api/novels/{id}", auth.GetToken(HttpContext));
+        if (result?.Success == true) TempData["Success"] = "Novel deleted.";
+        else TempData["Error"] = result?.Message ?? "Could not delete novel.";
         return RedirectToPage();
     }
 

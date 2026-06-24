@@ -15,7 +15,8 @@ public class VolumesModel : PublishPageModel
     {
         var guard = RequireAuthor();
         if (guard != null) return guard;
-        await LoadAsync(novelId);
+        var loaded = await LoadAsync(novelId);
+        if (!loaded) return RedirectToPage("/Publish/Index");
         Input.VolumeNumber = (Volumes.Count == 0 ? 1 : Volumes.Max(v => v.VolumeNumber) + 1);
         return Page();
     }
@@ -38,12 +39,19 @@ public class VolumesModel : PublishPageModel
         return RedirectToPage(new { novelId });
     }
 
-    private async Task LoadAsync(int novelId)
+    private async Task<bool> LoadAsync(int novelId)
     {
         var novelTask = Api.GetAsync<NovelDetailDto>($"/api/novels/{novelId}", Token);
         var volumeTask = Api.GetAsync<List<VolumeDto>>($"/api/novels/{novelId}/volumes", Token);
         await Task.WhenAll(novelTask, volumeTask);
-        Novel = novelTask.Result?.Data ?? MockNovel(novelId);
+        if (!IsApiSuccess(novelTask.Result) || novelTask.Result?.Data == null)
+        {
+            TempData["Error"] = ApiFailureMessage(novelTask.Result, "Unable to load novel.");
+            return false;
+        }
+
+        Novel = novelTask.Result.Data;
         Volumes = volumeTask.Result?.Data ?? Novel.Volumes.Cast<VolumeDto>().ToList();
+        return true;
     }
 }

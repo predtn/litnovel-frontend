@@ -1,4 +1,6 @@
 @page
+@using System.Globalization
+@using litnovel_frontend.Services
 @model litnovel_frontend.Pages.Admin.Statistics.IndexModel
 @{
     Layout = "_LayoutDashboard";
@@ -11,14 +13,25 @@
 <div class="page-header">
     <div>
         <h1 class="page-header__title">Statistics Charts</h1>
-        <p class="page-header__subtitle">Chart-only analytics. Numeric summaries stay on the Admin Dashboard.</p>
+        <p class="page-header__subtitle">Daily and monthly growth snapshots.</p>
     </div>
-    <form class="admin-toolbar admin-toolbar--inline" method="get">
-        <input class="form-input" type="date" name="from" value="@Model.FromDate" />
-        <input class="form-input" type="date" name="to" value="@Model.ToDate" />
-        <button class="btn btn-secondary" type="submit">Apply</button>
-    </form>
 </div>
+
+<form class="admin-toolbar admin-toolbar--chart-ranges" method="get">
+    <label class="form-group">
+        <span class="form-label">Daily range</span>
+        <select class="form-select" name="dayRange" onchange="this.form.submit()">
+            <option value="7" selected="@(Model.DayRange == "7")">7 days</option>
+            <option value="30" selected="@(Model.DayRange == "30")">30 days</option>
+            <option value="90" selected="@(Model.DayRange == "90")">90 days</option>
+        </select>
+    </label>
+    <label class="form-group">
+        <span class="form-label">Month detail</span>
+        <input class="form-input" type="month" name="month" value="@Model.SelectedMonth" onchange="this.form.submit()" />
+    </label>
+    <button class="btn btn-secondary" type="submit">Apply</button>
+</form>
 
 @if (!string.IsNullOrWhiteSpace(Model.LoadError))
 {
@@ -30,8 +43,11 @@
 
 <div class="admin-chart-grid">
     <section class="card admin-chart-card">
-        <h2 class="text-display-sm mb-md">User growth</h2>
-        @if (Model.UserGrowth.Points.Count == 0)
+        <div class="admin-chart-card__header">
+            <h2 class="text-display-sm">Daily growth</h2>
+            <span class="text-caption text-mute">@Model.DayRange days</span>
+        </div>
+        @if (Model.DailyGrowth.Points.Count == 0)
         {
             <div class="empty-state">
                 <div class="empty-state__title">No chart data</div>
@@ -40,23 +56,40 @@
         }
         else
         {
-            var max = Math.Max(1, Model.UserGrowth.Points.Max(p => p.Value));
-            <div class="admin-chart">
-                @foreach (var point in Model.UserGrowth.Points)
-                {
-                    <div class="admin-chart__row">
-                        <span class="admin-chart__date">@point.Date</span>
-                        <div class="admin-chart__track"><div class="admin-chart__bar" style="width:@(point.Value * 100 / max)%"></div></div>
-                        <span class="admin-chart__value">@point.Value</span>
-                    </div>
-                }
+            var points = Model.DailyGrowth.Points;
+            var max = Math.Max(1, points.Max(p => p.Value));
+            var pointCount = Math.Max(1, points.Count - 1);
+            var coordinates = BuildCoordinates(points, max, pointCount);
+
+            <div class="admin-line-chart" role="img" aria-label="Daily user growth">
+                <svg viewBox="0 0 500 200" preserveAspectRatio="none">
+                    <line x1="24" y1="172" x2="476" y2="172" class="admin-line-chart__axis" />
+                    <line x1="24" y1="40" x2="24" y2="172" class="admin-line-chart__axis" />
+                    <polyline points="@coordinates" class="admin-line-chart__line" />
+                    @foreach (var point in points.Select((value, index) => new { value, index }))
+                    {
+                        var x = 24 + (point.index * 452.0 / pointCount);
+                        var y = 172 - (point.value.Value * 132.0 / max);
+                        <circle cx="@SvgNumber(x)" cy="@SvgNumber(y)" r="4" class="admin-line-chart__dot" tabindex="0">
+                            <title>@point.value.Date: @point.value.Value</title>
+                        </circle>
+                    }
+                </svg>
+            </div>
+            <div class="admin-chart__legend">
+                <span>@points.First().Date</span>
+                <span>Max @max</span>
+                <span>@points.Last().Date</span>
             </div>
         }
     </section>
 
     <section class="card admin-chart-card">
-        <h2 class="text-display-sm mb-md">Novel publish rate</h2>
-        @if (Model.NovelPublishRate.Points.Count == 0)
+        <div class="admin-chart-card__header">
+            <h2 class="text-display-sm">Monthly growth</h2>
+            <span class="text-caption text-mute">@(string.IsNullOrWhiteSpace(Model.SelectedMonth) ? "12 months" : Model.SelectedMonth)</span>
+        </div>
+        @if (Model.MonthlyGrowth.Points.Count == 0)
         {
             <div class="empty-state">
                 <div class="empty-state__title">No chart data</div>
@@ -65,17 +98,44 @@
         }
         else
         {
-            var max = Math.Max(1, Model.NovelPublishRate.Points.Max(p => p.Value));
-            <div class="admin-chart">
-                @foreach (var point in Model.NovelPublishRate.Points)
-                {
-                    <div class="admin-chart__row">
-                        <span class="admin-chart__date">@point.Date</span>
-                        <div class="admin-chart__track"><div class="admin-chart__bar" style="width:@(point.Value * 100 / max)%"></div></div>
-                        <span class="admin-chart__value">@point.Value</span>
-                    </div>
-                }
+            var points = Model.MonthlyGrowth.Points;
+            var max = Math.Max(1, points.Max(p => p.Value));
+            var pointCount = Math.Max(1, points.Count - 1);
+            var coordinates = BuildCoordinates(points, max, pointCount);
+
+            <div class="admin-line-chart" role="img" aria-label="Monthly user growth">
+                <svg viewBox="0 0 500 200" preserveAspectRatio="none">
+                    <line x1="24" y1="172" x2="476" y2="172" class="admin-line-chart__axis" />
+                    <line x1="24" y1="40" x2="24" y2="172" class="admin-line-chart__axis" />
+                    <polyline points="@coordinates" class="admin-line-chart__line" />
+                    @foreach (var point in points.Select((value, index) => new { value, index }))
+                    {
+                        var x = 24 + (point.index * 452.0 / pointCount);
+                        var y = 172 - (point.value.Value * 132.0 / max);
+                        <circle cx="@SvgNumber(x)" cy="@SvgNumber(y)" r="4" class="admin-line-chart__dot" tabindex="0">
+                            <title>@point.value.Date: @point.value.Value</title>
+                        </circle>
+                    }
+                </svg>
+            </div>
+            <div class="admin-chart__legend">
+                <span>@points.First().Date</span>
+                <span>Max @max</span>
+                <span>@points.Last().Date</span>
             </div>
         }
     </section>
 </div>
+
+@functions {
+    private static string BuildCoordinates(List<ChartPointDto> points, int max, int pointCount)
+        => string.Join(" ", points.Select((point, index) =>
+        {
+            var x = 24 + (index * 452.0 / pointCount);
+            var y = 172 - (point.Value * 132.0 / max);
+            return $"{SvgNumber(x)},{SvgNumber(y)}";
+        }));
+
+    private static string SvgNumber(double value)
+        => value.ToString("0.##", CultureInfo.InvariantCulture);
+}

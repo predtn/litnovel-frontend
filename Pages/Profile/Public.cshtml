@@ -1,8 +1,9 @@
-@page "/Profile/{userId:int}"
+﻿@page "/Profile/{userId:int}"
 @model litnovel_frontend.Pages.Profile.PublicModel
 @{
     ViewData["Title"] = Model.User?.Username ?? "Hồ sơ";
     var u = Model.User;
+    var joinedAt = u?.JoinedAt == default ? u?.CreatedAt : u?.JoinedAt;
 }
 <!-- SCR-07: Public Profile -->
 <div class="container" style="padding-top:var(--space-xl);padding-bottom:var(--space-4xl);">
@@ -18,10 +19,14 @@
         else
         { <div class="avatar-placeholder avatar-2xl">@(u.Username.Substring(0,1).ToUpper())</div> }
         <div style="flex:1;min-width:0;">
-            <div class="flex items-center gap-sm mb-xs">
+            <div class="profile-title-row mb-xs">
                 <h1 class="text-display-sm">@u.Username</h1>
-                <span class="badge role-@u.Role.ToLower()">@u.Role</span>
-                <span class="status-badge status-@u.Status.ToLower()">@u.Status</span>
+                <span class="profile-meta-badge role-@u.Role.ToLower()">@u.Role</span>
+                <span class="profile-meta-badge status-@u.Status.ToLower()">@u.Status</span>
+                @foreach (var badge in u.Badges)
+                {
+                    <span class="profile-mini-badge" style="--badge-color:@BadgeColor(badge.Color);" title="@badge.Name">@badge.Name</span>
+                }
             </div>
             @if (!string.IsNullOrEmpty(u.Bio)) { <p class="text-body-sm text-body mb-md">@u.Bio</p> }
             <div class="flex gap-lg" style="flex-wrap:wrap;">
@@ -29,70 +34,111 @@
                 <div><span class="text-display-sm font-semibold">@u.Stats.NovelsCreated</span> <span class="text-caption text-mute">Truyện</span></div>
                 <div><span class="text-display-sm font-semibold">@u.Stats.ChaptersPublished</span> <span class="text-caption text-mute">Chương</span></div>
             </div>
-            <div class="text-caption text-mute mt-sm">Tham gia từ @u.CreatedAt.ToString("MM/yyyy")</div>
+            <div class="text-caption text-mute mt-sm">Tham gia từ @joinedAt?.ToString("dd/MM/yyyy")</div>
         </div>
     </div>
-    @if (TempData["Success"] is string ok) { <div class="alert alert-success mb-md alert-auto-close">@ok</div> }
-    @if (TempData["Error"] is string er) { <div class="alert alert-error mb-md">@er</div> }
+
     <!-- Badges -->
-    @if (u.Badges.Any())
-    {
-        <div class="card mb-xl">
-            <h2 class="text-body-sm font-semibold mb-md">🏅 Huy hiệu</h2>
-            <div class="flex gap-sm" style="flex-wrap:wrap;">
+    <div class="card mb-xl">
+        <div class="profile-section-header">
+            <h2 class="text-body-sm font-semibold">Huy hiệu</h2>
+            <span class="text-caption text-mute">@u.Badges.Count huy hiệu</span>
+        </div>
+        @if (u.Badges.Any())
+        {
+            <div class="profile-badge-grid">
                 @foreach (var b in u.Badges)
                 {
-                    <span class="badge badge-violet profile-badge" title="@b.Name">
-                        @if (IsImageIcon(b.Icon))
-                        {
-                            <img src="@b.Icon" alt="" class="profile-badge__icon" />
-                        }
-                        else if (!string.IsNullOrWhiteSpace(b.Icon))
-                        {
-                            <span>@b.Icon</span>
-                        }
-                        <span>@b.Name</span>
-                    </span>
+                    <div class="profile-badge-card" style="--badge-color:@BadgeColor(b.Color);" title="@b.Name">
+                        <div class="profile-badge-card__icon">
+                            @if (IsImageIcon(b.Icon))
+                            {
+                                <img src="@b.Icon" alt="" />
+                            }
+                            else if (!string.IsNullOrWhiteSpace(b.Icon))
+                            {
+                                <span>@b.Icon</span>
+                            }
+                            else
+                            {
+                                <span>@Initials(b.Name)</span>
+                            }
+                        </div>
+                        <div class="profile-badge-card__body">
+                            <div class="profile-badge-card__name">@b.Name</div>
+                            @if (b.EarnedAt != default)
+                            {
+                                <div class="profile-badge-card__meta">Nhận @b.EarnedAt.ToString("dd/MM/yyyy")</div>
+                            }
+                        </div>
+                    </div>
                 }
             </div>
+        }
+        else
+        {
+            <div class="empty-state empty-state--compact">
+                <div class="empty-state__title">Chưa có huy hiệu nào</div>
+            </div>
+        }
+    </div>
+
+    @if (!Model.IsOwnProfile)
+    {
+        <!-- Report user -->
+        <div class="card mb-xl">
+            <h2 class="text-body-sm font-semibold mb-md">Báo cáo người dùng</h2>
+            <form method="post" asp-page-handler="Report" class="auth-form">
+                @Html.AntiForgeryToken()
+                <div class="form-group">
+                    <label class="form-label">Loại báo cáo</label>
+                    <select name="ReportType" class="form-input">
+                        <option value="Harassment">Harassment</option>
+                        <option value="Spam">Spam</option>
+                        <option value="Inappropriate">Inappropriate</option>
+                        <option value="Copyright">Copyright</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mô tả</label>
+                    <textarea name="Description" class="form-textarea" maxlength="1000" placeholder="Mô tả ngắn gọn lý do báo cáo..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-secondary" style="border-radius:var(--radius-sm);">Gửi báo cáo</button>
+            </form>
         </div>
     }
-    <!-- Report user -->
-    <div class="card mb-xl">
-        <h2 class="text-body-sm font-semibold mb-md">BĂ¡o cĂ¡o ngÆ°á»i dĂ¹ng</h2>
-        <form method="post" asp-page-handler="Report" class="auth-form">
-            @Html.AntiForgeryToken()
-            <div class="form-group">
-                <label class="form-label">Loáº¡i bĂ¡o cĂ¡o</label>
-                <select name="ReportType" class="form-input">
-                    <option value="Harassment">Harassment</option>
-                    <option value="Spam">Spam</option>
-                    <option value="Inappropriate">Inappropriate</option>
-                    <option value="Copyright">Copyright</option>
-                    <option value="Other">Other</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">MĂ´ táº£</label>
-                <textarea name="Description" class="form-textarea" maxlength="1000" placeholder="MĂ´ táº£ ngáº¯n gá»n lĂ½ do bĂ¡o cĂ¡o..."></textarea>
-            </div>
-            <button type="submit" class="btn btn-secondary" style="border-radius:var(--radius-sm);">Gá»­i bĂ¡o cĂ¡o</button>
-        </form>
-    </div>
+
     <!-- Novels by this author -->
     <h2 class="text-display-sm mb-lg">Tiểu thuyết của @u.Username</h2>
     @if (!Model.Novels.Any())
-    { <div class="empty-state"><div class="empty-state__icon">📝</div><div class="empty-state__title">Chưa có truyện nào</div></div> }
+    { <div class="empty-state"><div class="empty-state__icon">✎</div><div class="empty-state__title">Chưa có truyện nào</div></div> }
     else
     {
         <div class="grid-4" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr));">
             @foreach (var n in Model.Novels)
             {
-                <a href="/Novels/@n.Slug" class="novel-card">
-                    <div class="novel-card__cover-placeholder">📖</div>
+                var novelUrl = !string.IsNullOrWhiteSpace(n.Slug) ? n.Slug : n.Id.ToString();
+                <a href="/Novels/@novelUrl" class="novel-card">
+                    @if (!string.IsNullOrWhiteSpace(n.CoverImage))
+                    {
+                        <img class="novel-card__cover" src="@n.CoverImage" alt="@n.Title" loading="lazy" />
+                    }
+                    else
+                    {
+                        <div class="novel-card__cover-placeholder">📖</div>
+                    }
                     <div class="novel-card__body">
                         <div class="novel-card__title">@n.Title</div>
-                        <div class="novel-card__meta"><span>⭐ @n.RatingAverage.ToString("0.0")</span></div>
+                        <div class="profile-novel-meta">
+                            <span class="status-badge status-@n.Status.ToLowerInvariant()">@StatusLabel(n.Status)</span>
+                            <span>@n.TotalVolumes volume</span>
+                            <span>@n.TotalChapters chương</span>
+                        </div>
+                        <div class="novel-card__meta">
+                            <span>★ @n.RatingAverage.ToString("0.0")</span>
+                            <span>Cập nhật @n.UpdatedAt.ToString("dd/MM/yyyy")</span>
+                        </div>
                     </div>
                 </a>
             }
@@ -107,5 +153,29 @@
         return Uri.TryCreate(icon, UriKind.Absolute, out _)
             || icon.StartsWith("/", StringComparison.Ordinal)
             || icon.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string StatusLabel(string status) => status?.Trim().ToLowerInvariant() switch
+    {
+        "draft" => "Bản nháp",
+        "pending" => "Chờ duyệt",
+        "ongoing" => "Đang ra",
+        "published" => "Đã xuất bản",
+        "ended" => "Hoàn thành",
+        "rejected" => "Bị từ chối",
+        "hiatus" => "Tạm dừng",
+        "locked" => "Đã khóa",
+        _ => string.IsNullOrWhiteSpace(status) ? "Không rõ" : status
+    };
+
+    private static string Initials(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return "H";
+        return value.Trim().Substring(0, 1).ToUpperInvariant();
+    }
+
+    private static string BadgeColor(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "#8b5cf6" : value;
     }
 }

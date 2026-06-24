@@ -8,59 +8,59 @@
 @if (novel == null)
 {
     <div class="container" style="padding-top:80px;">
-        <div class="empty-state"><div class="empty-state__icon">🔍</div><div class="empty-state__title">Không tìm thấy truyện</div><a href="/Novels" class="btn btn-primary mt-md">Quay lại thư viện</a></div>
+        <div class="empty-state">
+            <div class="empty-state__icon">⌕</div>
+            <div class="empty-state__title">Không tìm thấy truyện</div>
+            <a href="/Novels" class="btn btn-primary mt-md">Quay lại thư viện</a>
+        </div>
     </div>
     return;
 }
 
-<!-- SCR-12: Novel Detail -->
-<div class="container" style="padding-top:var(--space-xl); padding-bottom:var(--space-4xl);">
-    <!-- Breadcrumb -->
+<div class="container novel-detail">
     <div class="breadcrumb">
         <a href="/">Trang chủ</a><span class="breadcrumb__sep">/</span>
         <a href="/Novels">Thư viện</a><span class="breadcrumb__sep">/</span>
         <span class="breadcrumb__current">@novel.Title</span>
     </div>
 
-    <!-- Novel Hero -->
-    <div class="flex gap-xl" style="margin-top:var(--space-lg);">
-        <!-- Cover -->
-        <div style="flex-shrink:0; width:200px;">
+    <div class="novel-detail__hero">
+        <div class="novel-detail__aside">
             @if (!string.IsNullOrEmpty(novel.CoverImage))
             {
-                <img src="@novel.CoverImage" alt="@novel.Title" style="width:200px; border-radius:var(--radius-md); box-shadow:var(--shadow-4);" />
+                <img src="@novel.CoverImage" alt="@novel.Title" class="novel-detail__cover" />
             }
             else
             {
-                <div style="width:200px; height:280px; background:var(--color-canvas-soft-2); border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; font-size:60px; box-shadow:var(--shadow-2);">📖</div>
+                <div class="novel-detail__cover-empty">No cover</div>
             }
 
-            <!-- Actions (mobile) -->
-            <div class="flex flex-col gap-xs mt-md">
+            <div class="novel-detail__actions">
                 @{ var firstChapter = novel.Volumes.SelectMany(v => v.Chapters).FirstOrDefault(); }
                 @if (firstChapter != null)
                 {
-                    <a href="/Novels/@novel.Slug/@firstChapter.Id/read" class="btn btn-primary" style="border-radius:var(--radius-sm); width:100%;">
-                        📖 Đọc ngay
-                    </a>
+                    var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
+                    var firstChapterUrl = !string.IsNullOrWhiteSpace(firstChapter.Slug) ? firstChapter.Slug : firstChapter.Id.ToString();
+                    <a href="/Novels/@novelUrl/@firstChapterUrl/read" class="btn btn-primary novel-detail__action">Đọc ngay</a>
                 }
                 else
                 {
-                    <span class="btn btn-primary" style="border-radius:var(--radius-sm); width:100%; opacity:.5; cursor:default;">📖 Chưa có chương</span>
+                    <span class="btn btn-primary novel-detail__action" style="opacity:.5; cursor:default;">Chưa có chương</span>
                 }
+
                 @if (User.Identity!.IsAuthenticated)
                 {
-                    <button id="favBtn" data-favorited="@novel.IsFavorited?.ToString().ToLower()"
+                    <button id="favBtn"
+                            data-favorited="@novel.IsFavorited?.ToString().ToLower()"
                             onclick="toggleFavorite(@novel.Id, this)"
-                            class="btn btn-secondary" style="border-radius:var(--radius-sm); width:100%;">
-                        <span class="fav-text">@(novel.IsFavorited == true ? "❤️ Đã yêu thích" : "♡ Yêu thích")</span>
+                            class="btn btn-secondary novel-detail__action">
+                        <span class="fav-text">@(novel.IsFavorited == true ? "Bỏ yêu thích" : "Yêu thích")</span>
                     </button>
                 }
             </div>
         </div>
 
-        <!-- Info -->
-        <div style="flex:1; min-width:0;">
+        <div class="novel-detail__main">
             <div class="flex gap-sm items-center" style="flex-wrap:wrap; margin-bottom:var(--space-sm);">
                 <span class="status-badge status-@novel.Status.ToLower()">@novel.Status</span>
                 @if (novel.Category != null)
@@ -75,8 +75,8 @@
 
             <h1 style="font-size:var(--text-display-md); font-weight:600; letter-spacing:var(--ls-display-md); color:var(--color-ink); margin-bottom:var(--space-xs);">@novel.Title</h1>
 
-            <div style="display:flex; align-items:center; gap:var(--space-md); margin-bottom:var(--space-lg); flex-wrap:wrap;">
-                <a href="/Profile/@novel.Author?.Id" style="display:flex; align-items:center; gap:var(--space-xs); text-decoration:none; color:var(--color-body);">
+            <div class="novel-detail__meta">
+                <a href="/Profile/@novel.Author?.Id" class="novel-detail__author">
                     <div class="avatar-placeholder avatar-sm">@(novel.Author?.Username?.Substring(0,1).ToUpper() ?? "A")</div>
                     <span class="text-body-sm font-medium">@novel.Author?.Username</span>
                 </a>
@@ -84,59 +84,55 @@
                 <span class="text-body-sm text-mute">@novel.TotalVolumes tập</span>
             </div>
 
-            <!-- Stats row -->
-            <div class="flex gap-xl mb-lg" style="flex-wrap:wrap;">
-                <div style="text-align:center;">
-                    <div style="font-size:var(--text-display-sm); font-weight:600;">@FormatNum(novel.ViewCount)</div>
+            <div class="novel-detail__stats">
+                <div class="novel-detail__stat">
+                    <div class="novel-detail__stat-value">@FormatNum(novel.ViewCount)</div>
                     <div class="text-caption text-mute">Lượt xem</div>
                 </div>
-                <div style="text-align:center;">
-                    <div style="font-size:var(--text-display-sm); font-weight:600;">@FormatNum(novel.LikeCount)</div>
+                <div class="novel-detail__stat">
+                    <div class="novel-detail__stat-value">@FormatNum(novel.LikeCount)</div>
                     <div class="text-caption text-mute">Lượt thích</div>
                 </div>
-                <div style="text-align:center;">
-                    <div style="font-size:var(--text-display-sm); font-weight:600; color:#f59e0b;">@novel.RatingAverage.ToString("0.0") ★</div>
+                <div class="novel-detail__stat">
+                    <div class="novel-detail__stat-value novel-detail__stat-value--rating">@novel.RatingAverage.ToString("0.0") ★</div>
                     <div class="text-caption text-mute">@novel.RatingCount đánh giá</div>
                 </div>
             </div>
 
-            <!-- Description -->
             @if (!string.IsNullOrEmpty(novel.Description))
             {
-                <div style="font-size:var(--text-body-sm); color:var(--color-body); line-height:1.7; margin-bottom:var(--space-lg);">
+                <div class="novel-detail__description">
                     @Html.Raw(novel.Description.Length > 400 ? novel.Description.Substring(0, 400) + "..." : novel.Description)
                 </div>
             }
         </div>
     </div>
 
-    <!-- Tabs: Chapters | Reviews | Comments -->
     <div class="tabs mt-xl">
-        <button class="tab active" data-tab="chapters" onclick="switchTab('chapters')">📑 Danh sách chương</button>
-        <button class="tab" data-tab="reviews" onclick="switchTab('reviews')">⭐ Đánh giá (@novel.RatingCount)</button>
+        <button class="tab active" data-tab="chapters" onclick="switchTab('chapters')">Danh sách chương</button>
+        <button class="tab" data-tab="reviews" onclick="switchTab('reviews')">Đánh giá (@novel.RatingCount)</button>
     </div>
 
-    <!-- Chapters tab -->
     <div id="tab-chapters">
         @foreach (var vol in novel.Volumes)
         {
-            <div style="margin-bottom:var(--space-xl);">
-                <div style="font-size:var(--text-body-sm); font-weight:600; color:var(--color-ink); padding:var(--space-sm) var(--space-md); background:var(--color-canvas-soft-2); border-radius:var(--radius-sm); margin-bottom:var(--space-sm);">
-                    📚 @vol.Title
-                </div>
-                <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:var(--space-xs);">
+            <div class="novel-detail__volume">
+                <div class="novel-detail__volume-title">@vol.Title</div>
+                <div class="novel-detail__chapter-list">
                     @foreach (var ch in vol.Chapters)
                     {
-                        <a href="/Novels/@novel.Slug/@ch.Id/read" style="display:flex; align-items:center; gap:var(--space-sm); padding:var(--space-xs) var(--space-sm); border-radius:var(--radius-sm); font-size:var(--text-body-sm); color:var(--color-body); text-decoration:none; transition:background .15s;">
-                            <span style="color:var(--color-mute); min-width:40px; font-size:var(--text-caption);">Ch.@ch.ChapterNumber</span>
+                        var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
+                        var chapterUrl = !string.IsNullOrWhiteSpace(ch.Slug) ? ch.Slug : ch.Id.ToString();
+                        <a href="/Novels/@novelUrl/@chapterUrl/read" class="novel-detail__chapter">
+                            <span class="novel-detail__chapter-number">Ch.@ch.ChapterNumber</span>
                             <span class="truncate">@ch.Title</span>
                             @if (ch.Status == "Published")
                             {
-                                <span style="margin-left:auto; flex-shrink:0; font-size:var(--text-caption); color:var(--color-mute);">@ch.CreatedAt.ToString("dd/MM")</span>
+                                <span class="novel-detail__chapter-date">@ch.CreatedAt.ToString("dd/MM")</span>
                             }
                             else
                             {
-                                <span class="status-badge status-@ch.Status.ToLower()" style="margin-left:auto; flex-shrink:0;">@ch.Status</span>
+                                <span class="status-badge status-@ch.Status.ToLower()" style="justify-self:end;">@ch.Status</span>
                             }
                         </a>
                     }
@@ -145,41 +141,44 @@
         }
         @if (!novel.Volumes.Any())
         {
-            <div class="empty-state"><div class="empty-state__icon">📄</div><div class="empty-state__title">Chưa có chương nào</div></div>
+            <div class="empty-state">
+                <div class="empty-state__icon">□</div>
+                <div class="empty-state__title">Chưa có chương nào</div>
+            </div>
         }
     </div>
 
-    <!-- Reviews tab (hidden) -->
-    <div id="tab-reviews" class="hidden">
-        <!-- Rating summary -->
-        <div class="card mb-xl" style="display:flex; gap:var(--space-xl); align-items:center; flex-wrap:wrap;">
-            <div style="text-align:center; flex-shrink:0;">
-                <div style="font-size:56px; font-weight:600; color:var(--color-ink);">@novel.RatingAverage.ToString("0.0")</div>
-                <div style="color:#f59e0b; font-size:20px;">★★★★★</div>
-                <div class="text-caption text-mute mt-xs">@novel.RatingCount đánh giá</div>
+    <div id="tab-reviews" class="hidden novel-detail__reviews">
+        <section class="novel-detail__rating-summary">
+            <div class="novel-detail__rating-score">@novel.RatingAverage.ToString("0.0")</div>
+            <div>
+                <div class="novel-detail__stars" aria-label="@novel.RatingAverage.ToString("0.0") out of 5">★★★★★</div>
+                <div class="text-caption text-mute">@novel.RatingCount đánh giá</div>
             </div>
-        </div>
+        </section>
 
         @if (User.Identity!.IsAuthenticated && novel.UserRating == null)
         {
-            <div class="card mb-xl">
-                <h3 class="text-body-sm font-semibold mb-md">Viết đánh giá của bạn</h3>
-                <form method="post" asp-page-handler="Review">
+            <section class="novel-detail__review-form">
+                <h3 class="novel-detail__review-title">Viết đánh giá của bạn</h3>
+                <form method="post" asp-page-handler="Review" class="novel-detail__review-form-body">
                     @Html.AntiForgeryToken()
-                    <div class="star-rating mb-md" id="starRating">
+                    <input type="hidden" name="id" value="@novel.Id" />
+                    <div class="star-rating" id="starRating">
                         @for (int s = 1; s <= 5; s++) { <span class="star" data-val="@s">★</span> }
                     </div>
                     <input type="hidden" id="ratingInput" name="rating" value="0" />
                     <div class="form-group">
                         <textarea class="form-textarea" name="reviewText" placeholder="Chia sẻ cảm nhận của bạn..." rows="3"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary mt-sm" style="border-radius:var(--radius-sm);">Gửi đánh giá</button>
+                    <button type="submit" class="btn btn-primary novel-detail__review-submit">Gửi đánh giá</button>
                 </form>
-            </div>
+            </section>
         }
 
-        @foreach (var review in Model.Reviews)
-        {
+        <div class="novel-detail__review-list">
+            @foreach (var review in Model.Reviews)
+            {
             <div class="review-card">
                 <div class="review-card__header">
                     <div class="avatar-placeholder avatar-sm">@(review.User?.Username?.Substring(0,1).ToUpper() ?? "U")</div>
@@ -188,7 +187,7 @@
                         <div class="text-caption text-mute">@review.CreatedAt.ToString("dd/MM/yyyy")</div>
                     </div>
                     <div class="flex gap-xxs ml-auto">
-                        @for (int s = 1; s <= 5; s++) { <span style="color:@(s <= review.Rating ? "#f59e0b" : "var(--color-hairline)");">★</span> }
+                        @for (int s = 1; s <= 5; s++) { <span style="color:@(s <= review.Rating ? "#d97706" : "var(--color-hairline)");">★</span> }
                     </div>
                 </div>
                 @if (!string.IsNullOrEmpty(review.Review))
@@ -196,16 +195,16 @@
                     <div class="review-card__content">@review.Review</div>
                 }
             </div>
-        }
+            }
+        </div>
     </div>
 </div>
 
-<!-- Report modal -->
 <div class="modal-overlay" id="reportModal">
     <div class="modal">
         <div class="modal__header">
             <div class="modal__title">Báo cáo vi phạm</div>
-            <button class="modal__close" onclick="closeModal('reportModal')">✕</button>
+            <button class="modal__close" onclick="closeModal('reportModal')">×</button>
         </div>
         <form method="post" asp-page-handler="Report">
             @Html.AntiForgeryToken()
@@ -244,25 +243,18 @@ function switchTab(tab) {
     document.getElementById(`tab-${tab}`)?.classList.remove('hidden');
 }
 
-// Star hover
 const stars = document.querySelectorAll('.star');
 const input = document.getElementById('ratingInput');
 stars.forEach((star, i) => {
-    star.addEventListener('mouseover', () => stars.forEach((s, j) => s.style.color = j <= i ? '#f59e0b' : '#ebebeb'));
+    star.addEventListener('mouseover', () => stars.forEach((s, j) => s.style.color = j <= i ? '#d97706' : '#ebebeb'));
     star.addEventListener('mouseleave', () => {
         const val = parseInt(input?.value || 0);
-        stars.forEach((s, j) => s.style.color = j < val ? '#f59e0b' : '#ebebeb');
+        stars.forEach((s, j) => s.style.color = j < val ? '#d97706' : '#ebebeb');
     });
     star.addEventListener('click', () => {
         if (input) input.value = i + 1;
-        stars.forEach((s, j) => s.style.color = j <= i ? '#f59e0b' : '#ebebeb');
+        stars.forEach((s, j) => s.style.color = j <= i ? '#d97706' : '#ebebeb');
     });
-});
-
-// Hover effect on chapter links
-document.querySelectorAll('a[href*="/read"]').forEach(a => {
-    a.addEventListener('mouseenter', () => a.style.background = 'var(--color-canvas-soft-2)');
-    a.addEventListener('mouseleave', () => a.style.background = '');
 });
 </script>
 }

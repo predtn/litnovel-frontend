@@ -1,0 +1,30 @@
+@model List<litnovel_frontend.Services.TaxonomyListItemDto>
+@{
+    const string deleteConfirm = "Delete this item?";
+}
+
+<div class="table-wrapper">
+    <table class="table table--compact">
+        <thead><tr><th>Name</th><th>Slug</th><th>Novels using</th><th class="col-actions">Actions</th></tr></thead>
+        <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td class="font-medium">@item.Name</td>
+                <td class="text-caption text-mute">@item.Slug</td>
+                <td>@item.NovelCount</td>
+                <td class="col-actions">
+                    <div class="publish-actions">
+                        <button class="btn btn-secondary btn-sm" type="button" onclick="openEdit(@item.Id, '@System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(item.Name)', '@System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(item.Slug)')">Edit</button>
+                        <form method="post" asp-page-handler="Delete" onsubmit="return confirm('@deleteConfirm')">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

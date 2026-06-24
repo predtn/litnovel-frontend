@@ -19,34 +19,19 @@
 {
     <div class="card-soft mb-xl" style="border-color:var(--color-warning);">@Model.LoadError</div>
 }
-@if (TempData["Error"] is string error)
-{
-    <div class="alert alert-error mb-md">@error</div>
-}
-@if (TempData["Success"] is string ok)
-{
-    <div class="alert alert-success mb-md alert-auto-close">@ok</div>
-}
+<partial name="~/Pages/Admin/_TaxonomyList.cshtml" model="Model.Items" />
 
-<div class="admin-chip-grid">
-    @foreach (var tag in Model.Tags)
-    {
-        <article class="admin-chip">
-            <div class="admin-chip__body">
-                <div class="font-medium">@tag.Name</div>
-                <div class="text-caption text-mute">@tag.NovelCount novels</div>
-            </div>
-            <div class="publish-actions">
-                <button class="btn btn-secondary btn-sm" type="button" onclick="openEdit(@tag.Id, '@System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(tag.Name)', '@System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(tag.Slug)')">Edit</button>
-                <form method="post" asp-page-handler="Delete" onsubmit="return confirm('Delete this tag?')">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="id" value="@tag.Id" />
-                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                </form>
-            </div>
-        </article>
-    }
-</div>
+@if (Model.TotalPages > 1)
+{
+    <div class="pagination mt-md">
+        <a class="pagination__btn @(Model.Page <= 1 ? "disabled" : "")" href="?page=@Math.Max(1, Model.Page - 1)">‹</a>
+        @for (int i = 1; i <= Model.TotalPages; i++)
+        {
+            <a class="pagination__btn @(i == Model.Page ? "active" : "")" href="?page=@i">@i</a>
+        }
+        <a class="pagination__btn @(Model.Page >= Model.TotalPages ? "disabled" : "")" href="?page=@Math.Min(Model.TotalPages, Model.Page + 1)">›</a>
+    </div>
+}
 
 <div class="modal-overlay" id="addModal">
     <div class="modal">
