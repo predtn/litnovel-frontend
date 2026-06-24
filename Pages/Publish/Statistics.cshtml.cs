@@ -19,7 +19,7 @@ public class StatisticsModel : PublishPageModel
         await Task.WhenAll(novelTask, analyticsTask);
         if (!IsApiSuccess(novelTask.Result) || novelTask.Result?.Data == null)
         {
-            TempData["Error"] = ApiFailureMessage(novelTask.Result, "Unable to load novel.");
+            TempData["Error"] = ApiFailureMessage(novelTask.Result, "Không thể tải truyện.");
             return RedirectToPage("/Publish/Index");
         }
 

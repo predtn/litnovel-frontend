@@ -32,7 +32,7 @@ public class ModerationModel : PublishPageModel
             Type = "Novel",
             Status = n.Status,
             SubmittedAt = n.UpdatedAt,
-            ReviewerNotes = n.Status == "Rejected" ? "Please revise metadata before resubmitting." : null
+            ReviewerNotes = n.Status == "Rejected" ? "Vui lòng chỉnh sửa thông tin trước khi gửi lại." : null
         }).ToList() ?? [];
 
         return Page();
@@ -64,7 +64,7 @@ public class ModerationModel : PublishPageModel
                 Type = "Chapter",
                 Status = x.Chapter.Status,
                 SubmittedAt = x.Chapter.UpdatedAt == default ? x.Chapter.CreatedAt : x.Chapter.UpdatedAt,
-                ReviewerNotes = x.Chapter.Status == "Rejected" ? "Content needs clearer formatting." : null
+                ReviewerNotes = x.Chapter.Status == "Rejected" ? "Nội dung cần định dạng rõ ràng hơn." : null
             })
             .OrderByDescending(i => i.SubmittedAt)
             .ToList();

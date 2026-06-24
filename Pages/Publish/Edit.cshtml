@@ -1,20 +1,20 @@
 @page "{id:int}/Edit"
 @model litnovel_frontend.Pages.Publish.EditModel
 @{
-    ViewData["Title"] = "Edit Novel";
+    ViewData["Title"] = "Chỉnh sửa truyện";
 }
 
 <div class="publish-shell publish-shell--narrow">
     <div class="breadcrumb">
-        <a asp-page="/Publish/Index">My Novels</a><span class="breadcrumb__sep">/</span>
+        <a asp-page="/Publish/Index">Truyện của tôi</a><span class="breadcrumb__sep">/</span>
         <a asp-page="/Publish/Manage" asp-route-id="@Model.Novel.Id">@Model.Novel.Title</a><span class="breadcrumb__sep">/</span>
-        <span class="breadcrumb__current">Edit</span>
+        <span class="breadcrumb__current">Chỉnh sửa</span>
     </div>
 
     <div class="page-header">
         <div>
-            <h1 class="page-header__title">Edit Novel</h1>
-            <p class="page-header__subtitle">Update metadata, cover, category, and tags.</p>
+            <h1 class="page-header__title">Chỉnh sửa truyện</h1>
+            <p class="page-header__subtitle">Cập nhật thông tin, ảnh bìa, thể loại và tag.</p>
         </div>
     </div>
 
@@ -26,14 +26,14 @@
             <div class="publish-form-main">
                 <div class="publish-form-grid">
                     <div class="form-group">
-                        <label class="form-label" asp-for="Input.Title">Title</label>
+                        <label class="form-label" asp-for="Input.Title">Tiêu đề</label>
                         <input class="form-input" asp-for="Input.Title" maxlength="200" />
                         <span class="form-error" asp-validation-for="Input.Title"></span>
                     </div>
                     <div class="form-group">
-                        <label class="form-label" asp-for="Input.CategoryId">Category</label>
+                        <label class="form-label" asp-for="Input.CategoryId">Thể loại</label>
                         <select class="form-select" asp-for="Input.CategoryId">
-                            <option value="">No category</option>
+                            <option value="">Chưa chọn thể loại</option>
                             @foreach (var category in Model.Categories)
                             {
                                 <option value="@category.Id">@category.Name</option>
@@ -43,12 +43,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" asp-for="Input.Description">Description</label>
+                    <label class="form-label" asp-for="Input.Description">Mô tả</label>
                     <textarea class="form-textarea publish-description" asp-for="Input.Description" maxlength="5000"></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Tags</label>
+                    <label class="form-label">Tag</label>
                     <div class="publish-tag-box publish-tag-box--compact">
                         @foreach (var tag in Model.Tags)
                         {
@@ -62,28 +62,28 @@
             </div>
 
             <div class="publish-cover-panel">
-                <label class="form-label" asp-for="CoverImageFile">Cover image</label>
+                <label class="form-label" asp-for="CoverImageFile">Ảnh bìa</label>
                 <label class="publish-upload">
                     <input asp-for="CoverImageFile" type="file" accept="image/png,image/jpeg,image/webp" data-cover-input />
                     <span class="publish-upload__preview" data-cover-preview>
                         @if (!string.IsNullOrEmpty(Model.Input.CoverImage))
                         {
-                            <img src="@Model.Input.CoverImage" alt="Current cover" />
+                            <img src="@Model.Input.CoverImage" alt="Ảnh bìa hiện tại" />
                         }
                         else
                         {
-                            <span>Cover</span>
+                            <span>Bìa</span>
                         }
                     </span>
-                    <span class="publish-upload__text">Upload JPG, PNG, or WEBP</span>
+                    <span class="publish-upload__text">Tải lên JPG, PNG hoặc WEBP</span>
                 </label>
                 <span class="form-error" asp-validation-for="CoverImageFile"></span>
             </div>
         </div>
 
         <div class="publish-form-actions">
-            <a asp-page="/Publish/Manage" asp-route-id="@Model.Novel.Id" class="btn btn-secondary">Cancel</a>
-            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <a asp-page="/Publish/Manage" asp-route-id="@Model.Novel.Id" class="btn btn-secondary">Hủy</a>
+            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
         </div>
     </form>
 </div>
@@ -98,7 +98,7 @@
 
                 const reader = new FileReader();
                 reader.onload = event => {
-                    preview.innerHTML = `<img src="${event.target.result}" alt="Cover preview" />`;
+                    preview.innerHTML = `<img src="${event.target.result}" alt="Xem trước ảnh bìa" />`;
                 };
                 reader.readAsDataURL(file);
             });

@@ -29,9 +29,9 @@
     </div>
     <select class="form-select" name="status" data-quick-filter-select>
         <option value="">Tất cả trạng thái</option>
-        <option value="Online" selected="@(Model.StatusFilter == "Online")">Online</option>
+        <option value="Online" selected="@(Model.StatusFilter == "Online")">Đang online</option>
         <option value="Offline" selected="@(Model.StatusFilter == "Offline")">Offline</option>
-        <option value="Banned" selected="@(Model.StatusFilter == "Banned")">Banned</option>
+        <option value="Banned" selected="@(Model.StatusFilter == "Banned")">Bị cấm</option>
     </select>
     @if (!string.IsNullOrWhiteSpace(Model.Keyword) || !string.IsNullOrWhiteSpace(Model.StatusFilter))
     {
@@ -62,8 +62,8 @@
                         </div>
                     </td>
                     <td data-label="Email" class="text-body-sm text-mute">@user.Email</td>
-                    <td data-label="Vai trò"><span class="badge badge-secondary role-@user.Role.ToLowerInvariant()">@user.Role</span></td>
-                    <td data-label="Trạng thái"><span class="status-badge status-@user.Status.ToLowerInvariant()">@user.Status</span></td>
+                    <td data-label="Vai trò"><span class="badge badge-secondary role-@user.Role.ToLowerInvariant()">@DisplayText.Role(user.Role)</span></td>
+                    <td data-label="Trạng thái"><span class="status-badge status-@user.Status.ToLowerInvariant()">@DisplayText.Status(user.Status)</span></td>
                     <td data-label="Ngày tham gia" class="text-caption text-mute">@(user.JoinedDate == default ? "-" : user.JoinedDate.ToString("dd/MM/yyyy"))</td>
                     <td data-label="Hành động" class="col-actions">
                         <div class="flex gap-xs justify-end">

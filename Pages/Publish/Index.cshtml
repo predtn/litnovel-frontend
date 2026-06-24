@@ -1,27 +1,27 @@
 @page
 @model litnovel_frontend.Pages.Publish.IndexModel
 @{
-    ViewData["Title"] = "My Novels";
+    ViewData["Title"] = "Truyện của tôi";
 }
 
 <div class="publish-shell">
     <div class="page-header">
         <div>
-            <h1 class="page-header__title">My Novels</h1>
-            <p class="page-header__subtitle">Draft, submit, and manage your serialized novels.</p>
+            <h1 class="page-header__title">Truyện của tôi</h1>
+            <p class="page-header__subtitle">Soạn bản nháp, gửi duyệt và quản lý các truyện dài kỳ của bạn.</p>
         </div>
-        <a asp-page="/Publish/Create" class="btn btn-primary">Create Novel</a>
+        <a asp-page="/Publish/Create" class="btn btn-primary">Tạo truyện</a>
     </div>
 <div class="publish-stats">
-        <div class="stat-card"><div class="stat-card__label">Total novels</div><div class="stat-card__value">@Model.TotalElements</div></div>
-        <div class="stat-card"><div class="stat-card__label">Total chapters</div><div class="stat-card__value">@Model.TotalChapters</div></div>
-        <div class="stat-card"><div class="stat-card__label">Total views</div><div class="stat-card__value">@Model.TotalViews.ToString("N0")</div></div>
-        <div class="stat-card"><div class="stat-card__label">Avg rating</div><div class="stat-card__value">@Model.AverageRating.ToString("0.0")</div></div>
+        <div class="stat-card"><div class="stat-card__label">Tổng truyện</div><div class="stat-card__value">@Model.TotalElements</div></div>
+        <div class="stat-card"><div class="stat-card__label">Tổng chương</div><div class="stat-card__value">@Model.TotalChapters</div></div>
+        <div class="stat-card"><div class="stat-card__label">Tổng lượt xem</div><div class="stat-card__value">@Model.TotalViews.ToString("N0")</div></div>
+        <div class="stat-card"><div class="stat-card__label">Điểm trung bình</div><div class="stat-card__value">@Model.AverageRating.ToString("0.0")</div></div>
     </div>
 
     <div class="publish-toolbar">
         <div class="tabs publish-tabs">
-            @foreach (var tab in new[] { ("", "All"), ("Draft", "Draft"), ("Pending", "Pending"), ("Ongoing", "Ongoing"), ("Ended", "Ended") })
+            @foreach (var tab in new[] { ("", "Tất cả"), ("Draft", "Bản nháp"), ("Pending", "Chờ duyệt"), ("Ongoing", "Đang tiến hành"), ("Ended", "Đã kết thúc") })
             {
                 <a class="tab @(Model.Status == tab.Item1 ? "active" : "")" asp-page="/Publish/Index" asp-route-status="@tab.Item1" asp-route-sort="@Model.Sort">@tab.Item2</a>
             }
@@ -29,9 +29,9 @@
         <form method="get" class="publish-sort">
             <input type="hidden" name="status" value="@Model.Status" />
             <select name="sort" class="form-select" onchange="this.form.submit()">
-                <option value="updatedAt" selected="@(Model.Sort == "updatedAt")">Updated</option>
-                <option value="viewCount" selected="@(Model.Sort == "viewCount")">Views</option>
-                <option value="ratingAverage" selected="@(Model.Sort == "ratingAverage")">Rating</option>
+                <option value="updatedAt" selected="@(Model.Sort == "updatedAt")">Cập nhật</option>
+                <option value="viewCount" selected="@(Model.Sort == "viewCount")">Lượt xem</option>
+                <option value="ratingAverage" selected="@(Model.Sort == "ratingAverage")">Đánh giá</option>
             </select>
         </form>
     </div>
@@ -39,9 +39,9 @@
     @if (!Model.Novels.Any())
     {
         <div class="empty-state card">
-            <div class="empty-state__title">No novels yet</div>
-            <div class="empty-state__desc">Start a draft and build your first volume.</div>
-            <a asp-page="/Publish/Create" class="btn btn-primary">Create Novel</a>
+            <div class="empty-state__title">Chưa có truyện</div>
+            <div class="empty-state__desc">Bắt đầu một bản nháp và tạo tập đầu tiên của bạn.</div>
+            <a asp-page="/Publish/Create" class="btn btn-primary">Tạo truyện</a>
         </div>
     }
     else
@@ -50,20 +50,20 @@
             <table class="table publish-table">
                 <thead>
                     <tr>
-                        <th>Novel</th>
-                        <th>Status</th>
-                        <th class="publish-col-center">Chapters</th>
-                        <th class="publish-col-center">Views</th>
-                        <th class="publish-col-center">Rating</th>
-                        <th class="publish-col-center">Updated</th>
-                        <th class="publish-col-actions">Actions</th>
+                        <th>Truyện</th>
+                        <th>Trạng thái</th>
+                        <th class="publish-col-center">Chương</th>
+                        <th class="publish-col-center">Lượt xem</th>
+                        <th class="publish-col-center">Đánh giá</th>
+                        <th class="publish-col-center">Cập nhật</th>
+                        <th class="publish-col-actions">Hành động</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var novel in Model.Novels)
                     {
                         <tr>
-                            <td data-label="Novel">
+                            <td data-label="Truyện">
                                 <div class="publish-title-cell">
                                     @if (!string.IsNullOrEmpty(novel.CoverImage))
                                     {
@@ -79,18 +79,18 @@
                                     </div>
                                 </div>
                             </td>
-                            <td data-label="Status"><span class="status-badge status-@novel.Status.ToLowerInvariant()">@novel.Status</span></td>
-                            <td data-label="Chapters" class="publish-col-center">@novel.TotalChapters</td>
-                            <td data-label="Views" class="publish-col-center">@novel.ViewCount.ToString("N0")</td>
-                            <td data-label="Rating" class="publish-col-center">@novel.RatingAverage.ToString("0.0")</td>
-                            <td data-label="Updated" class="publish-col-center">@novel.UpdatedAt.ToString("dd/MM/yyyy")</td>
-                            <td data-label="Actions" class="publish-col-actions">
+                            <td data-label="Trạng thái"><span class="status-badge status-@novel.Status.ToLowerInvariant()">@DisplayText.Status(novel.Status)</span></td>
+                            <td data-label="Chương" class="publish-col-center">@novel.TotalChapters</td>
+                            <td data-label="Lượt xem" class="publish-col-center">@novel.ViewCount.ToString("N0")</td>
+                            <td data-label="Đánh giá" class="publish-col-center">@novel.RatingAverage.ToString("0.0")</td>
+                            <td data-label="Cập nhật" class="publish-col-center">@novel.UpdatedAt.ToString("dd/MM/yyyy")</td>
+                            <td data-label="Hành động" class="publish-col-actions">
                                 <div class="publish-actions">
-                                    <a asp-page="/Publish/Manage" asp-route-id="@novel.Id" class="btn btn-secondary btn-sm">Preview</a>
-                                    <a asp-page="/Publish/Edit" asp-route-id="@novel.Id" class="btn btn-secondary btn-sm">Edit</a>
-                                    <a asp-page="/Publish/Manage" asp-route-id="@novel.Id" class="btn btn-primary btn-sm">Manage</a>
-                                    <form method="post" asp-page-handler="Delete" asp-route-id="@novel.Id" onsubmit="return confirm('Delete this novel?');">
-                                        <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+                                    <a asp-page="/Publish/Manage" asp-route-id="@novel.Id" class="btn btn-secondary btn-sm">Xem</a>
+                                    <a asp-page="/Publish/Edit" asp-route-id="@novel.Id" class="btn btn-secondary btn-sm">Sửa</a>
+                                    <a asp-page="/Publish/Manage" asp-route-id="@novel.Id" class="btn btn-primary btn-sm">Quản lý</a>
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@novel.Id" onsubmit="return confirm('Xóa truyện này?');">
+                                        <button class="btn btn-danger btn-sm" type="submit">Xóa</button>
                                     </form>
                                 </div>
                             </td>

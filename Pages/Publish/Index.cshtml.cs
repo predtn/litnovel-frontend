@@ -45,7 +45,7 @@ public class IndexModel : PublishPageModel
         if (guard != null) return guard;
 
         var result = await Api.DeleteAsync<object>($"/api/novels/{id}", Token);
-        SetApiResultMessage(result, "Novel deleted.", "Unable to delete novel.");
+        SetApiResultMessage(result, "Đã xóa truyện.", "Không thể xóa truyện.");
         return RedirectToPage();
     }
 }

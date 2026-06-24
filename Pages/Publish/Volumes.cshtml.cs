@@ -26,7 +26,7 @@ public class VolumesModel : PublishPageModel
         var guard = RequireAuthor();
         if (guard != null) return guard;
         var result = await Api.PostAsync<VolumeDto>($"/api/novels/{novelId}/volumes", Input, Token);
-        SetApiResultMessage(result, "Volume created.", "Unable to create volume.");
+        SetApiResultMessage(result, "Tạo tập thành công.", "Không thể tạo tập.");
         return RedirectToPage(new { novelId });
     }
 
@@ -35,7 +35,7 @@ public class VolumesModel : PublishPageModel
         var guard = RequireAuthor();
         if (guard != null) return guard;
         var result = await Api.DeleteAsync<object>($"/api/volumes/{id}", Token);
-        SetApiResultMessage(result, "Volume deleted.", "Unable to delete volume.");
+        SetApiResultMessage(result, "Đã xóa tập.", "Không thể xóa tập.");
         return RedirectToPage(new { novelId });
     }
 
@@ -46,7 +46,7 @@ public class VolumesModel : PublishPageModel
         await Task.WhenAll(novelTask, volumeTask);
         if (!IsApiSuccess(novelTask.Result) || novelTask.Result?.Data == null)
         {
-            TempData["Error"] = ApiFailureMessage(novelTask.Result, "Unable to load novel.");
+            TempData["Error"] = ApiFailureMessage(novelTask.Result, "Không thể tải truyện.");
             return false;
         }
 
