@@ -35,14 +35,14 @@ else
     <div class="admin-detail-grid">
         <section class="card">
             <div class="flex gap-lg items-start admin-profile-header">
-                <div class="avatar-placeholder" style="width:72px;height:72px;font-size:24px;">@user.Username[..1].ToUpper()</div>
+                <div class="avatar-placeholder" style="width:72px;height:72px;font-size:24px;">@((string.IsNullOrWhiteSpace(user.Username) ? "?" : user.Username[..1]).ToUpper())</div>
                 <div>
                     <div class="flex gap-sm items-center mb-sm" style="flex-wrap:wrap;">
                         <span class="badge role-@user.Role.ToLower()">@user.Role</span>
                         <span class="status-badge status-@user.Status.ToLower()">@user.Status</span>
                     </div>
                     <p class="text-body">@user.Bio</p>
-                    <p class="text-caption text-mute mt-sm">Joined @user.CreatedAt.ToString("dd/MM/yyyy")</p>
+                    <p class="text-caption text-mute mt-sm">Joined @(user.JoinedDate == default ? "-" : user.JoinedDate.ToString("dd/MM/yyyy"))</p>
                 </div>
             </div>
             <div class="grid-4 mt-xl">
@@ -84,7 +84,6 @@ else
                     <select class="form-select" name="role">
                         <option selected="@(user.Role == "User")">User</option>
                         <option selected="@(user.Role == "Staff")">Staff</option>
-                        <option selected="@(user.Role == "Admin")">Admin</option>
                     </select>
                 </label>
                 <label class="form-group">

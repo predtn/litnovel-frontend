@@ -35,7 +35,7 @@
     <section class="card admin-card">
         <div class="flex justify-between items-center gap-md mb-md">
             <h2 class="text-display-sm">Current staff</h2>
-            <span class="badge badge-secondary">@Model.StaffUsers.Count accounts</span>
+            <span class="badge badge-secondary">@Model.StaffTotalElements accounts</span>
         </div>
         @if (Model.StaffUsers.Count == 0)
         {
@@ -71,13 +71,23 @@
                     </tbody>
                 </table>
             </div>
+            @if (Model.StaffTotalPages > 1)
+            {
+                <div class="pagination mt-md">
+                    @for (int i = 1; i <= Model.StaffTotalPages; i++)
+                    {
+                        <a class="pagination__btn @(i == Model.StaffPage ? "active" : "")"
+                           href="?staffPage=@i&candidatePage=@Model.CandidatePage">@i</a>
+                    }
+                </div>
+            }
         }
     </section>
 
     <section class="card admin-card">
         <div class="flex justify-between items-center gap-md mb-md">
             <h2 class="text-display-sm">Promote user</h2>
-            <span class="badge badge-secondary">@Model.CandidateUsers.Count candidates</span>
+            <span class="badge badge-secondary">@Model.CandidateTotalElements candidates</span>
         </div>
         @if (Model.CandidateUsers.Count == 0)
         {
@@ -94,7 +104,7 @@
                     <form class="admin-list-row" method="post" asp-page-handler="Assign">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="userId" value="@user.Id" />
-                        <div class="avatar-placeholder avatar-sm">@user.Username[..1].ToUpper()</div>
+                        <div class="avatar-placeholder avatar-sm">@((string.IsNullOrWhiteSpace(user.Username) ? "?" : user.Username[..1]).ToUpper())</div>
                         <div class="admin-list-row__body">
                             <div class="font-medium truncate">@user.Username</div>
                             <div class="text-caption text-mute truncate">@user.Email</div>
@@ -103,6 +113,16 @@
                     </form>
                 }
             </div>
+            @if (Model.CandidateTotalPages > 1)
+            {
+                <div class="pagination mt-md">
+                    @for (int i = 1; i <= Model.CandidateTotalPages; i++)
+                    {
+                        <a class="pagination__btn @(i == Model.CandidatePage ? "active" : "")"
+                           href="?staffPage=@Model.StaffPage&candidatePage=@i">@i</a>
+                    }
+                </div>
+            }
         }
     </section>
 </div>

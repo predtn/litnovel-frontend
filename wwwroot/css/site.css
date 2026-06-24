@@ -966,6 +966,31 @@ ul, ol { list-style: none; }
   transition: background 0.1s, color 0.1s;
   position: relative;
 }
+.sidebar__icon {
+  width: 24px;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 24px;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  background: var(--color-canvas);
+  color: var(--color-mute);
+  font-size: 13px;
+  line-height: 1;
+}
+.sidebar__icon svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+  fill: currentColor;
+}
+.sidebar__link:hover .sidebar__icon,
+.sidebar__link.active .sidebar__icon {
+  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-hairline));
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-canvas));
+}
 .sidebar__link:hover { background: var(--color-canvas-soft-2); color: var(--color-ink); }
 .sidebar__link.active {
   background: var(--color-canvas-soft-2);
@@ -2724,8 +2749,27 @@ ul, ol { list-style: none; }
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-lg);
 }
+.admin-chart-grid--three {
+  grid-template-columns: repeat(3, minmax(260px, 1fr));
+}
 .admin-chart-card {
   min-width: 0;
+  overflow: hidden;
+}
+.admin-chart-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+  min-width: 0;
+}
+.admin-toolbar--chart-ranges {
+  align-items: end;
+  margin-bottom: var(--space-xl);
+}
+.admin-toolbar--chart-ranges .form-group {
+  min-width: min(220px, 100%);
 }
 .admin-chart {
   display: grid;
@@ -2756,6 +2800,52 @@ ul, ol { list-style: none; }
   height: 100%;
   background: var(--color-primary);
   border-radius: var(--radius-full);
+}
+.admin-line-chart {
+  height: 240px;
+  min-width: 0;
+  padding: var(--space-sm);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(to bottom, transparent 24%, var(--color-hairline) 25%, transparent 26%),
+    linear-gradient(to bottom, transparent 49%, var(--color-hairline) 50%, transparent 51%),
+    linear-gradient(to bottom, transparent 74%, var(--color-hairline) 75%, transparent 76%),
+    var(--color-canvas-soft);
+}
+.admin-line-chart svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.admin-line-chart__axis {
+  stroke: var(--color-hairline);
+  stroke-width: 1.5;
+}
+.admin-line-chart__line {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.admin-line-chart__dot {
+  fill: var(--color-canvas);
+  stroke: var(--color-primary);
+  stroke-width: 2;
+  outline: none;
+}
+.admin-line-chart__dot:hover,
+.admin-line-chart__dot:focus {
+  fill: var(--color-primary);
+}
+.admin-chart__legend {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-top: var(--space-xs);
+  color: var(--color-mute);
+  font-size: var(--text-caption);
 }
 
 /* ─── 34. Responsive ─── */

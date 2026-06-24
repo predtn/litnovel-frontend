@@ -10,15 +10,15 @@
 <div class="page-header">
     <div>
         <h1 class="page-header__title">Audit Logs</h1>
-        <p class="page-header__subtitle">System-level record of administrative actions.</p>
+        <p class="page-header__subtitle">@Model.TotalElements system-level administrative actions.</p>
     </div>
 </div>
 
 <form class="admin-toolbar" method="get">
-    <input class="form-input" name="actorId" type="number" min="1" placeholder="Actor ID" />
-    <input class="form-input" name="entityType" placeholder="Entity type" />
-    <input class="form-input" name="fromDate" type="date" />
-    <input class="form-input" name="toDate" type="date" />
+    <input class="form-input" name="actorId" type="number" min="1" placeholder="Actor ID" value="@Model.ActorId" />
+    <input class="form-input" name="entityType" placeholder="Entity type" value="@Model.EntityType" />
+    <input class="form-input" name="fromDate" type="date" value="@Model.FromDate" />
+    <input class="form-input" name="toDate" type="date" value="@Model.ToDate" />
     <button class="btn btn-secondary" type="submit">Filter</button>
 </form>
 
@@ -34,13 +34,26 @@
         @foreach (var log in Model.Logs)
         {
             <tr>
-                <td class="text-caption text-mute">@log.CreatedAt.ToString("dd/MM/yyyy HH:mm:ss")</td>
-                <td class="text-body-sm">@log.Actor?.Username</td>
-                <td><span class="badge badge-secondary">@log.Action</span></td>
-                <td class="text-body-sm">@log.EntityType #@log.EntityId</td>
-                <td class="text-caption text-mute text-mono">@log.IpAddress</td>
+                <td class="text-caption text-mute">@(log.DisplayCreatedAt == default ? "-" : log.DisplayCreatedAt.ToString("dd/MM/yyyy HH:mm:ss"))</td>
+                <td class="text-body-sm">@log.DisplayActor</td>
+                <td><span class="badge badge-secondary">@log.DisplayAction</span></td>
+                <td class="text-body-sm">@log.DisplayEntity</td>
+                <td class="text-caption text-mute text-mono">@log.DisplayIp</td>
             </tr>
         }
         </tbody>
     </table>
 </div>
+
+@if (Model.TotalPages > 1)
+{
+    <div class="flex justify-center mt-xl">
+        <div class="pagination">
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <a class="pagination__btn @(i == Model.Page ? "active" : "")"
+                   href="?page=@i&actorId=@Model.ActorId&entityType=@Uri.EscapeDataString(Model.EntityType ?? "")&fromDate=@Model.FromDate&toDate=@Model.ToDate">@i</a>
+            }
+        </div>
+    </div>
+}

@@ -30,19 +30,21 @@ public class IndexModel : PageModel
         if (!_auth.IsInRole(HttpContext, "Admin")) return RedirectToPage("/Index");
 
         Keyword = keyword;
-        RoleFilter = role;
+        RoleFilter = "User";
         StatusFilter = status;
         Page = page;
 
-        var qs = $"/api/admin/users?page={page}&size=20"
+        var qs = $"/api/admin/users?page={page}&size=5"
             + (string.IsNullOrEmpty(keyword) ? "" : $"&keyword={Uri.EscapeDataString(keyword)}")
-            + (string.IsNullOrEmpty(role) ? "" : $"&role={role}")
+            + $"&role={RoleFilter}"
             + (string.IsNullOrEmpty(status) ? "" : $"&status={status}");
 
         var result = await _api.GetAsync<PagedData<UserDetailDto>>(qs, token);
         if (result?.Success == true && result.Data != null)
         {
-            Users = result.Data.Items;
+            Users = result.Data.Items
+                .Where(user => !user.Role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+                .ToList();
             TotalPages = result.Data.TotalPages;
             TotalElements = result.Data.TotalElements;
         }

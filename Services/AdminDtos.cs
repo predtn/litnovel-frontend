@@ -17,11 +17,31 @@ public class AuditLogDto
 {
     public int Id { get; set; }
     public UserSummaryDto? Actor { get; set; }
+    public int? ActorId { get; set; }
+    public string? ActorUsername { get; set; }
+    public string? Username { get; set; }
     public string Action { get; set; } = "";
+    public string? Event { get; set; }
+    public string? Operation { get; set; }
     public string EntityType { get; set; } = "";
+    public string? TableName { get; set; }
+    public string? ResourceType { get; set; }
     public int EntityId { get; set; }
+    public string? EntityKey { get; set; }
     public string IpAddress { get; set; } = "";
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? Ip { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? Timestamp { get; set; }
+    public DateTime? PerformedAt { get; set; }
+
+    public string DisplayActor => Actor?.Username ?? ActorUsername ?? Username ?? (ActorId.HasValue ? $"User #{ActorId}" : "System");
+    public string DisplayAction => FirstNonEmpty(Action, Event, Operation) ?? "Unknown";
+    public string DisplayEntity => $"{FirstNonEmpty(EntityType, ResourceType, TableName) ?? "Entity"} #{(EntityId != 0 ? EntityId.ToString() : EntityKey ?? "-")}";
+    public string DisplayIp => FirstNonEmpty(IpAddress, Ip) ?? "-";
+    public DateTime DisplayCreatedAt => CreatedAt != default ? CreatedAt : Timestamp ?? PerformedAt ?? default;
+
+    private static string? FirstNonEmpty(params string?[] values)
+        => values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
 }
 
 public class SentNotificationDto

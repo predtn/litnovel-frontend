@@ -36,6 +36,13 @@ public class UserDetailDto : UserSummaryDto
     public UserStatsDto Stats { get; set; } = new();
     public List<UserWarningDto> Warnings { get; set; } = [];
     public DateTime CreatedAt { get; set; }
+    public DateTime? JoinedAt { get; set; }
+    public DateTime? JoinDate { get; set; }
+    public DateTime? RegisteredAt { get; set; }
+
+    public DateTime JoinedDate =>
+        CreatedAt != default ? CreatedAt :
+        JoinedAt ?? JoinDate ?? RegisteredAt ?? default;
 }
 
 public class UserWarningDto

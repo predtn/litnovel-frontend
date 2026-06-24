@@ -8,20 +8,31 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
 {
     public List<UserDetailDto> StaffUsers { get; set; } = [];
     public List<UserDetailDto> CandidateUsers { get; set; } = [];
+    public int StaffPage { get; set; } = 1;
+    public int StaffTotalPages { get; set; } = 1;
+    public int StaffTotalElements { get; set; }
+    public int CandidatePage { get; set; } = 1;
+    public int CandidateTotalPages { get; set; } = 1;
+    public int CandidateTotalElements { get; set; }
     public string? LoadError { get; set; }
 
-    public async Task<IActionResult> OnGetAsync()
+    public async Task<IActionResult> OnGetAsync(int staffPage = 1, int candidatePage = 1)
     {
         if (!auth.IsInRole(HttpContext, "Admin")) return RedirectToPage("/Index");
         SetShell();
         var token = auth.GetToken(HttpContext);
-        var staff = await api.GetAsync<PagedData<UserDetailDto>>("/api/admin/users?role=Staff&page=1&size=50", token);
-        var users = await api.GetAsync<PagedData<UserDetailDto>>("/api/admin/users?role=User&page=1&size=20", token);
+        StaffPage = Math.Max(1, staffPage);
+        CandidatePage = Math.Max(1, candidatePage);
+
+        var staff = await api.GetAsync<PagedData<UserDetailDto>>($"/api/admin/users?role=Staff&page={StaffPage}&size=5", token);
+        var users = await api.GetAsync<PagedData<UserDetailDto>>($"/api/admin/users?role=User&page={CandidatePage}&size=5", token);
         if (staff?.Success == true && staff.Data != null)
         {
             StaffUsers = staff.Data.Items
                 .Where(user => string.Equals(user.Role, "Staff", StringComparison.OrdinalIgnoreCase))
                 .ToList();
+            StaffTotalPages = Math.Max(1, staff.Data.TotalPages);
+            StaffTotalElements = staff.Data.TotalElements;
         }
         else
         {
@@ -35,6 +46,8 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
                 .Where(user => string.Equals(user.Role, "User", StringComparison.OrdinalIgnoreCase))
                 .Where(user => currentUserId == null || user.Id != currentUserId.Value)
                 .ToList();
+            CandidateTotalPages = Math.Max(1, users.Data.TotalPages);
+            CandidateTotalElements = users.Data.TotalElements;
         }
         return Page();
     }
