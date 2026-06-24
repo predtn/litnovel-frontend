@@ -10,16 +10,7 @@
         <div class="auth-card__logo">Lit<span style="color:var(--color-link);">Novel</span></div>
         <h1 class="auth-card__title">Đăng nhập</h1>
         <p class="auth-card__subtitle">Chào mừng trở lại! Đăng nhập để tiếp tục đọc truyện.</p>
-
-        @if (TempData["Error"] is string err)
-        {
-            <div class="alert alert-error mb-md">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                @err
-            </div>
-        }
-
-        <form method="post" class="auth-form">
+<form method="post" class="auth-form">
             @Html.AntiForgeryToken()
             <div class="form-group">
                 <label class="form-label" for="identifier">Email hoặc tên đăng nhập</label>

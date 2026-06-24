@@ -64,8 +64,9 @@ public class DetailsModel(IApiService api, IAuthService auth) : PageModel
 
     public async Task<IActionResult> OnPostWarnAsync(int id, string reason, string severity)
     {
-        await api.PostAsync<object>($"/api/staff/users/{id}/warn", new { reason, severity }, auth.GetToken(HttpContext));
-        TempData["Success"] = "Warning issued.";
+        var result = await api.PostAsync<object>($"/api/staff/users/{id}/warn", new { reason, severity }, auth.GetToken(HttpContext));
+        if (result?.Success == true) TempData["Success"] = result.Message ?? "Warning issued.";
+        else TempData["Error"] = result?.Message ?? "Could not issue warning.";
         return RedirectToPage(new { id });
     }
 
@@ -78,9 +79,9 @@ public class DetailsModel(IApiService api, IAuthService auth) : PageModel
         ViewData["UserEmail"] = user.Email;
     }
 
-    private async Task SendUserNotificationAsync(int userId, string message, string? token)
+    private async Task<ApiResponse<object>?> SendUserNotificationAsync(int userId, string message, string? token)
     {
-        await api.PostAsync<object>("/api/admin/notifications", new
+        return await api.PostAsync<object>("/api/admin/notifications", new
         {
             notificationType = "SystemAlert",
             message,

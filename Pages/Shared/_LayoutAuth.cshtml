@@ -1,3 +1,19 @@
+@using Microsoft.AspNetCore.Http
+@{
+    var sessionNotice = Context.Session.GetString("SessionNotice");
+    var sessionNoticeType = Context.Session.GetString("SessionNoticeType") ?? "info";
+    var toastMessages = new List<(string Message, string Type)>();
+    if (!string.IsNullOrWhiteSpace(sessionNotice)) toastMessages.Add((sessionNotice, sessionNoticeType));
+    if (TempData["ToastMessage"] is string tempToast && !string.IsNullOrWhiteSpace(tempToast)) toastMessages.Add((tempToast, TempData["ToastType"] as string ?? "info"));
+    if (TempData["Success"] is string tempSuccess && !string.IsNullOrWhiteSpace(tempSuccess)) toastMessages.Add((tempSuccess, "success"));
+    if (TempData["SuccessMessage"] is string tempSuccessMessage && !string.IsNullOrWhiteSpace(tempSuccessMessage)) toastMessages.Add((tempSuccessMessage, "success"));
+    if (TempData["Error"] is string tempError && !string.IsNullOrWhiteSpace(tempError)) toastMessages.Add((tempError, "error"));
+    if (!string.IsNullOrWhiteSpace(sessionNotice))
+    {
+        Context.Session.Remove("SessionNotice");
+        Context.Session.Remove("SessionNoticeType");
+    }
+}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -18,6 +34,10 @@
     @RenderBody()
 
     <div class="toast-container" id="toastContainer"></div>
+    @foreach (var toast in toastMessages)
+    {
+        <div class="server-toast" data-message="@toast.Message" data-type="@toast.Type" hidden></div>
+    }
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

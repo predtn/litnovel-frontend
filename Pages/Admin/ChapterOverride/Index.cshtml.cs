@@ -60,16 +60,25 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
 
     public async Task<IActionResult> OnPostSaveAsync(int id, int? novelId, string title, string content, string status)
     {
-        await api.PutAsync<object>($"/api/chapters/{id}", new { title, content }, auth.GetToken(HttpContext));
-        await api.PutAsync<object>($"/api/admin/chapters/{id}/status", new { status }, auth.GetToken(HttpContext));
-        TempData["Success"] = "Chapter override saved.";
+        var token = auth.GetToken(HttpContext);
+        var chapterResult = await api.PutAsync<object>($"/api/chapters/{id}", new { title, content }, token);
+        if (chapterResult?.Success != true)
+        {
+            TempData["Error"] = chapterResult?.Message ?? "Could not update chapter content.";
+            return RedirectToPage(new { chapterId = id, novelId });
+        }
+
+        var statusResult = await api.PutAsync<object>($"/api/admin/chapters/{id}/status", new { status }, token);
+        if (statusResult?.Success == true) TempData["Success"] = "Chapter override saved.";
+        else TempData["Error"] = statusResult?.Message ?? "Chapter content was saved, but status could not be updated.";
         return RedirectToPage(new { chapterId = id, novelId });
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(int id)
     {
-        await api.DeleteAsync<object>($"/api/chapters/{id}", auth.GetToken(HttpContext));
-        TempData["Success"] = "Chapter deleted.";
+        var result = await api.DeleteAsync<object>($"/api/chapters/{id}", auth.GetToken(HttpContext));
+        if (result?.Success == true) TempData["Success"] = "Chapter deleted.";
+        else TempData["Error"] = result?.Message ?? "Could not delete chapter.";
         return RedirectToPage();
     }
 

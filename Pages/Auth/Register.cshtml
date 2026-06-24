@@ -10,17 +10,7 @@
         <div class="auth-card__logo">Lit<span style="color:var(--color-link);">Novel</span></div>
         <h1 class="auth-card__title">Tạo tài khoản</h1>
         <p class="auth-card__subtitle">Tham gia cộng đồng hàng triệu người đọc và tác giả.</p>
-
-        @if (TempData["Error"] is string err)
-        {
-            <div class="alert alert-error mb-md">@err</div>
-        }
-        @if (TempData["Success"] is string suc)
-        {
-            <div class="alert alert-success mb-md">@suc</div>
-        }
-
-        <form method="post" class="auth-form">
+<form method="post" class="auth-form">
             @Html.AntiForgeryToken()
             <div class="form-group">
                 <label class="form-label" for="username">Tên đăng nhập</label>

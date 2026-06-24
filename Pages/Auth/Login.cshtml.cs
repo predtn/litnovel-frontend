@@ -33,6 +33,9 @@ public class LoginModel : PageModel
         var (success, error, user) = await _auth.LoginAsync(HttpContext, Identifier, Password);
         if (success)
         {
+            TempData["ToastMessage"] = "Đăng nhập thành công.";
+            TempData["ToastType"] = "success";
+
             if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
             {
                 return Redirect(returnUrl);

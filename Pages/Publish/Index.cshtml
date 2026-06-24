@@ -12,11 +12,7 @@
         </div>
         <a asp-page="/Publish/Create" class="btn btn-primary">Create Novel</a>
     </div>
-
-    @if (TempData["Success"] is string success) { <div class="alert alert-success mb-lg">@success</div> }
-    @if (TempData["Error"] is string error) { <div class="alert alert-error mb-lg">@error</div> }
-
-    <div class="publish-stats">
+<div class="publish-stats">
         <div class="stat-card"><div class="stat-card__label">Total novels</div><div class="stat-card__value">@Model.TotalElements</div></div>
         <div class="stat-card"><div class="stat-card__label">Total chapters</div><div class="stat-card__value">@Model.TotalChapters</div></div>
         <div class="stat-card"><div class="stat-card__label">Total views</div><div class="stat-card__value">@Model.TotalViews.ToString("N0")</div></div>

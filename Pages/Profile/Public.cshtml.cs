@@ -11,6 +11,7 @@ public class PublicModel : PageModel
 
     public new UserDetailDto? User { get; set; }
     public List<NovelSummaryDto> Novels { get; set; } = [];
+    public bool IsOwnProfile { get; set; }
 
     [BindProperty] public string ReportType { get; set; } = "Harassment";
     [BindProperty] public string? Description { get; set; }
@@ -23,6 +24,7 @@ public class PublicModel : PageModel
 
     public async Task OnGetAsync(int userId)
     {
+        IsOwnProfile = _auth.GetCurrentUser(HttpContext)?.Id == userId;
         var profileTask = _api.GetAsync<UserDetailDto>($"/api/users/{userId}");
         var novelsTask = _api.GetAsync<PagedData<NovelSummaryDto>>($"/api/novels?authorId={userId}&page=1&size=12");
         await Task.WhenAll(profileTask, novelsTask);
@@ -33,6 +35,12 @@ public class PublicModel : PageModel
 
     public async Task<IActionResult> OnPostReportAsync(int userId)
     {
+        if (_auth.GetCurrentUser(HttpContext)?.Id == userId)
+        {
+            TempData["Error"] = "Bạn không thể báo cáo chính mình.";
+            return RedirectToPage(new { userId });
+        }
+
         var token = _auth.GetToken(HttpContext);
         if (string.IsNullOrEmpty(token))
         {

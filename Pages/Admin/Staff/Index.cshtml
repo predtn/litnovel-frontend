@@ -22,15 +22,6 @@
         <p class="text-body-sm text-body">@Model.LoadError</p>
     </div>
 }
-@if (TempData["Error"] is string error)
-{
-    <div class="alert alert-error mb-md">@error</div>
-}
-@if (TempData["Success"] is string ok)
-{
-    <div class="alert alert-success mb-md alert-auto-close">@ok</div>
-}
-
 <div class="admin-stack">
     <section class="card admin-card">
         <div class="flex justify-between items-center gap-md mb-md">

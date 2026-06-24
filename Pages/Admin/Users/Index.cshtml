@@ -14,15 +14,6 @@
         <p class="page-header__subtitle">@Model.TotalElements người dùng</p>
     </div>
 </div>
-
-@if (TempData["Success"] is string ok)
-{
-    <div class="alert alert-success mb-md alert-auto-close">@ok</div>
-}
-@if (TempData["Error"] is string error)
-{
-    <div class="alert alert-error mb-md">@error</div>
-}
 @if (!string.IsNullOrWhiteSpace(Model.LoadError))
 {
     <div class="card-soft mb-xl" style="border-color:var(--color-warning);">

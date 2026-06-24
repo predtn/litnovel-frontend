@@ -27,6 +27,34 @@ function showToast(message, type = 'info', duration = 3000) {
 }
 
 // ─── Modal ───
+// Safe toast renderer. This replaces the legacy implementation above without
+// injecting server-provided messages as HTML.
+showToast = function (message, type = 'info', duration = 3000) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    const validTypes = new Set(['success', 'error', 'warning', 'info']);
+    const toastType = validTypes.has(type) ? type : 'info';
+    const icons = { success: 'OK', error: 'X', warning: '!', info: 'i' };
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${toastType}`;
+
+    const icon = document.createElement('span');
+    icon.className = 'toast-icon';
+    icon.textContent = icons[toastType] || icons.info;
+
+    const text = document.createElement('span');
+    text.textContent = message || '';
+
+    toast.append(icon, text);
+    toast.onclick = () => toast.remove();
+    container.appendChild(toast);
+    setTimeout(() => {
+        if (toast.isConnected) toast.remove();
+    }, duration);
+};
+
 function openModal(id) {
     const m = document.getElementById(id);
     if (m) { m.classList.add('open'); document.body.style.overflow = 'hidden'; }
@@ -91,7 +119,7 @@ async function toggleFavorite(novelId, btn) {
         const res = await fetch(`/api/novels/${novelId}/favorites`, { method, headers: getHeaders() });
         if (res.ok) {
             btn.dataset.favorited = isFav ? 'false' : 'true';
-            btn.querySelector('.fav-text').textContent = isFav ? 'Yêu thích' : 'Đã yêu thích';
+            btn.querySelector('.fav-text').textContent = isFav ? 'Yêu thích' : 'Bỏ yêu thích';
             showToast(isFav ? 'Đã bỏ yêu thích' : 'Đã thêm vào yêu thích', 'success');
         }
     } catch (e) { showToast('Có lỗi xảy ra', 'error'); }
@@ -144,14 +172,21 @@ function switchTab(tabId, contentPrefix) {
 }
 
 // Auto-init
-document.addEventListener('DOMContentLoaded', function () {
+function initSiteFeedback() {
     // Auto-close success alerts
     document.querySelectorAll('.alert-auto-close').forEach(a => {
         setTimeout(() => a.remove(), 4000);
     });
-    // Show toast from TempData (server-injected)
-    const toastMsg = document.getElementById('serverToast');
-    if (toastMsg) {
+
+    // Show toasts from server-injected flash messages.
+    document.querySelectorAll('.server-toast, #serverToast').forEach(toastMsg => {
         showToast(toastMsg.dataset.message, toastMsg.dataset.type || 'info');
-    }
-});
+        toastMsg.remove();
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSiteFeedback);
+} else {
+    initSiteFeedback();
+}

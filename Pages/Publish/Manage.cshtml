@@ -8,11 +8,7 @@
     <div class="breadcrumb">
         <a asp-page="/Publish/Index">My Novels</a><span class="breadcrumb__sep">/</span><span class="breadcrumb__current">@Model.Novel.Title</span>
     </div>
-
-    @if (TempData["Success"] is string success) { <div class="alert alert-success mb-lg">@success</div> }
-    @if (TempData["Error"] is string error) { <div class="alert alert-error mb-lg">@error</div> }
-
-    <section class="publish-hero-card">
+<section class="publish-hero-card">
         @if (!string.IsNullOrEmpty(Model.Novel.CoverImage))
         {
             <img src="@Model.Novel.CoverImage" alt="@Model.Novel.Title" class="publish-cover-lg" />

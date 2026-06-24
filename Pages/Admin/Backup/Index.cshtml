@@ -18,6 +18,10 @@
         <button class="btn btn-primary" type="submit">Create backup now</button>
     </form>
 </div>
+@if (!string.IsNullOrWhiteSpace(Model.LoadError))
+{
+    <div class="card-soft mb-xl" style="border-color:var(--color-warning);">@Model.LoadError</div>
+}
 
 <div class="card-soft mb-xl" style="border-color:var(--color-warning);">
     <div class="font-semibold mb-sm">Restore requires confirmation</div>

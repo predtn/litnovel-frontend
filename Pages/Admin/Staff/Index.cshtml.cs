@@ -69,9 +69,9 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
         ViewData["UserEmail"] = user.Email;
     }
 
-    private async Task SendUserNotificationAsync(int userId, string message, string? token)
+    private async Task<ApiResponse<object>?> SendUserNotificationAsync(int userId, string message, string? token)
     {
-        await api.PostAsync<object>("/api/admin/notifications", new
+        return await api.PostAsync<object>("/api/admin/notifications", new
         {
             notificationType = "SystemAlert",
             message,

@@ -1,7 +1,18 @@
 @using Microsoft.AspNetCore.Http
+@using System.Security.Claims
 @{
     var sessionNotice = Context.Session.GetString("SessionNotice");
     var sessionNoticeType = Context.Session.GetString("SessionNoticeType") ?? "info";
+    var toastMessages = new List<(string Message, string Type)>();
+    if (!string.IsNullOrWhiteSpace(sessionNotice)) toastMessages.Add((sessionNotice, sessionNoticeType));
+    if (TempData["ToastMessage"] is string tempToast && !string.IsNullOrWhiteSpace(tempToast)) toastMessages.Add((tempToast, TempData["ToastType"] as string ?? "info"));
+    if (TempData["Success"] is string tempSuccess && !string.IsNullOrWhiteSpace(tempSuccess)) toastMessages.Add((tempSuccess, "success"));
+    if (TempData["SuccessMessage"] is string tempSuccessMessage && !string.IsNullOrWhiteSpace(tempSuccessMessage)) toastMessages.Add((tempSuccessMessage, "success"));
+    if (TempData["Error"] is string tempError && !string.IsNullOrWhiteSpace(tempError)) toastMessages.Add((tempError, "error"));
+    var layoutUserName = ViewData["UserName"]?.ToString() ?? Context.User.FindFirst(ClaimTypes.Name)?.Value;
+    var layoutUserEmail = ViewData["UserEmail"]?.ToString() ?? Context.User.FindFirst(ClaimTypes.Email)?.Value;
+    var layoutUserAvatar = ViewData["UserAvatar"]?.ToString() ?? Context.User.FindFirst("avatar")?.Value;
+    var layoutUserInitial = !string.IsNullOrWhiteSpace(layoutUserName) ? layoutUserName.Trim().Substring(0, 1).ToUpper() : "U";
     if (!string.IsNullOrWhiteSpace(sessionNotice))
     {
         Context.Session.Remove("SessionNotice");
@@ -18,7 +29,7 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body>
+<body class="site-body">
     <!-- ── Navigation Bar ── -->
     <nav class="navbar" id="navbar">
         <div class="navbar__inner">
@@ -60,24 +71,24 @@
                     <!-- User Avatar Dropdown -->
                     <div class="dropdown" id="userDropdown">
                         <div class="navbar__avatar" onclick="toggleDropdown()">
-                            @if (ViewData["UserAvatar"] is string avatar && !string.IsNullOrEmpty(avatar))
+                            @if (!string.IsNullOrWhiteSpace(layoutUserAvatar))
                             {
-                                <img src="@avatar" alt="Avatar" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
+                                <img src="@layoutUserAvatar" alt="Avatar" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
                                 <div class="navbar__avatar-placeholder hidden">
-                                    @(ViewData["UserName"]?.ToString()?.Substring(0, 1).ToUpper() ?? "U")
+                                    @layoutUserInitial
                                 </div>
                             }
                             else
                             {
                                 <div class="navbar__avatar-placeholder">
-                                    @(ViewData["UserName"]?.ToString()?.Substring(0, 1).ToUpper() ?? "U")
+                                    @layoutUserInitial
                                 </div>
                             }
                         </div>
                         <div class="dropdown__menu">
                             <div style="padding: var(--space-xs) var(--space-sm); margin-bottom: var(--space-xs);">
-                                <div style="font-size: 14px; font-weight: 500; color: var(--color-ink);">@ViewData["UserName"]</div>
-                                <div style="font-size: 12px; color: var(--color-mute);">@ViewData["UserEmail"]</div>
+                                <div style="font-size: 14px; font-weight: 500; color: var(--color-ink);">@layoutUserName</div>
+                                <div style="font-size: 12px; color: var(--color-mute);">@layoutUserEmail</div>
                             </div>
                             <div class="dropdown__divider"></div>
                             <a href="/Profile" class="dropdown__item">
@@ -185,9 +196,9 @@
 
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
-    @if (!string.IsNullOrWhiteSpace(sessionNotice))
+    @foreach (var toast in toastMessages)
     {
-        <div id="serverToast" data-message="@sessionNotice" data-type="@sessionNoticeType" hidden></div>
+        <div class="server-toast" data-message="@toast.Message" data-type="@toast.Type" hidden></div>
     }
 
     <!-- JS -->

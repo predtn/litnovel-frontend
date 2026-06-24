@@ -35,11 +35,6 @@
 {
     <div class="alert alert-danger">@Model.ActionMessage</div>
 }
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
-}
-
 @if (Model.Novel != null)
 {
     var n = Model.Novel;
