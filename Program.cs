@@ -99,6 +99,38 @@ app.Use(async (context, next) =>
 });
 app.UseAuthorization();
 
+app.MapPost("/api/novels/{id:int}/favorites", async (
+    int id,
+    HttpContext context,
+    IApiService api,
+    IAuthService auth) =>
+{
+    var token = auth.GetToken(context);
+    if (string.IsNullOrWhiteSpace(token))
+    {
+        return Results.Unauthorized();
+    }
+
+    var result = await api.PostAsync<object>($"/api/novels/{id}/favorites", null, token);
+    return Results.Json(result, statusCode: result?.Success == true ? StatusCodes.Status200OK : StatusCodes.Status400BadRequest);
+});
+
+app.MapDelete("/api/novels/{id:int}/favorites", async (
+    int id,
+    HttpContext context,
+    IApiService api,
+    IAuthService auth) =>
+{
+    var token = auth.GetToken(context);
+    if (string.IsNullOrWhiteSpace(token))
+    {
+        return Results.Unauthorized();
+    }
+
+    var result = await api.DeleteAsync<object>($"/api/novels/{id}/favorites", token);
+    return Results.Json(result, statusCode: result?.Success == true ? StatusCodes.Status200OK : StatusCodes.Status400BadRequest);
+});
+
 app.MapRazorPages();
 
 app.Run();

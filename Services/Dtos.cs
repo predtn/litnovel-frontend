@@ -35,6 +35,7 @@ public class UserDetailDto : UserSummaryDto
     public List<BadgeDto> Badges { get; set; } = [];
     public UserStatsDto Stats { get; set; } = new();
     public List<UserWarningDto> Warnings { get; set; } = [];
+    public DateTime JoinedAt { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? JoinedAt { get; set; }
     public DateTime? JoinDate { get; set; }

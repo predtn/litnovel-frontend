@@ -54,7 +54,7 @@
                             data-favorited="@novel.IsFavorited?.ToString().ToLower()"
                             onclick="toggleFavorite(@novel.Id, this)"
                             class="btn btn-secondary novel-detail__action">
-                        <span class="fav-text">@(novel.IsFavorited == true ? "Đã yêu thích" : "Yêu thích")</span>
+                        <span class="fav-text">@(novel.IsFavorited == true ? "Bỏ yêu thích" : "Yêu thích")</span>
                     </button>
                 }
             </div>

@@ -11,11 +11,7 @@
         <a asp-page="/Publish/Volumes" asp-route-novelId="@Model.Novel.Id">Volumes</a><span class="breadcrumb__sep">/</span>
         <span class="breadcrumb__current">@Model.Volume.Title</span>
     </div>
-
-    @if (TempData["Success"] is string success) { <div class="alert alert-success mb-lg">@success</div> }
-    @if (TempData["Error"] is string error) { <div class="alert alert-error mb-lg">@error</div> }
-
-    <div class="page-header">
+<div class="page-header">
         <div>
             <h1 class="page-header__title">Chapter Management</h1>
             <p class="page-header__subtitle">@Model.Volume.Title</p>

@@ -2,6 +2,12 @@
 @{
     var sessionNotice = Context.Session.GetString("SessionNotice");
     var sessionNoticeType = Context.Session.GetString("SessionNoticeType") ?? "info";
+    var toastMessages = new List<(string Message, string Type)>();
+    if (!string.IsNullOrWhiteSpace(sessionNotice)) toastMessages.Add((sessionNotice, sessionNoticeType));
+    if (TempData["ToastMessage"] is string tempToast && !string.IsNullOrWhiteSpace(tempToast)) toastMessages.Add((tempToast, TempData["ToastType"] as string ?? "info"));
+    if (TempData["Success"] is string tempSuccess && !string.IsNullOrWhiteSpace(tempSuccess)) toastMessages.Add((tempSuccess, "success"));
+    if (TempData["SuccessMessage"] is string tempSuccessMessage && !string.IsNullOrWhiteSpace(tempSuccessMessage)) toastMessages.Add((tempSuccessMessage, "success"));
+    if (TempData["Error"] is string tempError && !string.IsNullOrWhiteSpace(tempError)) toastMessages.Add((tempError, "error"));
     var activeNav = ViewData["ActiveNav"]?.ToString() ?? "";
     var isStaffArea = activeNav.StartsWith("staff", StringComparison.OrdinalIgnoreCase) ||
         Context.Request.Path.StartsWithSegments("/Staff");
@@ -45,9 +51,9 @@
     </div>
 
     <div class="toast-container" id="toastContainer"></div>
-    @if (!string.IsNullOrWhiteSpace(sessionNotice))
+    @foreach (var toast in toastMessages)
     {
-        <div id="serverToast" data-message="@sessionNotice" data-type="@sessionNoticeType" hidden></div>
+        <div class="server-toast" data-message="@toast.Message" data-type="@toast.Type" hidden></div>
     }
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)

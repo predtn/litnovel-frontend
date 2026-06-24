@@ -21,8 +21,9 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
 
     public async Task<IActionResult> OnPostSendAsync(string notificationType, string message, bool targetAll, int? targetUserId)
     {
-        await api.PostAsync<object>("/api/admin/notifications", new { notificationType, message, targetAll, targetUserId }, auth.GetToken(HttpContext));
-        TempData["Success"] = "Notification sent.";
+        var result = await api.PostAsync<object>("/api/admin/notifications", new { notificationType, message, targetAll, targetUserId }, auth.GetToken(HttpContext));
+        if (result?.Success == true) TempData["Success"] = result.Message ?? "Notification sent.";
+        else TempData["Error"] = result?.Message ?? "Could not send notification.";
         return RedirectToPage();
     }
 

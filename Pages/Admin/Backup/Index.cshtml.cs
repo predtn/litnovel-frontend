@@ -21,22 +21,25 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
 
     public async Task<IActionResult> OnPostCreateAsync()
     {
-        await api.PostAsync<object>("/api/admin/backups", null, auth.GetToken(HttpContext));
-        TempData["Success"] = "Backup job started.";
+        var result = await api.PostAsync<object>("/api/admin/backups", null, auth.GetToken(HttpContext));
+        if (result?.Success == true) TempData["Success"] = result.Message ?? "Backup job started.";
+        else TempData["Error"] = result?.Message ?? "Could not start backup job.";
         return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostRestoreAsync(string id, string confirmationText)
     {
-        await api.PostAsync<object>($"/api/admin/backups/{id}/restore", new { confirmationText }, auth.GetToken(HttpContext));
-        TempData["Success"] = "Restore job started.";
+        var result = await api.PostAsync<object>($"/api/admin/backups/{id}/restore", new { confirmationText }, auth.GetToken(HttpContext));
+        if (result?.Success == true) TempData["Success"] = result.Message ?? "Restore job started.";
+        else TempData["Error"] = result?.Message ?? "Could not start restore job.";
         return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(string id)
     {
-        await api.DeleteAsync<object>($"/api/admin/backups/{id}", auth.GetToken(HttpContext));
-        TempData["Success"] = "Backup deleted.";
+        var result = await api.DeleteAsync<object>($"/api/admin/backups/{id}", auth.GetToken(HttpContext));
+        if (result?.Success == true) TempData["Success"] = result.Message ?? "Backup deleted.";
+        else TempData["Error"] = result?.Message ?? "Could not delete backup.";
         return RedirectToPage();
     }
 

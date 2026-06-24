@@ -50,8 +50,9 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
 
     public async Task<IActionResult> OnPostDeleteAsync(int id)
     {
-        await api.DeleteAsync<object>($"/api/novels/{id}", auth.GetToken(HttpContext));
-        TempData["Success"] = "Novel deleted.";
+        var result = await api.DeleteAsync<object>($"/api/novels/{id}", auth.GetToken(HttpContext));
+        if (result?.Success == true) TempData["Success"] = "Novel deleted.";
+        else TempData["Error"] = result?.Message ?? "Could not delete novel.";
         return RedirectToPage();
     }
 
