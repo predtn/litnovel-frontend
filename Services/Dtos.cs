@@ -24,7 +24,7 @@ public class UserSummaryDto
     public string Username { get; set; } = "";
     public string? Avatar { get; set; }
     public string Role { get; set; } = "User";
-    public string Status { get; set; } = "Online";
+    public string Status { get; set; } = "Offline";
 }
 
 public class UserDetailDto : UserSummaryDto
@@ -171,6 +171,7 @@ public class CommentDto
     public UserSummaryDto? User { get; set; }
     public string Content { get; set; } = "";
     public int LikeCount { get; set; }
+    public bool IsLiked { get; set; }
     public int DislikeCount { get; set; }
     public int? ParentCommentId { get; set; }
     public List<CommentDto> Replies { get; set; } = [];

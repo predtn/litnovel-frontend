@@ -4,31 +4,118 @@
     ViewData["Title"] = Model.Chapter?.Title ?? "Đọc chương";
     var ch = Model.Chapter;
     var novelUrl = !string.IsNullOrWhiteSpace(ch?.Novel?.Slug) ? ch.Novel.Slug : ch?.Novel?.Id.ToString();
+    var allVolumes = Model.Novel?.Volumes ?? [];
 }
 @if (ch == null)
 {
-    <div class="container" style="padding-top:80px;"><div class="empty-state"><div class="empty-state__icon">🔍</div><div class="empty-state__title">Không tìm thấy chương này</div><a href="/Novels" class="btn btn-primary mt-md">Quay lại</a></div></div>
+    <div class="container" style="padding-top:80px;">
+        <div class="empty-state">
+            <div class="empty-state__icon">⌕</div>
+            <div class="empty-state__title">Không tìm thấy chương này</div>
+            <a href="/Novels" class="btn btn-primary mt-md">Quay lại</a>
+        </div>
+    </div>
     return;
 }
 
-<!-- Reader toolbar -->
-<div style="background:var(--color-canvas); border-bottom:1px solid var(--color-hairline); padding: var(--space-sm) var(--space-lg); position:sticky; top:64px; z-index:50;">
-    <div class="container" style="display:flex; align-items:center; justify-content:space-between;">
-        <div class="breadcrumb" style="margin:0;">
-            <a href="/">Home</a><span class="breadcrumb__sep">/</span>
-            <a href="/Novels/@novelUrl">@ch.Novel?.Title</a><span class="breadcrumb__sep">/</span>
-            <span class="breadcrumb__current">Ch.@ch.ChapterNumber</span>
+<div class="reader-toolbar">
+    <div class="reader-toolbar__inner">
+        <div class="reader-toolbar__context">
+            <a href="/Novels/@novelUrl" class="reader-toolbar__novel">@ch.Novel?.Title</a>
+            <span class="reader-toolbar__chapter">Ch.@ch.ChapterNumber</span>
         </div>
-        <div class="flex gap-sm items-center">
-            <!-- Font size -->
-            <button onclick="changeFontSize(-1)" class="btn-icon" title="Nhỏ hơn">A-</button>
-            <button onclick="changeFontSize(1)"  class="btn-icon" title="Lớn hơn">A+</button>
+
+        <div class="reader-toolbar__nav" aria-label="Điều hướng chương">
+            @if (ch.PrevChapter != null)
+            {
+                var prevUrl = !string.IsNullOrWhiteSpace(ch.PrevChapter.Slug) ? ch.PrevChapter.Slug : ch.PrevChapter.Id.ToString();
+                <a href="/Novels/@novelUrl/@prevUrl/read" class="btn-icon reader-toolbar__button" title="Chương trước" aria-label="Chương trước">←</a>
+            }
+            else
+            {
+                <span class="btn-icon reader-toolbar__button disabled" aria-disabled="true">←</span>
+            }
+
+            <button type="button" class="btn-icon reader-toolbar__button reader-toolbar__menu" onclick="openModal('chapterListModal')" title="Danh sách chương" aria-label="Danh sách chương">
+                <span></span><span></span><span></span>
+            </button>
+
+            @if (ch.NextChapter != null)
+            {
+                var nextUrl = !string.IsNullOrWhiteSpace(ch.NextChapter.Slug) ? ch.NextChapter.Slug : ch.NextChapter.Id.ToString();
+                <a href="/Novels/@novelUrl/@nextUrl/read" class="btn-icon reader-toolbar__button" title="Chương tiếp theo" aria-label="Chương tiếp theo">→</a>
+            }
+            else
+            {
+                <span class="btn-icon reader-toolbar__button disabled" aria-disabled="true">→</span>
+            }
+        </div>
+
+        <div class="reader-toolbar__font" aria-label="Cỡ chữ">
+            <button onclick="changeFontSize(-1)" class="btn-icon reader-toolbar__button" title="Nhỏ hơn">A-</button>
+            <button onclick="changeFontSize(1)" class="btn-icon reader-toolbar__button" title="Lớn hơn">A+</button>
         </div>
     </div>
 </div>
 
-<!-- Reading area -->
-<div class="reader-layout" id="readerLayout">
+<div class="modal-overlay" id="chapterListModal">
+    <div class="modal modal-lg reader-chapter-modal" role="dialog" aria-modal="true" aria-labelledby="chapterListTitle">
+        <div class="modal__header reader-chapter-modal__header">
+            <div>
+                <div class="modal__title" id="chapterListTitle">Danh sách chương</div>
+                <div class="text-caption text-mute">@ch.Novel?.Title</div>
+            </div>
+            <button type="button" class="modal__close" onclick="closeModal('chapterListModal')" aria-label="Đóng">×</button>
+        </div>
+        <div class="reader-chapter-modal__body">
+            @if (allVolumes.Any())
+            {
+                @foreach (var volume in allVolumes.OrderBy(v => v.VolumeNumber))
+                {
+                    <section class="reader-volume">
+                        <div class="reader-volume__title">
+                            <span>Tập @volume.VolumeNumber</span>
+                            <strong>@volume.Title</strong>
+                        </div>
+                        <div class="reader-volume__chapters">
+                            @foreach (var chapter in volume.Chapters.OrderBy(c => c.ChapterNumber))
+                            {
+                                var chapterUrl = !string.IsNullOrWhiteSpace(chapter.Slug) ? chapter.Slug : chapter.Id.ToString();
+                                var isActive = chapter.Id == ch.Id;
+                                <a href="/Novels/@novelUrl/@chapterUrl/read" class="reader-chapter-link @(isActive ? "active" : "")">
+                                    <span class="reader-chapter-link__number">Ch.@chapter.ChapterNumber</span>
+                                    <span class="reader-chapter-link__title">@chapter.Title</span>
+                                </a>
+                            }
+                        </div>
+                    </section>
+                }
+            }
+            else
+            {
+                <div class="empty-state empty-state--compact">
+                    <div class="empty-state__title">Chưa có danh sách chương</div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="deleteCommentModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="deleteCommentTitle">
+        <div class="modal__header">
+            <div class="modal__title" id="deleteCommentTitle">Xóa bình luận</div>
+            <button type="button" class="modal__close" onclick="closeDeleteCommentModal()" aria-label="Đóng">×</button>
+        </div>
+        <p class="text-body-sm text-body">Bình luận này sẽ bị xóa khỏi chương. Hành động này không thể hoàn tác.</p>
+        <div class="modal__footer">
+            <button type="button" class="btn btn-secondary" onclick="closeDeleteCommentModal()">Hủy</button>
+            <button type="button" class="btn btn-danger" id="confirmDeleteCommentBtn" onclick="confirmDeleteComment()">Xóa bình luận</button>
+        </div>
+    </div>
+</div>
+
+<div class="reader-layout reader-layout--main" id="readerLayout">
     <div class="reader-header">
         <div class="reader-novel-title">
             <a href="/Novels/@novelUrl" style="color:var(--color-mute); text-decoration:none;">@ch.Novel?.Title</a>
@@ -37,47 +124,46 @@
         <div class="text-caption text-mute mt-xs">Chương @ch.ChapterNumber · @ch.CreatedAt.ToString("dd/MM/yyyy")</div>
     </div>
 
-    <!-- Chapter content -->
     <div class="reader-content" id="chapterContent">
         @Html.Raw(ch.Content)
     </div>
 
-    <!-- Prev / Next navigation -->
     <div class="reader-nav">
         @if (ch.PrevChapter != null)
         {
             var prevUrl = !string.IsNullOrWhiteSpace(ch.PrevChapter.Slug) ? ch.PrevChapter.Slug : ch.PrevChapter.Id.ToString();
-            <a href="/Novels/@novelUrl/@prevUrl/read" class="btn btn-secondary">
-                ← Ch.@ch.PrevChapter.ChapterNumber
-            </a>
+            <a href="/Novels/@novelUrl/@prevUrl/read" class="btn btn-secondary">← Ch.@ch.PrevChapter.ChapterNumber</a>
         }
-        else { <span></span> }
+        else
+        {
+            <span></span>
+        }
 
-        <a href="/Novels/@novelUrl" class="btn btn-ghost">Danh sách chương</a>
+        <button type="button" class="btn btn-ghost" onclick="openModal('chapterListModal')">Danh sách chương</button>
 
         @if (ch.NextChapter != null)
         {
             var nextUrl = !string.IsNullOrWhiteSpace(ch.NextChapter.Slug) ? ch.NextChapter.Slug : ch.NextChapter.Id.ToString();
-            <a href="/Novels/@novelUrl/@nextUrl/read" class="btn btn-primary">
-                Ch.@ch.NextChapter.ChapterNumber →
-            </a>
+            <a href="/Novels/@novelUrl/@nextUrl/read" class="btn btn-primary">Ch.@ch.NextChapter.ChapterNumber →</a>
         }
-        else { <span></span> }
+        else
+        {
+            <span></span>
+        }
     </div>
 </div>
 
-<!-- Comments Section -->
 <div style="background:var(--color-canvas); border-top:1px solid var(--color-hairline); padding:var(--space-2xl) 0;">
     <div class="reader-layout" style="padding-top:0; padding-bottom:0;">
         <h2 class="text-display-sm mb-xl">Bình luận (@Model.TotalComments)</h2>
 
-        @if (User.Identity!.IsAuthenticated)
+        @if (User.Identity?.IsAuthenticated == true)
         {
             <form method="post" asp-page-handler="Comment" class="mb-xl">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="chapterId" value="@ch.Id" />
                 <div class="flex gap-md">
-                    <div class="avatar-placeholder avatar-sm" style="flex-shrink:0;">@(ViewData["UserName"]?.ToString()?.Substring(0,1).ToUpper() ?? "U")</div>
+                    @RenderAvatar(ViewData["UserName"]?.ToString(), ViewData["UserAvatar"]?.ToString(), "avatar avatar-sm")
                     <div style="flex:1;">
                         <textarea class="form-textarea" name="content" placeholder="Viết bình luận..." rows="3" required></textarea>
                         <div class="flex justify-between mt-xs">
@@ -93,23 +179,42 @@
             <div class="alert alert-info mb-xl"><a href="/Auth/Login" style="color:inherit; font-weight:500;">Đăng nhập</a> để bình luận.</div>
         }
 
-        <!-- Comment list -->
         @foreach (var comment in Model.Comments)
         {
-            <div class="comment">
-                <div class="avatar-placeholder avatar-sm">@(comment.User?.Username?.Substring(0,1).ToUpper() ?? "U")</div>
+            <div class="comment" id="comment-@comment.Id">
+                @RenderAvatar(comment.User?.Username, comment.User?.Avatar, "avatar avatar-sm")
                 <div class="comment__body">
                     <div class="comment__header">
                         <span class="comment__author">@comment.User?.Username</span>
                         <span class="comment__time">@TimeAgo(comment.CreatedAt)</span>
+                        @if (Model.CurrentUserId == comment.User?.Id)
+                        {
+                            <button type="button" class="comment__delete" onclick="deleteComment(@comment.Id)" title="Xóa bình luận" aria-label="Xóa bình luận">
+                                <span aria-hidden="true">🗑</span>
+                            </button>
+                        }
                     </div>
                     <div class="comment__content">@comment.Content</div>
                     <div class="comment__actions">
-                        <button class="comment__action">👍 @comment.LikeCount</button>
-                        <button class="comment__action" onclick="showReply(@comment.Id)">↩ Trả lời</button>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <button type="button"
+                                    class="comment__action @(comment.IsLiked ? "active" : "")"
+                                    data-liked="@comment.IsLiked.ToString().ToLowerInvariant()"
+                                    data-count="@comment.LikeCount"
+                                    onclick="toggleCommentLike(@comment.Id, this)">
+                                <span class="comment-like-text">@(comment.IsLiked ? "Bỏ thích" : "Thích")</span>
+                                <span class="comment-like-count">@comment.LikeCount</span>
+                            </button>
+                            <button type="button" class="comment__action" onclick="showReply(@comment.Id)">Trả lời</button>
+                        }
+                        else
+                        {
+                            <span class="comment__action">Thích @comment.LikeCount</span>
+                        }
                     </div>
-                    <!-- Reply form (hidden) -->
-                    @if (User.Identity.IsAuthenticated)
+
+                    @if (User.Identity?.IsAuthenticated == true)
                     {
                         <form method="post" asp-page-handler="Reply" id="replyForm-@comment.Id" class="hidden mt-sm" style="margin-left:0;">
                             @Html.AntiForgeryToken()
@@ -124,22 +229,43 @@
                             </div>
                         </form>
                     }
-                    <!-- Replies -->
+
                     @if (comment.Replies.Any())
                     {
                         <div class="comment__replies">
                             @foreach (var reply in comment.Replies)
                             {
-                                <div class="comment" style="padding-top:var(--space-sm);">
-                                    <div class="avatar-placeholder" style="width:28px;height:28px;border-radius:50%;background:var(--color-canvas-soft-2);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">
-                                        @(reply.User?.Username?.Substring(0,1).ToUpper() ?? "U")
-                                    </div>
+                                <div class="comment" id="comment-@reply.Id" style="padding-top:var(--space-sm);">
+                                    @RenderAvatar(reply.User?.Username, reply.User?.Avatar, "avatar avatar-xs")
                                     <div class="comment__body">
                                         <div class="comment__header">
                                             <span class="comment__author">@reply.User?.Username</span>
                                             <span class="comment__time">@TimeAgo(reply.CreatedAt)</span>
+                                            @if (Model.CurrentUserId == reply.User?.Id)
+                                            {
+                                                <button type="button" class="comment__delete" onclick="deleteComment(@reply.Id)" title="Xóa bình luận" aria-label="Xóa bình luận">
+                                                    <span aria-hidden="true">🗑</span>
+                                                </button>
+                                            }
                                         </div>
                                         <div class="comment__content">@reply.Content</div>
+                                        <div class="comment__actions">
+                                            @if (User.Identity?.IsAuthenticated == true)
+                                            {
+                                                <button type="button"
+                                                        class="comment__action @(reply.IsLiked ? "active" : "")"
+                                                        data-liked="@reply.IsLiked.ToString().ToLowerInvariant()"
+                                                        data-count="@reply.LikeCount"
+                                                        onclick="toggleCommentLike(@reply.Id, this)">
+                                                    <span class="comment-like-text">@(reply.IsLiked ? "Bỏ thích" : "Thích")</span>
+                                                    <span class="comment-like-count">@reply.LikeCount</span>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <span class="comment__action">Thích @reply.LikeCount</span>
+                                            }
+                                        </div>
                                     </div>
                                 </div>
                             }
@@ -161,21 +287,36 @@
 </div>
 
 @functions {
-    string TimeAgo(DateTime dt) {
+    string TimeAgo(DateTime dt)
+    {
         var d = DateTime.UtcNow - dt;
-        if (d.TotalMinutes < 60) return $"{(int)d.TotalMinutes}p trước";
-        if (d.TotalHours   < 24) return $"{(int)d.TotalHours}h trước";
-        if (d.TotalDays    < 30) return $"{(int)d.TotalDays}d trước";
+        if (d.TotalMinutes < 60) return $"{Math.Max(0, (int)d.TotalMinutes)}p trước";
+        if (d.TotalHours < 24) return $"{(int)d.TotalHours}h trước";
+        if (d.TotalDays < 30) return $"{(int)d.TotalDays}d trước";
         return dt.ToString("dd/MM/yy");
+    }
+
+    Microsoft.AspNetCore.Html.IHtmlContent RenderAvatar(string? username, string? avatar, string cssClass)
+    {
+        var initial = string.IsNullOrWhiteSpace(username) ? "U" : username.Trim().Substring(0, 1).ToUpperInvariant();
+        if (!string.IsNullOrWhiteSpace(avatar))
+        {
+            return new Microsoft.AspNetCore.Html.HtmlString($"<img src=\"{System.Net.WebUtility.HtmlEncode(avatar)}\" alt=\"{System.Net.WebUtility.HtmlEncode(username ?? "User")}\" class=\"{cssClass}\" />");
+        }
+
+        if (cssClass.Contains("avatar-xs", StringComparison.Ordinal))
+        {
+            return new Microsoft.AspNetCore.Html.HtmlString($"<div class=\"avatar-placeholder\" style=\"width:28px;height:28px;border-radius:50%;font-size:12px;flex-shrink:0;\">{initial}</div>");
+        }
+
+        return new Microsoft.AspNetCore.Html.HtmlString($"<div class=\"avatar-placeholder avatar-sm\" style=\"flex-shrink:0;\">{initial}</div>");
     }
 }
 
 @section Scripts {
 <script>
-// Reading progress
 initReadingProgress(@ch.Id);
 
-// Font size
 let fontSize = 17;
 function changeFontSize(delta) {
     fontSize = Math.max(14, Math.min(24, fontSize + delta));
@@ -183,12 +324,75 @@ function changeFontSize(delta) {
     localStorage.setItem('readerFontSize', fontSize);
 }
 const saved = localStorage.getItem('readerFontSize');
-if (saved) { fontSize = parseInt(saved); document.getElementById('chapterContent').style.fontSize = fontSize + 'px'; }
+if (saved) {
+    fontSize = parseInt(saved);
+    document.getElementById('chapterContent').style.fontSize = fontSize + 'px';
+}
 
-// Reply toggle
 function showReply(id) {
     const form = document.getElementById('replyForm-' + id);
     if (form) form.classList.toggle('hidden');
+}
+
+async function toggleCommentLike(commentId, btn) {
+    const isLiked = btn.dataset.liked === 'true';
+    const method = isLiked ? 'DELETE' : 'POST';
+
+    try {
+        const res = await fetch(`/api/comments/${commentId}/likes`, { method, headers: getHeaders() });
+        if (!res.ok) {
+            showToast('Không thể cập nhật lượt thích.', 'error');
+            return;
+        }
+
+        const nextLiked = !isLiked;
+        const current = Number.parseInt(btn.dataset.count || '0', 10) || 0;
+        const nextCount = Math.max(0, current + (nextLiked ? 1 : -1));
+
+        btn.dataset.liked = nextLiked.toString();
+        btn.dataset.count = nextCount.toString();
+        btn.classList.toggle('active', nextLiked);
+        btn.querySelector('.comment-like-text').textContent = nextLiked ? 'Bỏ thích' : 'Thích';
+        btn.querySelector('.comment-like-count').textContent = nextCount.toString();
+    } catch {
+        showToast('Không thể cập nhật lượt thích.', 'error');
+    }
+}
+
+let pendingDeleteCommentId = null;
+
+function deleteComment(commentId) {
+    pendingDeleteCommentId = commentId;
+    openModal('deleteCommentModal');
+}
+
+function closeDeleteCommentModal() {
+    pendingDeleteCommentId = null;
+    closeModal('deleteCommentModal');
+}
+
+async function confirmDeleteComment() {
+    if (!pendingDeleteCommentId) return;
+
+    const commentId = pendingDeleteCommentId;
+    const btn = document.getElementById('confirmDeleteCommentBtn');
+    if (btn) btn.disabled = true;
+
+    try {
+        const res = await fetch(`/api/comments/${commentId}`, { method: 'DELETE', headers: getHeaders() });
+        if (!res.ok) {
+            showToast('Không thể xóa bình luận.', 'error');
+            return;
+        }
+
+        document.getElementById(`comment-${commentId}`)?.remove();
+        closeDeleteCommentModal();
+        showToast('Đã xóa bình luận.', 'success');
+    } catch {
+        showToast('Không thể xóa bình luận.', 'error');
+    } finally {
+        if (btn) btn.disabled = false;
+    }
 }
 </script>
 }

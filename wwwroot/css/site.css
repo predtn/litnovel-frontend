@@ -1921,6 +1921,27 @@ ul, ol { list-style: none; }
   transition: color 0.15s;
 }
 .comment__action:hover { color: var(--color-ink); }
+.comment__action.active {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+.comment__delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: auto;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-mute);
+  cursor: pointer;
+}
+.comment__delete:hover {
+  background: var(--color-canvas-soft-2);
+  color: var(--color-error);
+}
 .comment__replies { margin-left: var(--space-3xl); margin-top: var(--space-sm); }
 
 /* ─── 24. Review ─── */
@@ -2099,10 +2120,215 @@ ul, ol { list-style: none; }
 .auth-form { display: flex; flex-direction: column; gap: var(--space-md); }
 
 /* ─── 29. Chapter Reader ─── */
+.reader-toolbar {
+  --reader-toolbar-height: 56px;
+  position: fixed;
+  top: var(--nav-height);
+  left: 0;
+  right: 0;
+  z-index: 440;
+  background: rgba(255,255,255,0.94);
+  border-bottom: 1px solid var(--color-hairline);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.reader-toolbar__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-md);
+  max-width: var(--container-max);
+  min-height: 56px;
+  margin: 0 auto;
+  padding: var(--space-xs) var(--container-pad);
+}
+.reader-toolbar__context {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+.reader-toolbar__novel,
+.reader-toolbar__chapter {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.public-profile-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-xl);
+  min-height: 168px;
+}
+.public-profile-header__avatar {
+  align-self: center;
+}
+.public-profile-header__body {
+  display: grid;
+  align-content: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+.public-profile-header__title-row {
+  display: grid;
+  grid-template-columns: auto auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+}
+.public-profile-header__title-row h1 {
+  margin-right: 0;
+  white-space: nowrap;
+}
+.public-profile-header__mini-badges {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent);
+}
+.public-profile-header__stats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+}
+.reader-toolbar__novel {
+  color: var(--color-ink);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+}
+.reader-toolbar__chapter {
+  color: var(--color-mute);
+  font-size: var(--text-caption);
+}
+.reader-toolbar__nav,
+.reader-toolbar__font {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.reader-toolbar__nav {
+  justify-content: center;
+}
+.reader-toolbar__font {
+  justify-content: flex-end;
+}
+.reader-toolbar__button {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+}
+.reader-toolbar__button.disabled {
+  opacity: .35;
+  pointer-events: none;
+}
+.reader-toolbar__menu {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.reader-toolbar__menu span {
+  width: 15px;
+  height: 2px;
+  border-radius: var(--radius-full);
+  background: currentColor;
+}
+.reader-chapter-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 760px);
+  max-height: min(720px, calc(100vh - 96px));
+  padding: 0;
+  overflow: hidden;
+}
+.reader-chapter-modal__header {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--color-hairline);
+}
+.reader-chapter-modal__body {
+  display: grid;
+  gap: var(--space-md);
+  min-height: 0;
+  padding: var(--space-md);
+  overflow-y: auto;
+}
+.reader-volume {
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  background: var(--color-canvas);
+  overflow: hidden;
+}
+.reader-volume__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--color-hairline);
+  background: var(--color-canvas-soft);
+}
+.reader-volume__title span {
+  color: var(--color-mute);
+  font-size: var(--text-caption);
+  white-space: nowrap;
+}
+.reader-volume__title strong {
+  overflow: hidden;
+  color: var(--color-ink);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reader-volume__chapters {
+  display: grid;
+}
+.reader-chapter-link {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--color-hairline);
+  color: var(--color-body);
+  text-decoration: none;
+}
+.reader-chapter-link:last-child {
+  border-bottom: 0;
+}
+.reader-chapter-link:hover,
+.reader-chapter-link.active {
+  background: var(--color-link-bg-soft);
+  color: var(--color-link-deep);
+}
+.reader-chapter-link__number {
+  color: var(--color-mute);
+  font-size: var(--text-caption);
+}
+.reader-chapter-link.active .reader-chapter-link__number {
+  color: inherit;
+  font-weight: 600;
+}
+.reader-chapter-link__title {
+  overflow: hidden;
+  font-size: var(--text-body-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .reader-layout {
   max-width: 720px;
   margin: 0 auto;
   padding: var(--space-xl) var(--space-lg);
+}
+.reader-layout--main {
+  padding-top: calc(var(--space-xl) + 56px);
 }
 .reader-header {
   text-align: center;
@@ -2125,9 +2351,11 @@ ul, ol { list-style: none; }
 .reader-nav {
   display: flex;
   justify-content: space-between;
+  gap: var(--space-sm);
   margin-top: var(--space-2xl);
   padding-top: var(--space-xl);
   border-top: 1px solid var(--color-hairline);
+  flex-wrap: wrap;
 }
 
 /* ─── 30. Section Utilities ─── */
@@ -2799,6 +3027,30 @@ ul, ol { list-style: none; }
 .profile-novel-meta .status-badge {
   line-height: 1;
 }
+.profile-novel-details {
+  display: grid;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+  color: var(--color-mute);
+  font-size: var(--text-caption);
+}
+.profile-novel-details div {
+  display: grid;
+  grid-template-columns: minmax(72px, auto) minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+.profile-novel-details span,
+.profile-novel-details strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.profile-novel-details strong {
+  color: var(--color-body);
+  font-weight: 500;
+}
 .admin-volume-list,
 .admin-chapter-list {
   display: grid;
@@ -3090,6 +3342,70 @@ ul, ol { list-style: none; }
 
   .profile-edit-sidebar {
     padding-top: 0;
+  }
+
+  .public-profile-header {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: var(--space-lg);
+    min-height: auto;
+    text-align: center;
+  }
+
+  .public-profile-header__body {
+    justify-items: center;
+    width: 100%;
+  }
+
+  .public-profile-header__title-row {
+    grid-template-columns: auto auto;
+    justify-content: center;
+  }
+
+  .public-profile-header__title-row h1 {
+    grid-column: 1 / -1;
+  }
+
+  .public-profile-header__mini-badges {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    justify-content: center;
+  }
+
+  .public-profile-header__stats {
+    justify-content: center;
+  }
+
+  .reader-toolbar__inner {
+    min-height: 96px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-sm);
+  }
+
+  .reader-layout--main {
+    padding-top: calc(var(--space-md) + 96px);
+  }
+
+  .reader-toolbar__font {
+    grid-column: 1 / -1;
+    justify-content: center;
+    padding-top: var(--space-xs);
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .reader-toolbar__context {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+  }
+
+  .reader-chapter-modal {
+    max-height: calc(100vh - var(--space-lg));
+  }
+
+  .reader-chapter-link {
+    grid-template-columns: 56px minmax(0, 1fr);
+    padding: var(--space-sm);
   }
 
   .home-section-header {

@@ -110,19 +110,52 @@ async function saveProgress(chapterId, pct) {
         });
     } catch (e) { /* silent */ }
 }
-
 // ─── Favorite toggle ───
 async function toggleFavorite(novelId, btn) {
     const isFav = btn.dataset.favorited === 'true';
     try {
         const method = isFav ? 'DELETE' : 'POST';
         const res = await fetch(`/api/novels/${novelId}/favorites`, { method, headers: getHeaders() });
-        if (res.ok) {
-            btn.dataset.favorited = isFav ? 'false' : 'true';
-            btn.querySelector('.fav-text').textContent = isFav ? 'Yêu thích' : 'Bỏ yêu thích';
-            showToast(isFav ? 'Đã bỏ yêu thích' : 'Đã thêm vào yêu thích', 'success');
+        if (!res.ok) {
+            showToast('Có lỗi xảy ra', 'error');
+            return;
+        }
+
+        btn.dataset.favorited = isFav ? 'false' : 'true';
+        btn.querySelector('.fav-text').textContent = isFav ? 'Yêu thích' : 'Bỏ yêu thích';
+        showToast(isFav ? 'Đã bỏ yêu thích' : 'Đã thêm vào yêu thích', 'success');
+    } catch (e) { showToast('Có lỗi xảy ra', 'error'); }
+}
+
+// ─── Novel like toggle ───
+async function toggleNovelLike(novelId, btn) {
+    const isLiked = btn.dataset.liked === 'true';
+    try {
+        const method = isLiked ? 'DELETE' : 'POST';
+        const res = await fetch(`/api/novels/${novelId}/likes`, { method, headers: getHeaders() });
+        if (!res.ok) {
+            showToast('Có lỗi xảy ra', 'error');
+            return;
+        }
+
+        btn.dataset.liked = isLiked ? 'false' : 'true';
+        btn.querySelector('.like-text').textContent = isLiked ? 'Thích' : 'Bỏ thích';
+        showToast(isLiked ? 'Đã bỏ thích truyện' : 'Đã thích truyện', 'success');
+
+        const likeCount = document.getElementById('novelLikeCount');
+        if (likeCount) {
+            const current = Number.parseInt(likeCount.dataset.count || likeCount.textContent || '0', 10) || 0;
+            const next = Math.max(0, current + (isLiked ? -1 : 1));
+            likeCount.dataset.count = next.toString();
+            likeCount.textContent = formatCompactNumber(next);
         }
     } catch (e) { showToast('Có lỗi xảy ra', 'error'); }
+}
+
+function formatCompactNumber(value) {
+    if (value >= 1000000) return `${(value / 1000000).toFixed(value >= 10000000 ? 0 : 1).replace(/\.0$/, '')}M`;
+    if (value >= 1000) return `${(value / 1000).toFixed(value >= 10000 ? 0 : 1).replace(/\.0$/, '')}K`;
+    return value.toString();
 }
 
 // ─── Notification mark read ───

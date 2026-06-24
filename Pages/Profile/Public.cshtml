@@ -13,28 +13,33 @@
         return;
     }
     <!-- Profile header -->
-    <div class="card mb-xl" style="display:flex;gap:var(--space-xl);align-items:flex-start;flex-wrap:wrap;">
+    <div class="card mb-xl public-profile-header">
         @if (!string.IsNullOrEmpty(u.Avatar))
-        { <img src="@u.Avatar" class="avatar avatar-2xl" /> }
+        { <img src="@u.Avatar" class="avatar avatar-2xl public-profile-header__avatar" /> }
         else
-        { <div class="avatar-placeholder avatar-2xl">@(u.Username.Substring(0,1).ToUpper())</div> }
-        <div style="flex:1;min-width:0;">
-            <div class="profile-title-row mb-xs">
+        { <div class="avatar-placeholder avatar-2xl public-profile-header__avatar">@(u.Username.Substring(0,1).ToUpper())</div> }
+        <div class="public-profile-header__body">
+            <div class="profile-title-row public-profile-header__title-row">
                 <h1 class="text-display-sm">@u.Username</h1>
-                <span class="profile-meta-badge role-@u.Role.ToLower()">@u.Role</span>
-                <span class="profile-meta-badge status-@u.Status.ToLower()">@u.Status</span>
-                @foreach (var badge in u.Badges)
+                <span class="profile-meta-badge role-@u.Role.ToLower()">@RoleLabel(u.Role)</span>
+                <span class="profile-meta-badge status-@u.Status.ToLower()">@UserStatusLabel(u.Status)</span>
+                @if (u.Badges.Any())
                 {
-                    <span class="profile-mini-badge" style="--badge-color:@BadgeColor(badge.Color);" title="@badge.Name">@badge.Name</span>
+                    <span class="public-profile-header__mini-badges">
+                        @foreach (var badge in u.Badges)
+                        {
+                            <span class="profile-mini-badge" style="--badge-color:@BadgeColor(badge.Color);" title="@badge.Name">@badge.Name</span>
+                        }
+                    </span>
                 }
             </div>
             @if (!string.IsNullOrEmpty(u.Bio)) { <p class="text-body-sm text-body mb-md">@u.Bio</p> }
-            <div class="flex gap-lg" style="flex-wrap:wrap;">
+            <div class="public-profile-header__stats">
                 <div><span class="text-display-sm font-semibold">@u.Reputation</span> <span class="text-caption text-mute">Reputation</span></div>
                 <div><span class="text-display-sm font-semibold">@u.Stats.NovelsCreated</span> <span class="text-caption text-mute">Truyện</span></div>
                 <div><span class="text-display-sm font-semibold">@u.Stats.ChaptersPublished</span> <span class="text-caption text-mute">Chương</span></div>
             </div>
-            <div class="text-caption text-mute mt-sm">Tham gia từ @joinedAt?.ToString("dd/MM/yyyy")</div>
+            <div class="text-caption text-mute">Tham gia từ @joinedAt?.ToString("dd/MM/yyyy")</div>
         </div>
     </div>
 
@@ -132,12 +137,12 @@
                         <div class="novel-card__title">@n.Title</div>
                         <div class="profile-novel-meta">
                             <span class="status-badge status-@n.Status.ToLowerInvariant()">@StatusLabel(n.Status)</span>
-                            <span>@n.TotalVolumes volume</span>
-                            <span>@n.TotalChapters chương</span>
                         </div>
-                        <div class="novel-card__meta">
-                            <span>★ @n.RatingAverage.ToString("0.0")</span>
-                            <span>Cập nhật @n.UpdatedAt.ToString("dd/MM/yyyy")</span>
+                        <div class="profile-novel-details">
+                            <div><span>Số volume: @n.TotalVolumes</span></div>
+                            <div><span>Số chương: @n.TotalChapters</span></div>
+                            <div><span>Đánh giá: ★ @n.RatingAverage.ToString("0.0")</span></div>
+                            <div><span>Cập nhật: @n.UpdatedAt.ToString("dd/MM/yyyy")</span></div>
                         </div>
                     </div>
                 </a>
@@ -166,6 +171,22 @@
         "hiatus" => "Tạm dừng",
         "locked" => "Đã khóa",
         _ => string.IsNullOrWhiteSpace(status) ? "Không rõ" : status
+    };
+
+    private static string UserStatusLabel(string? status) => status?.Trim().ToLowerInvariant() switch
+    {
+        "online" => "Online",
+        "offline" => "Offline",
+        "banned" => "Banned",
+        _ => string.IsNullOrWhiteSpace(status) ? "Offline" : status
+    };
+
+    private static string RoleLabel(string? role) => role?.Trim().ToLowerInvariant() switch
+    {
+        "admin" => "Admin",
+        "staff" => "Staff",
+        "user" => "User",
+        _ => string.IsNullOrWhiteSpace(role) ? "User" : role
     };
 
     private static string Initials(string? value)

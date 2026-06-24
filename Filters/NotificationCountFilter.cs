@@ -50,9 +50,9 @@ public class NotificationCountFilter : IAsyncPageFilter
                 {
                     try
                     {
-                        var r = await _api.GetAsync<PagedData<NotificationDto>>(
+                        var r = await _api.GetAsync<NotificationListDto>(
                             "/api/notifications?isRead=false&size=1", token);
-                        unreadCount = r?.Data?.TotalElements ?? 0;
+                        unreadCount = r?.Data?.UnreadCount ?? 0;
 
                         // Cache vào session
                         httpContext.Session.SetString("_notif_count", unreadCount.ToString());
