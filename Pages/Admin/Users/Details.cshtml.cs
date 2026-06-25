@@ -30,33 +30,11 @@ public class DetailsModel(IApiService api, IAuthService auth) : PageModel
                 await SendUserNotificationAsync(id, "Tài khoản của bạn đã được cấp quyền Staff. Staff Dashboard hiện đã sẵn sàng để sử dụng.", token);
             }
 
-            if (status.Equals("Banned", StringComparison.OrdinalIgnoreCase))
-            {
-                await SendUserNotificationAsync(id, "Tài khoản của bạn đã bị cấm do vi phạm quy định cộng đồng.", token);
-            }
-
             TempData["Success"] = "Đã cập nhật người dùng.";
         }
         else
         {
             TempData["Error"] = result?.Message ?? "Không thể cập nhật người dùng.";
-        }
-
-        return RedirectToPage(new { id });
-    }
-
-    public async Task<IActionResult> OnPostBanAsync(int id, string? reason)
-    {
-        var token = auth.GetToken(HttpContext);
-        var result = await api.PostAsync<object>($"/api/admin/users/{id}/ban", new { reason = string.IsNullOrWhiteSpace(reason) ? "Admin action" : reason }, token);
-        if (result?.Success == true)
-        {
-            await SendUserNotificationAsync(id, "Tài khoản của bạn đã bị cấm do vi phạm quy định cộng đồng.", token);
-            TempData["Success"] = "Đã cấm người dùng và gửi thông báo.";
-        }
-        else
-        {
-            TempData["Error"] = result?.Message ?? "Không thể cấm người dùng.";
         }
 
         return RedirectToPage(new { id });

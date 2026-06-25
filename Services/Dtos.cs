@@ -630,7 +630,6 @@ public class ContentSettingsDto
 {
     public int MaxNovelDescriptionLength { get; set; } = 5000;
     public int MaxChapterLength { get; set; } = 50000;
-    public int MaxTagsPerNovel { get; set; } = 10;
 }
 
 public class ModerationSettingsDto

@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Đọc truyện, Khám phá thế giới mới";
     ViewData["Description"] = "LitNovel — Nền tảng đọc và xuất bản truyện chữ trực tuyến hàng đầu Việt Nam.";
+    var writeUrl = User.Identity?.IsAuthenticated == true ? Url.Page("/Publish/Index") : Url.Page("/Auth/Register");
 }
 
 <!-- SCR-01: Landing Page -->
@@ -38,7 +39,7 @@
         <p class="hero__subtitle">Hàng nghìn tiểu thuyết từ các tác giả tài năng. Đọc miễn phí, mọi lúc, mọi nơi.</p>
         <div class="hero__cta">
             <a href="/Novels" class="btn btn-primary-lg">Khám phá ngay</a>
-            <a href="/Auth/Register" class="btn btn-secondary-lg">Bắt đầu viết</a>
+            <a href="@writeUrl" class="btn btn-secondary-lg">Bắt đầu viết</a>
         </div>
     </div>
 </section>
@@ -105,7 +106,12 @@
     <div class="container">
         <div class="home-section-header mb-xl">
             <div>
-                <h2 class="section-title">🔥 Đang hot</h2>
+                <h2 class="section-title">
+                    <span class="home-title-icon home-title-icon--hot" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M12 3s5 4.5 5 10a5 5 0 0 1-10 0c0-2.5 1.5-4.4 3.4-6.4.8 2.2 2.4 3.2 4.1 3.7C14.4 7.8 13.4 5.5 12 3Z"/></svg>
+                    </span>
+                    Đang hot
+                </h2>
                 <p class="section-subtitle">Những tiểu thuyết được đọc nhiều nhất</p>
             </div>
             <a href="/Novels?sort=viewCount&order=desc" class="btn btn-ghost">Xem tất cả →</a>
@@ -118,18 +124,18 @@
                     @if (!string.IsNullOrEmpty(novel.CoverImage))
                     {
                         <img class="novel-card__cover" src="@novel.CoverImage" alt="@novel.Title" loading="lazy" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
-                        <div class="novel-card__cover-placeholder hidden">📖</div>
+                        <div class="novel-card__cover-placeholder hidden"><span class="cover-placeholder-icon" aria-hidden="true"></span></div>
                     }
                     else
                     {
-                        <div class="novel-card__cover-placeholder">📖</div>
+                        <div class="novel-card__cover-placeholder"><span class="cover-placeholder-icon" aria-hidden="true"></span></div>
                     }
                     <div class="novel-card__body">
                         <div class="novel-card__title">@novel.Title</div>
                         <div class="novel-card__author">@novel.Author?.Username</div>
                         <div class="novel-card__meta">
-                            <span>⭐ @novel.RatingAverage.ToString("0.0")</span>
-                            <span>👁 @FormatCount(novel.ViewCount)</span>
+                            <span class="novel-card__metric"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/></svg>@novel.RatingAverage.ToString("0.0")</span>
+                            <span class="novel-card__metric"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="3"/></svg>@FormatCount(novel.ViewCount)</span>
                         </div>
                     </div>
                 </a>
@@ -143,7 +149,12 @@
     <div class="container">
         <div class="home-section-header mb-xl">
             <div>
-                <h2 class="section-title">🆕 Mới cập nhật</h2>
+                <h2 class="section-title">
+                    <span class="home-title-icon home-title-icon--new" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M12 5v7l4 2"/><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>
+                    </span>
+                    Mới cập nhật
+                </h2>
                 <p class="section-subtitle">Chapter mới nhất từ các truyện đang ra</p>
             </div>
             <a href="/Novels?sort=updatedAt&order=desc&status=Ongoing" class="btn btn-ghost">Xem tất cả →</a>
@@ -187,7 +198,12 @@
     <div class="container">
         <div class="home-section-header mb-xl">
             <div>
-                <h2 class="section-title">⭐ Được đánh giá cao</h2>
+                <h2 class="section-title">
+                    <span class="home-title-icon home-title-icon--rated" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/></svg>
+                    </span>
+                    Được đánh giá cao
+                </h2>
                 <p class="section-subtitle">Tiểu thuyết được yêu thích nhất</p>
             </div>
             <a href="/Novels?sort=ratingAverage&order=desc" class="btn btn-ghost">Xem tất cả →</a>
@@ -200,16 +216,16 @@
                     @if (!string.IsNullOrEmpty(novel.CoverImage))
                     {
                         <img class="novel-card__cover" src="@novel.CoverImage" alt="@novel.Title" loading="lazy" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
-                        <div class="novel-card__cover-placeholder hidden">📖</div>
+                        <div class="novel-card__cover-placeholder hidden"><span class="cover-placeholder-icon" aria-hidden="true"></span></div>
                     }
                     else
                     {
-                        <div class="novel-card__cover-placeholder">📖</div>
+                        <div class="novel-card__cover-placeholder"><span class="cover-placeholder-icon" aria-hidden="true"></span></div>
                     }
                     <div class="novel-card__body">
                         <div class="novel-card__title">@novel.Title</div>
                         <div class="novel-card__meta">
-                            <span style="color:#f59e0b; font-weight:500;">★ @novel.RatingAverage.ToString("0.0")</span>
+                            <span class="novel-card__metric novel-card__metric--rated"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/></svg>@novel.RatingAverage.ToString("0.0")</span>
                             <span>(@novel.RatingCount)</span>
                         </div>
                     </div>

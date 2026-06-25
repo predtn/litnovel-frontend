@@ -31,7 +31,6 @@
         <option value="">Tất cả trạng thái</option>
         <option value="Online" selected="@(Model.StatusFilter == "Online")">Đang online</option>
         <option value="Offline" selected="@(Model.StatusFilter == "Offline")">Offline</option>
-        <option value="Banned" selected="@(Model.StatusFilter == "Banned")">Bị cấm</option>
     </select>
     @if (!string.IsNullOrWhiteSpace(Model.Keyword) || !string.IsNullOrWhiteSpace(Model.StatusFilter))
     {
@@ -68,22 +67,6 @@
                     <td data-label="Hành động" class="col-actions">
                         <div class="flex gap-xs justify-end">
                             <a href="/Admin/Users/@user.Id" class="btn btn-secondary btn-sm">Chi tiết</a>
-                            @if (!user.Status.Equals("Banned", StringComparison.OrdinalIgnoreCase))
-                            {
-                                <form method="post" asp-page-handler="Ban" style="display:inline;" onsubmit="return confirm('Xác nhận cấm người dùng này?')">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="userId" value="@user.Id" />
-                                    <button type="submit" class="btn btn-danger btn-sm">Cấm</button>
-                                </form>
-                            }
-                            else
-                            {
-                                <form method="post" asp-page-handler="Unban" style="display:inline;">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="userId" value="@user.Id" />
-                                    <button type="submit" class="btn btn-secondary btn-sm">Bỏ cấm</button>
-                                </form>
-                            }
                         </div>
                     </td>
                 </tr>

@@ -603,8 +603,29 @@ ul, ol { list-style: none; }
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 40px;
 }
+.cover-placeholder-icon {
+  width: 42px;
+  height: 54px;
+  position: relative;
+  display: inline-block;
+  border: 2px solid var(--color-hairline-strong);
+  border-left-width: 5px;
+  border-radius: 3px 7px 7px 3px;
+  background: linear-gradient(90deg, rgba(0,0,0,0.04), rgba(255,255,255,0.3));
+}
+.cover-placeholder-icon::before,
+.cover-placeholder-icon::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 8px;
+  height: 2px;
+  border-radius: var(--radius-full);
+  background: var(--color-hairline-strong);
+}
+.cover-placeholder-icon::before { top: 17px; }
+.cover-placeholder-icon::after { top: 25px; }
 .novel-card__body { padding: var(--space-md); }
 .novel-card__title {
   font-size: var(--text-body-sm);
@@ -628,6 +649,26 @@ ul, ol { list-style: none; }
   margin-top: var(--space-xs);
   font-size: var(--text-caption);
   color: var(--color-mute);
+}
+.novel-card__metric {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.novel-card__metric svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.novel-card__metric--rated {
+  color: #b7791f;
+  font-weight: 500;
 }
 
 /* ─── 8. Badges & Tags ─── */
@@ -1229,6 +1270,39 @@ ul, ol { list-style: none; }
 .home-section-header .btn {
   flex: 0 0 auto;
   margin-left: auto;
+}
+.home-title-icon {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--space-xs);
+  border-radius: var(--radius-sm);
+  vertical-align: -5px;
+  color: var(--color-link-deep);
+  background: var(--color-link-bg-soft);
+}
+.home-title-icon svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.home-title-icon--hot {
+  color: #b45309;
+  background: #fff7ed;
+}
+.home-title-icon--new {
+  color: #047857;
+  background: #ecfdf5;
+}
+.home-title-icon--rated {
+  color: #b7791f;
+  background: #fffbeb;
 }
 .home-novel-grid {
   display: grid;

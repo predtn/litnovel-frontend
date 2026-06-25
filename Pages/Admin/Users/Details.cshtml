@@ -91,7 +91,6 @@ else
                     <select class="form-select" name="status">
                         <option selected="@(user.Status == "Offline")">Offline</option>
                         <option selected="@(user.Status == "Online")">Online</option>
-                        <option selected="@(user.Status == "Banned")">Banned</option>
                     </select>
                 </label>
                 <button class="btn btn-primary" type="submit">Save changes</button>
@@ -107,14 +106,6 @@ else
                 <button class="btn btn-secondary" type="submit">Issue warning</button>
             </form>
 
-            <div class="divider"></div>
-
-            <form method="post" asp-page-handler="Ban">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="id" value="@user.Id" />
-                <input class="form-input mb-sm" name="reason" placeholder="Ban reason" />
-                <button class="btn btn-danger w-full" type="submit">Ban account</button>
-            </form>
         </aside>
     </div>
 }
