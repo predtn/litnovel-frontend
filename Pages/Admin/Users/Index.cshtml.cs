@@ -66,43 +66,6 @@ public class IndexModel : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostBanAsync(int userId)
-    {
-        var token = _auth.GetToken(HttpContext);
-        var result = await _api.PostAsync<object>($"/api/admin/users/{userId}/ban", new { reason = "Admin action" }, token);
-        if (result?.Success == true)
-        {
-            await SendUserNotificationAsync(userId, "Tài khoản của bạn đã bị cấm do vi phạm quy định cộng đồng.", token);
-            TempData["Success"] = "Đã cấm người dùng và gửi thông báo.";
-        }
-        else
-        {
-            TempData["Error"] = result?.Message ?? "Không thể cấm người dùng.";
-        }
-
-        return RedirectToPage();
-    }
-
-    public async Task<IActionResult> OnPostUnbanAsync(int userId)
-    {
-        var token = _auth.GetToken(HttpContext);
-        var result = await _api.PostAsync<object>($"/api/admin/users/{userId}/unban", null, token);
-        if (result?.Success == true) TempData["Success"] = "Đã bỏ cấm người dùng.";
-        else TempData["Error"] = result?.Message ?? "Không thể bỏ cấm người dùng.";
-        return RedirectToPage();
-    }
-
-    private async Task<ApiResponse<object>?> SendUserNotificationAsync(int userId, string message, string? token)
-    {
-        return await _api.PostAsync<object>("/api/admin/notifications", new
-        {
-            notificationType = "SystemAlert",
-            message,
-            targetAll = false,
-            targetUserId = userId
-        }, token);
-    }
-
     private void SetShell()
     {
         var user = _auth.GetCurrentUser(HttpContext);

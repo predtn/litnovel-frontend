@@ -26,14 +26,13 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
         bool maintenanceMode,
         int maxNovelDescriptionLength,
         int maxChapterLength,
-        int maxTagsPerNovel,
         int reviewSLAHours,
         string? autoFlagKeywords)
     {
         var request = new AdminSettingsDto
         {
             General = new() { SiteName = siteName, Tagline = tagline, MaintenanceMode = maintenanceMode },
-            Content = new() { MaxNovelDescriptionLength = maxNovelDescriptionLength, MaxChapterLength = maxChapterLength, MaxTagsPerNovel = maxTagsPerNovel },
+            Content = new() { MaxNovelDescriptionLength = maxNovelDescriptionLength, MaxChapterLength = maxChapterLength },
             Moderation = new()
             {
                 ReviewSLAHours = reviewSLAHours,

@@ -33,7 +33,7 @@ public class CreateModel : PublishPageModel
         var guard = RequireAuthor();
         if (guard != null) return guard;
         Input.Status = "Draft";
-        Input.TagIds = SelectedTagIds.Take(10).ToList();
+        Input.TagIds = SelectedTagIds.Distinct().ToList();
         await ApplyCoverImageAsync();
 
         if (string.IsNullOrWhiteSpace(Input.Title))

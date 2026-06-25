@@ -42,7 +42,7 @@ public class EditModel : PublishPageModel
     {
         var guard = RequireAuthor();
         if (guard != null) return guard;
-        Input.TagIds = SelectedTagIds.Take(10).ToList();
+        Input.TagIds = SelectedTagIds.Distinct().ToList();
         await ApplyCoverImageAsync();
 
         if (string.IsNullOrWhiteSpace(Input.Title))
