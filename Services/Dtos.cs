@@ -487,6 +487,7 @@ public class ReportTargetNovelInfoDto
     public int Id { get; set; }
     public string Title { get; set; } = "";
     public string Slug { get; set; } = "";
+    public ReportActorInfoDto? Author { get; set; }
 }
 
 public class ReportTargetChapterInfoDto

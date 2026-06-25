@@ -65,6 +65,15 @@
                             class="btn btn-secondary novel-detail__action">
                         <span class="fav-text">@(novel.IsFavorited == true ? "Bỏ yêu thích" : "Yêu thích")</span>
                     </button>
+
+                    @if (Model.CurrentUserId != novel.Author?.Id)
+                    {
+                        <button type="button"
+                                onclick="openModal('reportModal')"
+                                class="btn btn-secondary novel-detail__action" style="color: var(--color-danger); border-color: var(--color-hairline);">
+                            <span>Báo cáo</span>
+                        </button>
+                    }
                 }
             </div>
         </div>

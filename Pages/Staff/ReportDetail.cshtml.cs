@@ -11,6 +11,8 @@ public class ReportDetailModel : PageModel
     public StaffReportDto? Report { get; set; }
     public string? Kind { get; set; }
     public string? ActionMessage { get; set; }
+    public int? NovelAuthorId { get; set; }
+    public string? NovelAuthorUsername { get; set; }
 
     public ReportDetailModel(IApiService api, IAuthService auth) { _api = api; _auth = auth; }
 
@@ -31,6 +33,10 @@ public class ReportDetailModel : PageModel
         var result = await _api.GetAsync<StaffReportDto>($"/api/staff/reports/{id}?kind={kind}", token);
         Report = result?.Data;
         if (Report == null) return NotFound();
+
+        NovelAuthorId       = Report.TargetNovel?.Author?.Id;
+        NovelAuthorUsername = Report.TargetNovel?.Author?.Username;
+
         return Page();
     }
 
