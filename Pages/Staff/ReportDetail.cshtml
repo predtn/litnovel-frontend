@@ -145,6 +145,21 @@
                             <label class="form-label">Ghi chú giải quyết</label>
                             <textarea name="resolutionNotes" class="form-control" rows="3" placeholder="Nhập ghi chú..."></textarea>
                         </div>
+                        @if ((r.Kind == "User" && r.TargetComment != null) || (r.Kind == "Novel" && r.TargetChapter != null))
+                        {
+                            <div class="form-group mt-sm">
+                                <label class="d-flex align-items-center gap-xs" style="cursor:pointer">
+                                    <input type="checkbox" name="takeDownContent" value="true" id="chkTakeDown" />
+                                    <span>
+                                        @if (r.Kind == "User")
+                                        { <strong>Xóa bình luận vi phạm (#@r.TargetComment!.Id)</strong> }
+                                        else
+                                        { <strong>Gỡ chương vi phạm về Draft: "@r.TargetChapter!.Title"</strong> }
+                                    </span>
+                                </label>
+                                <small class="text-muted">Hành động này sẽ được ghi vào lịch sử kiểm duyệt.</small>
+                            </div>
+                        }
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" onclick="document.getElementById('resolveModal').close()">Hủy</button>

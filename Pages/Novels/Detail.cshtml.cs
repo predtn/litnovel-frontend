@@ -39,11 +39,11 @@ public class DetailModel : PageModel
         return RedirectToPage(new { slug });
     }
 
-    public async Task<IActionResult> OnPostReportAsync([FromRoute] string slug, int targetNovelId, string reportType, string description)
+    public async Task<IActionResult> OnPostReportAsync([FromRoute] string slug, int targetNovelId, string reportType, string description, int? targetChapterId)
     {
         var token = _auth.GetToken(HttpContext);
         if (string.IsNullOrEmpty(token)) return RedirectToPage("/Auth/Login");
-        await _api.PostAsync<object>("/api/reports/novels", new { targetNovelId, reportType, description }, token);
+        await _api.PostAsync<object>("/api/reports/novels", new { targetNovelId, targetChapterId, reportType, description }, token);
         TempData["Success"] = "Báo cáo đã được gửi.";
         return RedirectToPage(new { slug });
     }

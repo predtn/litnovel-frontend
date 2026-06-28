@@ -14,6 +14,7 @@ public class ReportsModel : PageModel
     public int PendingCount { get; set; }
     public new int Page { get; set; } = 1;
     public int TotalPages { get; set; } = 1;
+    public StaffDashboardDto Dashboard { get; set; } = new();
 
     public ReportsModel(IApiService api, IAuthService auth) { _api = api; _auth = auth; }
 
@@ -35,11 +36,13 @@ public class ReportsModel : PageModel
 
         var kindParam   = string.IsNullOrEmpty(kind) ? "" : $"&kind={kind}";
         var statusParam = string.IsNullOrEmpty(status) ? "" : $"&status={status}";
+        var dashTask    = _api.GetAsync<StaffDashboardDto>("/api/staff/dashboard", token);
         var reportsTask = _api.GetAsync<PagedData<StaffReportDto>>($"/api/staff/reports?page={Page}&size=20{kindParam}{statusParam}", token);
         var pendingTask = _api.GetAsync<PagedData<StaffReportDto>>("/api/staff/reports?status=Pending&page=1&size=1", token);
-        await Task.WhenAll(reportsTask, pendingTask);
+        await Task.WhenAll(dashTask, reportsTask, pendingTask);
 
         var data = reportsTask.Result?.Data;
+        Dashboard    = dashTask.Result?.Data ?? new();
         Reports      = data?.Items ?? [];
         TotalPages   = data?.TotalPages ?? 1;
         PendingCount = pendingTask.Result?.Data?.TotalElements ?? 0;

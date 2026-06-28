@@ -42,12 +42,13 @@ public class ReportDetailModel : PageModel
 
     public async Task<IActionResult> OnPostAsync(
         [FromForm] int id, [FromForm] string kind,
-        [FromForm] string action, [FromForm] string? actionTaken, [FromForm] string? resolutionNotes)
+        [FromForm] string action, [FromForm] string? actionTaken, [FromForm] string? resolutionNotes,
+        [FromForm] bool takeDownContent = false)
     {
         if (!ValidateAccess(out var token)) return RedirectToPage("/Auth/Login");
         Kind = kind;
 
-        var payload = new { action, actionTaken, resolutionNotes };
+        var payload = new { action, actionTaken, resolutionNotes, takeDownContent };
         var result = await _api.PutAsync<object>($"/api/staff/reports/{id}/resolve?kind={kind}", payload, token);
         if (result?.Success == true)
         {

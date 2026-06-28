@@ -471,6 +471,7 @@ public class StaffReportDto
     public ReportTargetNovelInfoDto? TargetNovel { get; set; }
     public ReportActorInfoDto? TargetUser { get; set; }
     public ReportTargetChapterInfoDto? TargetChapter { get; set; }
+    public ReportCommentInfoDto? TargetComment { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 }
@@ -495,6 +496,14 @@ public class ReportTargetChapterInfoDto
     public int Id { get; set; }
     public string Title { get; set; } = "";
     public int ChapterNumber { get; set; }
+}
+
+public class ReportCommentInfoDto
+{
+    public int Id { get; set; }
+    public string Content { get; set; } = "";
+    public int UserId { get; set; }
+    public string Username { get; set; } = "";
 }
 
 public class ModerationHistoryDto
