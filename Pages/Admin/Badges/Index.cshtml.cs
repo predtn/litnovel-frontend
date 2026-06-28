@@ -68,7 +68,7 @@ public class IndexModel(IApiService api, IAuthService auth, IWebHostEnvironment 
 
         var result = await api.PostAsync<object>("/api/admin/badges", new { key = ToKey(name), name, description, icon, color }, auth.GetToken(HttpContext));
         if (result?.Success == true) TempData["Success"] = "Badge created.";
-        else TempData["Error"] = result?.Message ?? "Create badge failed.";
+        else TempData["Error"] = result?.Message ?? "Chưa thể tạo huy hiệu lúc này.";
         return RedirectToPage();
     }
 
@@ -80,15 +80,15 @@ public class IndexModel(IApiService api, IAuthService auth, IWebHostEnvironment 
         var iconValue = uploadedIcon ?? NormalizeIconValue(EditIconValue) ?? icon;
         var result = await api.PutAsync<object>($"/api/admin/badges/{id}", new { name, description, icon = iconValue, color }, auth.GetToken(HttpContext));
         if (result?.Success == true) TempData["Success"] = "Badge updated.";
-        else TempData["Error"] = result?.Message ?? "Update badge failed.";
+        else TempData["Error"] = result?.Message ?? "Chưa thể cập nhật huy hiệu lúc này.";
         return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(int id)
     {
         var result = await api.DeleteAsync<object>($"/api/admin/badges/{id}", auth.GetToken(HttpContext));
-        if (result?.Success == true) TempData["Success"] = "Badge deleted.";
-        else TempData["Error"] = result?.Message ?? "Delete badge failed.";
+        if (result?.Success == true) TempData["Success"] = "Đã xóa huy hiệu.";
+        else TempData["Error"] = result?.Message ?? "Chưa thể xóa huy hiệu lúc này.";
         return RedirectToPage();
     }
 
@@ -116,7 +116,7 @@ public class IndexModel(IApiService api, IAuthService auth, IWebHostEnvironment 
 
         var result = await api.PostAsync<object>($"/api/admin/badges/{id}/award/{userId}", null, token);
         if (result?.Success == true) TempData["Success"] = "Badge awarded.";
-        else TempData["Error"] = result?.Message ?? "Award badge failed.";
+        else TempData["Error"] = result?.Message ?? "Chưa thể trao huy hiệu lúc này.";
         return RedirectToPage();
     }
 

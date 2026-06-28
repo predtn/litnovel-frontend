@@ -8,6 +8,7 @@ public class ChapterPreviewModel : PublishPageModel
     public ChapterDetailDto Chapter { get; set; } = new();
     public int VolumeId { get; set; }
     public int NovelId { get; set; }
+    public bool CanEditChapter => CanEditSubmittedContent(Chapter.Status);
 
     public ChapterPreviewModel(IApiService api, IAuthService auth) : base(api, auth) { }
 

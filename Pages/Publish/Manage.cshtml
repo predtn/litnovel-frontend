@@ -8,7 +8,7 @@
     <div class="breadcrumb">
         <a asp-page="/Publish/Index">Truyện của tôi</a><span class="breadcrumb__sep">/</span><span class="breadcrumb__current">@Model.Novel.Title</span>
     </div>
-<section class="publish-hero-card">
+    <section class="publish-hero-card">
         @if (!string.IsNullOrEmpty(Model.Novel.CoverImage))
         {
             <img src="@Model.Novel.CoverImage" alt="@Model.Novel.Title" class="publish-cover-lg" />
@@ -30,7 +30,10 @@
                 <span>@Model.Novel.RatingAverage.ToString("0.0") điểm</span>
             </div>
             <div class="publish-hero-actions">
-                <a asp-page="/Publish/Edit" asp-route-id="@Model.Novel.Id" class="btn btn-secondary">Chỉnh sửa thông tin truyện</a>
+                @if (Model.CanEditNovel)
+                {
+                    <a asp-page="/Publish/Edit" asp-route-id="@Model.Novel.Id" class="btn btn-secondary">Chỉnh sửa thông tin truyện</a>
+                }
                 <a asp-page="/Publish/Volumes" asp-route-novelId="@Model.Novel.Id" class="btn btn-primary">Quản lý tập</a>
                 <a asp-page="/Publish/Statistics" asp-route-id="@Model.Novel.Id" class="btn btn-secondary">Thống kê</a>
             </div>
@@ -43,7 +46,6 @@
                 <a href="#overview" class="tab active">Tổng quan</a>
                 <a asp-page="/Publish/Volumes" asp-route-novelId="@Model.Novel.Id" class="tab">Tập & chương</a>
                 <a asp-page="/Publish/Statistics" asp-route-id="@Model.Novel.Id" class="tab">Thống kê</a>
-                <a href="#settings" class="tab">Cài đặt</a>
             </div>
             <div id="overview" class="publish-richtext">@Html.Raw(Model.Novel.Description)</div>
             <div class="divider"></div>
@@ -55,15 +57,31 @@
             </div>
         </section>
 
-        <aside class="card publish-side-panel" id="settings">
+        <aside class="card publish-side-panel">
             <h2 class="text-display-sm mb-md">Điều khiển đăng truyện</h2>
-            <form method="post" asp-page-handler="Submit" asp-route-id="@Model.Novel.Id" class="mb-sm">
-                <button class="btn btn-primary w-full" type="submit">Gửi duyệt</button>
-            </form>
-            <a asp-page="/Publish/Moderation" class="btn btn-secondary w-full mb-sm">Trạng thái xét duyệt</a>
-            <form method="post" asp-page-handler="Delete" asp-route-id="@Model.Novel.Id" onsubmit="return confirm('Xóa truyện này và toàn bộ chương?');">
-                <button class="btn btn-danger w-full" type="submit">Xóa truyện</button>
-            </form>
+            @if (Model.CanSubmitNovel)
+            {
+                <form method="post" asp-page-handler="Submit" asp-route-id="@Model.Novel.Id" class="mb-sm">
+                    <button class="btn btn-primary w-full" type="submit">Gửi duyệt</button>
+                </form>
+            }
+            else if (Model.Novel.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase))
+            {
+                <div class="card-soft mb-sm text-body-sm">Truyện đang chờ xét duyệt. Bạn sẽ nhận được thông báo khi có kết quả.</div>
+                <form method="post" asp-page-handler="CancelReview" asp-route-id="@Model.Novel.Id" class="mb-sm" onsubmit="return confirm('Hủy gửi duyệt và đưa truyện về bản nháp?');">
+                    <button class="btn btn-secondary w-full" type="submit">Hủy gửi duyệt</button>
+                </form>
+            }
+            @if (Model.CanDeleteNovel)
+            {
+                <form method="post" asp-page-handler="Delete" asp-route-id="@Model.Novel.Id" onsubmit="return confirm('Xóa truyện này và toàn bộ chương? Hành động này không thể hoàn tác.');">
+                    <button class="btn btn-danger w-full" type="submit">Xóa truyện</button>
+                </form>
+            }
+            else
+            {
+                <button class="btn btn-secondary w-full" type="button" disabled>Đang trong quy trình duyệt</button>
+            }
         </aside>
     </div>
 </div>

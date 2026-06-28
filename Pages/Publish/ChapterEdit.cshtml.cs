@@ -11,6 +11,7 @@ public class ChapterEditModel : PublishPageModel
     public int VolumeId { get; set; }
     public int NovelId { get; set; }
     public int WordCount => CountWords(Input.Content);
+    public bool CanEditChapter => CanEditSubmittedContent(Chapter.Status);
 
     public ChapterEditModel(IApiService api, IAuthService auth) : base(api, auth) { }
 
@@ -20,6 +21,12 @@ public class ChapterEditModel : PublishPageModel
         if (guard != null) return guard;
         var loaded = await LoadAsync(id, volumeId, novelId);
         if (!loaded) return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
+        if (!CanEditChapter)
+        {
+            TempData["Error"] = "Chương đã được duyệt hoặc đang chờ duyệt nên không thể chỉnh sửa trực tiếp.";
+            return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
+        }
+
         Input = new()
         {
             ChapterNumber = Chapter.ChapterNumber,
@@ -34,6 +41,14 @@ public class ChapterEditModel : PublishPageModel
     {
         var guard = RequireAuthor();
         if (guard != null) return guard;
+        var loaded = await LoadAsync(id, volumeId, novelId);
+        if (!loaded) return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
+        if (!CanEditChapter)
+        {
+            TempData["Error"] = "Chương đã được duyệt hoặc đang chờ duyệt nên không thể chỉnh sửa trực tiếp.";
+            return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
+        }
+
         if (string.IsNullOrWhiteSpace(Input.Title) || !HasText(Input.Content))
         {
             ModelState.AddModelError("", "Cần nhập tiêu đề và nội dung chương.");

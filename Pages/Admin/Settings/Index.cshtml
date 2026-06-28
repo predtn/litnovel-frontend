@@ -2,15 +2,15 @@
 @model litnovel_frontend.Pages.Admin.Settings.IndexModel
 @{
     Layout = "_LayoutDashboard";
-    ViewData["Title"] = "System Settings";
+    ViewData["Title"] = "Cài đặt hệ thống";
 }
 
 @section Sidebar { <partial name="~/Pages/Admin/_AdminSidebar.cshtml" /> }
 
 <div class="page-header">
     <div>
-        <h1 class="page-header__title">System Settings</h1>
-        <p class="page-header__subtitle">Configure general, content, and moderation settings.</p>
+        <h1 class="page-header__title">Cài đặt hệ thống</h1>
+        <p class="page-header__subtitle">Điều chỉnh thông tin chung, nội dung và quy trình kiểm duyệt.</p>
     </div>
 </div>
 @if (!string.IsNullOrWhiteSpace(Model.LoadError))
@@ -46,6 +46,6 @@
     </section>
 
     <div class="publish-form-actions">
-        <button type="submit" class="btn btn-primary">Save settings</button>
+        <button type="submit" class="btn btn-primary">Lưu cài đặt</button>
     </div>
 </form>

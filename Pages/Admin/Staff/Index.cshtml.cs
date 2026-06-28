@@ -138,7 +138,7 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
             await SendUserNotificationAsync(userId, "Tài khoản của bạn đã được cấp quyền Staff. Staff Dashboard hiện đã sẵn sàng để sử dụng.", token);
             TempData["Success"] = "Đã cấp quyền Staff và gửi thông báo cho người dùng.";
         }
-        else TempData["Error"] = result?.Message ?? "Assign Staff failed.";
+        else TempData["Error"] = result?.Message ?? "Chưa thể cấp quyền nhân viên lúc này.";
         return RedirectToPage();
     }
 
@@ -146,7 +146,7 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
     {
         var result = await api.PostAsync<object>($"/api/admin/users/{userId}/revoke-staff", null, auth.GetToken(HttpContext));
         if (result?.Success == true) TempData["Success"] = "Removed Staff role.";
-        else TempData["Error"] = result?.Message ?? "Revoke Staff failed.";
+        else TempData["Error"] = result?.Message ?? "Chưa thể thu hồi quyền nhân viên lúc này.";
         return RedirectToPage();
     }
 

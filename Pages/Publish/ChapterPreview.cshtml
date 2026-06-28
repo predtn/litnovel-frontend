@@ -27,7 +27,10 @@
             <p class="page-header__subtitle">@ch.Novel?.Title</p>
         </div>
         <div class="publish-actions">
-            <a asp-page="/Publish/ChapterEdit" asp-route-id="@ch.Id" asp-route-volumeId="@Model.VolumeId" asp-route-novelId="@Model.NovelId" class="btn btn-primary">Sửa</a>
+            @if (Model.CanEditChapter)
+            {
+                <a asp-page="/Publish/ChapterEdit" asp-route-id="@ch.Id" asp-route-volumeId="@Model.VolumeId" asp-route-novelId="@Model.NovelId" class="btn btn-primary">Sửa</a>
+            }
             <a asp-page="/Publish/Chapters" asp-route-volumeId="@Model.VolumeId" asp-route-novelId="@Model.NovelId" class="btn btn-secondary">Quay lại</a>
         </div>
     </div>
