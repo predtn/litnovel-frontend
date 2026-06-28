@@ -62,6 +62,8 @@
                 <tbody>
                     @foreach (var novel in Model.Novels)
                     {
+                        var canDelete = !novel.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase);
+                        var canEdit = Model.CanEditNovel(novel.Status);
                         <tr>
                             <td data-label="Truyện">
                                 <div class="publish-title-cell">
@@ -87,11 +89,17 @@
                             <td data-label="Hành động" class="publish-col-actions">
                                 <div class="publish-actions">
                                     <a asp-page="/Publish/Manage" asp-route-id="@novel.Id" class="btn btn-secondary btn-sm">Xem</a>
-                                    <a asp-page="/Publish/Edit" asp-route-id="@novel.Id" class="btn btn-secondary btn-sm">Sửa</a>
+                                    @if (canEdit)
+                                    {
+                                        <a asp-page="/Publish/Edit" asp-route-id="@novel.Id" class="btn btn-secondary btn-sm">Sửa</a>
+                                    }
                                     <a asp-page="/Publish/Manage" asp-route-id="@novel.Id" class="btn btn-primary btn-sm">Quản lý</a>
-                                    <form method="post" asp-page-handler="Delete" asp-route-id="@novel.Id" onsubmit="return confirm('Xóa truyện này?');">
-                                        <button class="btn btn-danger btn-sm" type="submit">Xóa</button>
-                                    </form>
+                                    @if (canDelete)
+                                    {
+                                        <form method="post" asp-page-handler="Delete" asp-route-id="@novel.Id" onsubmit="return confirm('Xóa truyện này? Hành động này không thể hoàn tác.');">
+                                            <button class="btn btn-danger btn-sm" type="submit">Xóa</button>
+                                        </form>
+                                    }
                                 </div>
                             </td>
                         </tr>

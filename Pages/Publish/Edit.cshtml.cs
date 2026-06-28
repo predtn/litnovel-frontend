@@ -13,6 +13,7 @@ public class EditModel : PublishPageModel
     public NovelDetailDto Novel { get; set; } = new();
     public List<CategoryDto> Categories { get; set; } = [];
     public List<TagDto> Tags { get; set; } = [];
+    public bool CanEditNovel => CanEditSubmittedContent(Novel.Status);
 
     public EditModel(IApiService api, IAuthService auth, IWebHostEnvironment environment) : base(api, auth)
     {
@@ -25,6 +26,12 @@ public class EditModel : PublishPageModel
         if (guard != null) return guard;
         var loaded = await LoadAsync(id);
         if (!loaded) return RedirectToPage("/Publish/Index");
+        if (!CanEditNovel)
+        {
+            TempData["Error"] = "Truyện đã được duyệt hoặc đang chờ duyệt nên không thể chỉnh sửa trực tiếp.";
+            return RedirectToPage("/Publish/Manage", new { id });
+        }
+
         Input = new()
         {
             Title = Novel.Title,
@@ -42,6 +49,14 @@ public class EditModel : PublishPageModel
     {
         var guard = RequireAuthor();
         if (guard != null) return guard;
+        var loaded = await LoadAsync(id);
+        if (!loaded) return RedirectToPage("/Publish/Index");
+        if (!CanEditNovel)
+        {
+            TempData["Error"] = "Truyện đã được duyệt hoặc đang chờ duyệt nên không thể chỉnh sửa trực tiếp.";
+            return RedirectToPage("/Publish/Manage", new { id });
+        }
+
         Input.TagIds = SelectedTagIds.Distinct().ToList();
         await ApplyCoverImageAsync();
 
@@ -52,7 +67,6 @@ public class EditModel : PublishPageModel
 
         if (!ModelState.IsValid)
         {
-            await LoadAsync(id);
             return Page();
         }
 
@@ -60,7 +74,6 @@ public class EditModel : PublishPageModel
         if (!IsApiSuccess(result))
         {
             ModelState.AddModelError("", ApiFailureMessage(result, "Không thể cập nhật truyện."));
-            await LoadAsync(id);
             return Page();
         }
 

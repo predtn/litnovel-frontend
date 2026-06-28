@@ -23,7 +23,7 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
     {
         var result = await api.PostAsync<object>("/api/admin/backups", null, auth.GetToken(HttpContext));
         if (result?.Success == true) TempData["Success"] = result.Message ?? "Backup job started.";
-        else TempData["Error"] = result?.Message ?? "Could not start backup job.";
+        else TempData["Error"] = result?.Message ?? "Chưa thể bắt đầu sao lưu lúc này.";
         return RedirectToPage();
     }
 
@@ -31,15 +31,15 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
     {
         var result = await api.PostAsync<object>($"/api/admin/backups/{id}/restore", new { confirmationText }, auth.GetToken(HttpContext));
         if (result?.Success == true) TempData["Success"] = result.Message ?? "Restore job started.";
-        else TempData["Error"] = result?.Message ?? "Could not start restore job.";
+        else TempData["Error"] = result?.Message ?? "Chưa thể bắt đầu khôi phục lúc này.";
         return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(string id)
     {
         var result = await api.DeleteAsync<object>($"/api/admin/backups/{id}", auth.GetToken(HttpContext));
-        if (result?.Success == true) TempData["Success"] = result.Message ?? "Backup deleted.";
-        else TempData["Error"] = result?.Message ?? "Could not delete backup.";
+        if (result?.Success == true) TempData["Success"] = result.Message ?? "Đã xóa bản sao lưu.";
+        else TempData["Error"] = result?.Message ?? "Chưa thể xóa bản sao lưu lúc này.";
         return RedirectToPage();
     }
 

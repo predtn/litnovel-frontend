@@ -68,8 +68,8 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
             new { notificationType, message, targetAll, targetUserId = targetAll ? null : targetUserId },
             token);
 
-        if (result?.Success == true) TempData["Success"] = result.Message ?? "Notification sent.";
-        else TempData["Error"] = result?.Message ?? "Could not send notification.";
+        if (result?.Success == true) TempData["Success"] = result.Message ?? "Đã gửi thông báo.";
+        else TempData["Error"] = result?.Message ?? "Chưa thể gửi thông báo lúc này.";
         return RedirectToPage();
     }
 

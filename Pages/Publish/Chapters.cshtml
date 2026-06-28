@@ -44,16 +44,28 @@
                         <td data-label="Hành động" class="publish-col-actions">
                             <div class="publish-actions">
                                 <a asp-page="/Publish/ChapterPreview" asp-route-id="@chapter.Id" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-secondary btn-sm">Xem</a>
-                                <a asp-page="/Publish/ChapterEdit" asp-route-id="@chapter.Id" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-secondary btn-sm">Sửa</a>
-                                @if (chapterStatus.Equals("Draft", StringComparison.OrdinalIgnoreCase) || chapterStatus.Equals("Rejected", StringComparison.OrdinalIgnoreCase))
+                                @if (Model.CanEditChapter(chapterStatus))
+                                {
+                                    <a asp-page="/Publish/ChapterEdit" asp-route-id="@chapter.Id" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-secondary btn-sm">Sửa</a>
+                                }
+                                @if (Model.CanSubmitChapter(chapterStatus))
                                 {
                                     <form method="post" asp-page-handler="Submit" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" asp-route-id="@chapter.Id">
                                         <button class="btn btn-primary btn-sm" type="submit">Gửi duyệt</button>
                                     </form>
                                 }
-                                <form method="post" asp-page-handler="Delete" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" asp-route-id="@chapter.Id" onsubmit="return confirm('Xóa chương này?');">
-                                    <button class="btn btn-danger btn-sm" type="submit">Xóa</button>
-                                </form>
+                                @if (Model.CanWithdrawChapter(chapterStatus))
+                                {
+                                    <form method="post" asp-page-handler="Withdraw" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" asp-route-id="@chapter.Id" onsubmit="return confirm('Hủy gửi duyệt và đưa chương về bản nháp?');">
+                                        <button class="btn btn-secondary btn-sm" type="submit">Hủy gửi duyệt</button>
+                                    </form>
+                                }
+                                @if (Model.CanDeleteChapter(chapterStatus))
+                                {
+                                    <form method="post" asp-page-handler="Delete" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" asp-route-id="@chapter.Id" onsubmit="return confirm('Xóa chương này?');">
+                                        <button class="btn btn-danger btn-sm" type="submit">Xóa</button>
+                                    </form>
+                                }
                             </div>
                         </td>
                     </tr>

@@ -43,8 +43,8 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
         };
 
         var result = await api.PutAsync<object>("/api/admin/settings", request, auth.GetToken(HttpContext));
-        if (result?.Success == true) TempData["Success"] = result.Message ?? "Settings saved.";
-        else TempData["Error"] = result?.Message ?? "Could not save settings.";
+        if (result?.Success == true) TempData["Success"] = result.Message ?? "Đã lưu cài đặt.";
+        else TempData["Error"] = result?.Message ?? "Chưa thể lưu cài đặt lúc này.";
         return RedirectToPage();
     }
 

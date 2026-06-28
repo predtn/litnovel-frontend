@@ -12,6 +12,12 @@ public class ChaptersModel : PublishPageModel
 
     public ChaptersModel(IApiService api, IAuthService auth) : base(api, auth) { }
 
+    public bool CanSubmitChapter(string? status) => CanSubmitForReview(status);
+    public bool CanEditChapter(string? status) => CanEditSubmittedContent(status);
+    public bool CanWithdrawChapter(string? status) => IsPendingReview(status);
+    public bool CanDeleteChapter(string? status)
+        => string.Equals(status, "Draft", StringComparison.OrdinalIgnoreCase) || IsApprovedChapterStatus(status);
+
     public async Task<IActionResult> OnGetAsync(int volumeId, int novelId)
     {
         var guard = RequireAuthor();
@@ -25,8 +31,16 @@ public class ChaptersModel : PublishPageModel
     {
         var guard = RequireAuthor();
         if (guard != null) return guard;
+
+        var chapterResult = await Api.GetAsync<ChapterDetailDto>($"/api/chapters/{id}", Token);
+        if (IsApiSuccess(chapterResult) && chapterResult?.Data != null && !CanSubmitForReview(chapterResult.Data.Status))
+        {
+            TempData["Error"] = "Chương chỉ có thể gửi duyệt khi đang là bản nháp hoặc cần chỉnh sửa.";
+            return RedirectToPage(new { volumeId, novelId });
+        }
+
         var result = await Api.PostAsync<object>($"/api/chapters/{id}/submit", null, Token);
-        SetApiResultMessage(result, "Chương đã được gửi duyệt.", "Không thể gửi duyệt chương.");
+        SetApiResultMessage(result, "Chương đã được gửi duyệt.", "Chưa thể gửi duyệt chương lúc này.");
         return RedirectToPage(new { volumeId, novelId });
     }
 
@@ -34,8 +48,52 @@ public class ChaptersModel : PublishPageModel
     {
         var guard = RequireAuthor();
         if (guard != null) return guard;
+
+        var chapterResult = await Api.GetAsync<ChapterDetailDto>($"/api/chapters/{id}", Token);
+        if (!IsApiSuccess(chapterResult) || chapterResult?.Data == null)
+        {
+            TempData["Error"] = ApiFailureMessage(chapterResult, "Không thể tải thông tin chương.");
+            return RedirectToPage(new { volumeId, novelId });
+        }
+
+        if (!CanDeleteChapter(chapterResult.Data.Status))
+        {
+            TempData["Error"] = "Chỉ có thể xóa chương đang là bản nháp hoặc đã được duyệt.";
+            return RedirectToPage(new { volumeId, novelId });
+        }
+
         var result = await Api.DeleteAsync<object>($"/api/chapters/{id}", Token);
-        SetApiResultMessage(result, "Đã xóa chương.", "Không thể xóa chương.");
+        SetApiResultMessage(result, "Đã xóa chương.", "Chưa thể xóa chương lúc này.");
+        return RedirectToPage(new { volumeId, novelId });
+    }
+
+    public async Task<IActionResult> OnPostWithdrawAsync(int volumeId, int novelId, int id)
+    {
+        var guard = RequireAuthor();
+        if (guard != null) return guard;
+
+        var chapterResult = await Api.GetAsync<ChapterDetailDto>($"/api/chapters/{id}", Token);
+        if (IsApiSuccess(chapterResult) && chapterResult?.Data != null && !IsPendingReview(chapterResult.Data.Status))
+        {
+            TempData["Error"] = "Chỉ có thể hủy gửi duyệt khi chương đang chờ duyệt.";
+            return RedirectToPage(new { volumeId, novelId });
+        }
+
+        var result = await Api.PostAsync<ChapterNavDto>($"/api/chapters/{id}/withdraw", null, Token);
+        if (!IsApiSuccess(result))
+        {
+            TempData["Error"] = ApiFailureMessage(result, "Chưa thể hủy gửi duyệt chương lúc này.");
+            return RedirectToPage(new { volumeId, novelId });
+        }
+
+        var verifyResult = await Api.GetAsync<ChapterDetailDto>($"/api/chapters/{id}", Token);
+        if (!string.Equals(verifyResult?.Data?.Status, "Draft", StringComparison.OrdinalIgnoreCase))
+        {
+            TempData["Error"] = "Hệ thống chưa cập nhật chương về bản nháp. Vui lòng thử lại sau.";
+            return RedirectToPage(new { volumeId, novelId });
+        }
+
+        TempData["Success"] = "Đã hủy gửi duyệt. Chương đã trở lại bản nháp.";
         return RedirectToPage(new { volumeId, novelId });
     }
 
