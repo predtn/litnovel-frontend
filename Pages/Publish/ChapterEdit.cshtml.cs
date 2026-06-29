@@ -68,6 +68,18 @@ public class ChapterEditModel : PublishPageModel
             return Page();
         }
 
+        var submitResult = await Api.PostAsync<object>($"/api/chapters/{id}/submit", null, Token);
+        if (!IsApiSuccess(submitResult))
+        {
+            var verifyResult = await Api.GetAsync<ChapterDetailDto>($"/api/chapters/{id}", Token);
+            if (!IsPendingReview(verifyResult?.Data?.Status))
+            {
+                ModelState.AddModelError("", ApiFailureMessage(submitResult, "Đã lưu thay đổi nhưng chưa thể gửi duyệt chương."));
+                await LoadAsync(id, volumeId, novelId);
+                return Page();
+            }
+        }
+
         TempData["Success"] = "Đã lưu thay đổi và gửi chương vào hàng chờ duyệt.";
         return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
     }
