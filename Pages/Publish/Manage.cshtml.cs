@@ -13,6 +13,9 @@ public class ManageModel : PublishPageModel
     public bool CanEditNovel => CanEditNovelStatus(Novel.Status);
     public bool CanCancelReview => IsPendingReview(Novel.Status);
     public bool CanDeleteNovel => !IsPendingReview(Novel.Status) && !HasPendingChapters;
+    public string EditUnavailableMessage => IsPendingReview(Novel.Status)
+        ? "Truyện đang chờ duyệt, không thể chỉnh sửa thông tin truyện."
+        : $"Không thể chỉnh sửa khi truyện đang {DisplayText.Status(Novel.Status).ToLowerInvariant()}.";
 
     public ManageModel(IApiService api, IAuthService auth) : base(api, auth) { }
 

@@ -5,11 +5,24 @@
     document.execCommand('insertText', false, text);
   };
 
-  const countWords = html => {
+  const getPlainText = html => {
     const temp = document.createElement('div');
     temp.innerHTML = html;
-    const text = temp.textContent?.trim() ?? '';
-    return text ? text.split(/\s+/).length : 0;
+    temp.querySelectorAll('br').forEach(node => node.replaceWith(document.createTextNode(' ')));
+    temp
+      .querySelectorAll('p,h1,h2,h3,h4,h5,h6,li,blockquote,div,section,article')
+      .forEach(node => node.appendChild(document.createTextNode(' ')));
+    return (temp.textContent ?? '')
+      .replace(/\u00a0/g, ' ')
+      .replace(/[\u200B-\u200D\uFEFF]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
+  const countWords = html => {
+    const text = getPlainText(html);
+    const words = text.match(/[\p{L}\p{N}]+(?:['’.-][\p{L}\p{N}]+)*/gu);
+    return words?.length ?? 0;
   };
 
   document.querySelectorAll('[data-rich-editor]').forEach(editor => {
@@ -18,12 +31,26 @@
     const output = form?.querySelector('[data-rich-editor-output]');
     const counter = form?.querySelector('[data-rich-word-count]');
     const format = editor.querySelector('[data-rich-format]');
+    const titleInput = form?.querySelector('[name="Input.Title"]');
+    const chapterNumberInput = form?.querySelector('[name="Input.ChapterNumber"]');
+    const editorMeta = form?.querySelector('.publish-editor-meta');
 
     if (!form || !surface || !output) return;
 
     const commandButtons = [...editor.querySelectorAll('[data-rich-command]')];
     const inlineCommands = ['bold', 'italic', 'underline'];
     const stickyInlineCommands = new Set();
+    const autosaveKey = `litnovel:publish-editor:${window.location.pathname}`;
+    const autosaveDelay = 800;
+    let autosaveTimer = null;
+    let autosaveStatus = null;
+
+    if (editorMeta) {
+      autosaveStatus = document.createElement('span');
+      autosaveStatus.className = 'text-caption text-mute';
+      autosaveStatus.setAttribute('data-autosave-status', '');
+      editorMeta.appendChild(autosaveStatus);
+    }
 
     const getSelection = () => {
       const selection = document.getSelection();
@@ -41,8 +68,74 @@
     };
 
     const sync = () => {
-      output.value = surface.innerHTML.trim();
+      const html = surface.innerHTML.trim();
+      output.value = getPlainText(html) ? html : '';
       if (counter) counter.textContent = countWords(output.value).toString();
+    };
+
+    const setAutosaveStatus = text => {
+      if (autosaveStatus) autosaveStatus.textContent = text;
+    };
+
+    const getAutosaveDraft = () => {
+      try {
+        return JSON.parse(window.localStorage.getItem(autosaveKey) || 'null');
+      } catch {
+        return null;
+      }
+    };
+
+    const clearAutosaveDraft = () => {
+      window.localStorage.removeItem(autosaveKey);
+      setAutosaveStatus('');
+    };
+
+    const saveAutosaveDraft = () => {
+      sync();
+      const draft = {
+        content: output.value,
+        title: titleInput?.value ?? '',
+        chapterNumber: chapterNumberInput?.value ?? '',
+        savedAt: new Date().toISOString()
+      };
+
+      if (!draft.content && !draft.title && !draft.chapterNumber) {
+        clearAutosaveDraft();
+        return;
+      }
+
+      window.localStorage.setItem(autosaveKey, JSON.stringify(draft));
+      setAutosaveStatus('Đã tự lưu');
+    };
+
+    const scheduleAutosave = () => {
+      window.clearTimeout(autosaveTimer);
+      setAutosaveStatus('Đang tự lưu...');
+      autosaveTimer = window.setTimeout(saveAutosaveDraft, autosaveDelay);
+    };
+
+    const restoreAutosaveDraft = () => {
+      const draft = getAutosaveDraft();
+      if (!draft || (!draft.content && !draft.title && !draft.chapterNumber)) return;
+
+      sync();
+      const hasDifferentContent = draft.content && draft.content !== output.value;
+      const hasDifferentTitle = titleInput && draft.title && draft.title !== titleInput.value;
+      const hasDifferentChapterNumber = chapterNumberInput && draft.chapterNumber && draft.chapterNumber !== chapterNumberInput.value;
+      if (!hasDifferentContent && !hasDifferentTitle && !hasDifferentChapterNumber) return;
+
+      const savedAt = draft.savedAt ? new Date(draft.savedAt).toLocaleString() : '';
+      const message = savedAt
+        ? `Có bản nháp tự lưu lúc ${savedAt}. Khôi phục bản nháp này?`
+        : 'Có bản nháp tự lưu. Khôi phục bản nháp này?';
+
+      if (!window.confirm(message)) return;
+
+      if (draft.content) surface.innerHTML = draft.content;
+      if (titleInput && draft.title) titleInput.value = draft.title;
+      if (chapterNumberInput && draft.chapterNumber) chapterNumberInput.value = draft.chapterNumber;
+      sync();
+      setAutosaveStatus('Đã khôi phục bản nháp');
     };
 
     const updateToolbarState = () => {
@@ -112,6 +205,7 @@
         }
 
         sync();
+        scheduleAutosave();
         updateToolbarState();
       });
     });
@@ -120,6 +214,7 @@
       surface.focus();
       document.execCommand('formatBlock', false, format.value);
       sync();
+      scheduleAutosave();
       updateToolbarState();
     });
 
@@ -130,18 +225,25 @@
         document.execCommand('formatBlock', false, 'p');
         ensureStickyFormatting();
         sync();
+        scheduleAutosave();
       }, 0);
     });
 
     surface.addEventListener('input', () => {
       ensureStickyFormatting();
       sync();
+      scheduleAutosave();
       updateToolbarState();
     });
+    titleInput?.addEventListener('input', scheduleAutosave);
+    chapterNumberInput?.addEventListener('input', scheduleAutosave);
     surface.addEventListener('keyup', updateToolbarState);
     surface.addEventListener('mouseup', updateToolbarState);
     surface.addEventListener('paste', sanitizePaste);
-    form.addEventListener('submit', sync);
+    form.addEventListener('submit', () => {
+      sync();
+      clearAutosaveDraft();
+    });
     document.addEventListener('selectionchange', () => {
       if (document.activeElement === surface || surface.contains(document.getSelection()?.anchorNode)) {
         updateToolbarState();
@@ -153,6 +255,8 @@
       if (format) format.value = 'h2';
     }
 
+    sync();
+    restoreAutosaveDraft();
     sync();
     updateToolbarState();
   });

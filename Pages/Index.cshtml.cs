@@ -28,9 +28,9 @@ public class IndexModel : PageModel
 
         // Load homepage content in parallel.
         var catTask          = _api.GetAsync<List<CategoryDto>>("/api/categories");
-        var trendingTask     = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=viewCount&order=desc&status=Ongoing&page=1&size=8");
+        var trendingTask     = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=viewCount&order=desc&status=Ongoing&page=1&size=24");
         var newTask          = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=updatedAt&order=desc&status=Ongoing&page=1&size=8");
-        var topTask          = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=ratingAverage&order=desc&page=1&size=8");
+        var topTask          = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=ratingAverage&order=desc&status=Ongoing&page=1&size=24");
         var announcementTask = LoadAnnouncementsAsync(token);
         var readingTask      = !string.IsNullOrWhiteSpace(token)
             ? LoadContinueReadingAsync(token)
@@ -45,9 +45,15 @@ public class IndexModel : PageModel
         await Task.WhenAll(catTask, trendingTask, newTask, topTask, announcementTask, readingTask, unreadTask, favTask);
 
         Categories      = catTask.Result?.Data ?? [];
-        TrendingNovels  = trendingTask.Result?.Data?.Items ?? [];
+        TrendingNovels  = (trendingTask.Result?.Data?.Items ?? [])
+            .Where(novel => novel.ViewCount > 0)
+            .Take(8)
+            .ToList();
         NewNovels       = newTask.Result?.Data?.Items ?? [];
-        TopRatedNovels  = topTask.Result?.Data?.Items ?? [];
+        TopRatedNovels  = (topTask.Result?.Data?.Items ?? [])
+            .Where(novel => novel.RatingAverage > 0)
+            .Take(8)
+            .ToList();
         Announcements   = announcementTask.Result;
         ContinueReading = readingTask.Result;
         ViewData["UnreadCount"] = unreadTask.Result;

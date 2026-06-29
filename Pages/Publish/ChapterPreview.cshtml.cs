@@ -9,6 +9,9 @@ public class ChapterPreviewModel : PublishPageModel
     public int VolumeId { get; set; }
     public int NovelId { get; set; }
     public bool CanEditChapter => CanEditChapterStatus(Chapter.Status);
+    public string EditUnavailableMessage => IsPendingReview(Chapter.Status)
+        ? "Chương đang chờ duyệt, không thể chỉnh sửa."
+        : "Chương đang bị khóa nên không thể chỉnh sửa.";
 
     public ChapterPreviewModel(IApiService api, IAuthService auth) : base(api, auth) { }
 

@@ -9,10 +9,10 @@
 
 <div class="page-header">
     <div>
-        <h1 class="page-header__title">Thông báo trang</h1>
-        <p class="page-header__subtitle">Banner/thông báo công khai hiển thị trên trang chủ hoặc khu vực thông báo.</p>
+        <h1 class="page-header__title">Banner thông báo</h1>
+        <p class="page-header__subtitle">Gửi một dòng nhắn nổi bật để người đọc dễ bắt kịp thông tin quan trọng.</p>
     </div>
-    <button class="btn btn-primary" type="button" onclick="openModal('addModal')">Tạo thông báo</button>
+    <button class="btn btn-primary" type="button" onclick="openModal('addModal')">Thêm thông báo</button>
 </div>
 @if (!string.IsNullOrWhiteSpace(Model.LoadError))
 {
@@ -22,8 +22,8 @@
 @if (Model.Announcements.Count == 0)
 {
     <div class="empty-state">
-        <div class="empty-state__title">Chưa có thông báo</div>
-        <p class="empty-state__text">Tạo banner trang chủ hoặc thông báo nổi bật công khai.</p>
+        <div class="empty-state__title">Chưa có banner</div>
+        <p class="empty-state__text">Khi có tin cần nhắn nhanh, bạn có thể thêm một banner ngắn gọn cho người đọc.</p>
     </div>
 }
 else
@@ -51,7 +51,7 @@ else
                     <form method="post" asp-page-handler="Delete" onsubmit="return confirm('Xóa thông báo này?')">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="id" value="@announcement.Id" />
-                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
                     </form>
                 </div>
             </article>
@@ -63,7 +63,7 @@ else
     <div class="modal modal--wide">
         <div class="modal__header">
             <div>
-                <div class="modal__title">Tạo thông báo công khai</div>
+                <div class="modal__title">Thêm thông báo mới</div>
             </div>
             <button class="modal__close" type="button" onclick="closeModal('addModal')">x</button>
         </div>
@@ -71,23 +71,13 @@ else
             @Html.AntiForgeryToken()
             <label class="form-group">
                 <span class="form-label">Tiêu đề</span>
-                <input name="title" class="form-input" placeholder="Thông báo bảo trì theo lịch" required maxlength="200" />
+                <input name="title" class="form-input" required maxlength="200" />
             </label>
             <label class="form-group">
-                <span class="form-label">Nội dung HTML</span>
-                <textarea name="content" class="form-textarea" rows="6" placeholder="<p>Nền tảng sẽ tạm ngưng để bảo trì.</p>" required maxlength="2000"></textarea>
-                <span class="form-hint">Tối đa 2000 ký tự.</span>
+                <span class="form-label">Nội dung thông báo</span>
+                <textarea name="content" class="form-textarea" rows="4" required maxlength="2000"></textarea>
+                <span class="form-hint">Thông báo sẽ phát ngay sau khi tạo, mỗi lượt 30 giây, cách nhau 15 phút và tối đa 3 lượt.</span>
             </label>
-            <div class="publish-form-grid">
-                <label class="form-group">
-                    <span class="form-label">Ngày bắt đầu</span>
-                    <input name="startDate" type="datetime-local" class="form-input" required />
-                </label>
-                <label class="form-group">
-                    <span class="form-label">Ngày kết thúc</span>
-                    <input name="endDate" type="datetime-local" class="form-input" />
-                </label>
-            </div>
             <label class="form-check"><input type="checkbox" name="isActive" value="true" checked /> Banner công khai đang bật</label>
             <div class="modal__footer">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('addModal')">Hủy</button>

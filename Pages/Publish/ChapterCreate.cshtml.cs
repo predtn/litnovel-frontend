@@ -97,8 +97,8 @@ public class ChapterCreateModel : PublishPageModel
     {
         var text = ToPlainText(value);
         return string.IsNullOrWhiteSpace(text)
-        ? 0
-        : text.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+            ? 0
+            : Regex.Matches(text, @"[\p{L}\p{N}]+(?:['’.-][\p{L}\p{N}]+)*").Count;
     }
 
     private static bool HasText(string? value) => !string.IsNullOrWhiteSpace(ToPlainText(value));
@@ -106,6 +106,9 @@ public class ChapterCreateModel : PublishPageModel
     private static string ToPlainText(string? value)
     {
         if (string.IsNullOrWhiteSpace(value)) return "";
-        return Regex.Replace(value, "<.*?>", " ").Replace("&nbsp;", " ").Trim();
+        return Regex.Replace(value, "<.*?>", " ")
+            .Replace("&nbsp;", " ")
+            .Replace('\u00a0', ' ')
+            .Trim();
     }
 }

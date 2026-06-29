@@ -12,7 +12,8 @@
         </div>
         <a asp-page="/Publish/Create" class="btn btn-primary">Tạo truyện</a>
     </div>
-<div class="publish-stats">
+
+    <div class="publish-stats">
         <div class="stat-card"><div class="stat-card__label">Tổng truyện</div><div class="stat-card__value">@Model.TotalElements</div></div>
         <div class="stat-card"><div class="stat-card__label">Tổng chương</div><div class="stat-card__value">@Model.TotalChapters</div></div>
         <div class="stat-card"><div class="stat-card__label">Tổng lượt xem</div><div class="stat-card__value">@Model.TotalViews.ToString("N0")</div></div>
@@ -47,24 +48,21 @@
     else
     {
         <div class="publish-table-card">
-            <table class="table publish-table">
+            <table class="table publish-table publish-table--novels">
                 <thead>
                     <tr>
                         <th>Truyện</th>
                         <th class="publish-col-status">Trạng thái</th>
-                        <th class="publish-col-center">Chương</th>
+                        <th class="publish-col-center">Số chương</th>
                         <th class="publish-col-center">Lượt xem</th>
-                        <th class="publish-col-center">Đánh giá</th>
-                        <th class="publish-col-center">Cập nhật</th>
-                        <th class="publish-col-actions">Hành động</th>
+                        <th class="publish-col-center publish-col-rating">Đánh giá</th>
+                        <th class="publish-col-center publish-col-updated">Cập nhật</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var novel in Model.Novels)
                     {
-                        var canDelete = !novel.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase);
-                        var canEdit = Model.CanEditNovel(novel.Status);
-                        <tr>
+                        <tr class="publish-row-link" data-href="@Url.Page("/Publish/Manage", new { id = novel.Id })">
                             <td data-label="Truyện">
                                 <div class="publish-title-cell">
                                     @if (!string.IsNullOrEmpty(novel.CoverImage))
@@ -82,30 +80,59 @@
                                 </div>
                             </td>
                             <td data-label="Trạng thái" class="publish-col-status"><span class="status-badge status-@novel.Status.ToLowerInvariant()">@DisplayText.Status(novel.Status)</span></td>
-                            <td data-label="Chương" class="publish-col-center">@novel.TotalChapters</td>
+                            <td data-label="Số chương" class="publish-col-center">@novel.TotalChapters</td>
                             <td data-label="Lượt xem" class="publish-col-center">@novel.ViewCount.ToString("N0")</td>
-                            <td data-label="Đánh giá" class="publish-col-center">@novel.RatingAverage.ToString("0.0")</td>
-                            <td data-label="Cập nhật" class="publish-col-center">@novel.UpdatedAt.ToString("dd/MM/yyyy")</td>
-                            <td data-label="Hành động" class="publish-col-actions">
-                                <div class="publish-actions">
-                                    <a asp-page="/Publish/Manage" asp-route-id="@novel.Id" class="btn btn-secondary btn-sm">Xem</a>
-                                    @if (canEdit)
-                                    {
-                                        <a asp-page="/Publish/Edit" asp-route-id="@novel.Id" class="btn btn-secondary btn-sm">Sửa</a>
-                                    }
-                                    <a asp-page="/Publish/Manage" asp-route-id="@novel.Id" class="btn btn-primary btn-sm">Quản lý</a>
-                                    @if (canDelete)
-                                    {
-                                        <form method="post" asp-page-handler="Delete" asp-route-id="@novel.Id" onsubmit="return confirm('Xóa truyện này? Hành động này không thể hoàn tác.');">
-                                            <button class="btn btn-danger btn-sm" type="submit">Xóa</button>
-                                        </form>
-                                    }
-                                </div>
+                            <td data-label="Đánh giá" class="publish-col-center publish-col-rating">
+                                @if (novel.RatingAverage > 0)
+                                {
+                                    <div>@novel.RatingAverage.ToString("0.0")</div>
+                                    <div class="text-caption text-mute">@novel.RatingCount đánh giá</div>
+                                }
+                                else
+                                {
+                                    <span class="text-caption text-mute">Chưa có đánh giá</span>
+                                }
                             </td>
+                            <td data-label="Cập nhật" class="publish-col-center publish-col-updated">@novel.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
+        @if (Model.TotalPages > 1)
+        {
+            <div class="pagination mt-md">
+                <a class="pagination__btn @(Model.Page <= 1 ? "disabled" : "")"
+                   asp-page="/Publish/Index"
+                   asp-route-status="@Model.Status"
+                   asp-route-sort="@Model.Sort"
+                   asp-route-page="@Math.Max(1, Model.Page - 1)">‹</a>
+                @for (int i = Math.Max(1, Model.Page - 2); i <= Math.Min(Model.TotalPages, Model.Page + 2); i++)
+                {
+                    <a class="pagination__btn @(i == Model.Page ? "active" : "")"
+                       asp-page="/Publish/Index"
+                       asp-route-status="@Model.Status"
+                       asp-route-sort="@Model.Sort"
+                       asp-route-page="@i">@i</a>
+                }
+                <a class="pagination__btn @(Model.Page >= Model.TotalPages ? "disabled" : "")"
+                   asp-page="/Publish/Index"
+                   asp-route-status="@Model.Status"
+                   asp-route-sort="@Model.Sort"
+                   asp-route-page="@Math.Min(Model.TotalPages, Model.Page + 1)">›</a>
+            </div>
+        }
     }
 </div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.publish-row-link').forEach(row => {
+            row.addEventListener('click', event => {
+                if (event.target.closest('a, button, input, select, textarea, form')) return;
+                const href = row.dataset.href;
+                if (href) window.location.href = href;
+            });
+        });
+    </script>
+}
