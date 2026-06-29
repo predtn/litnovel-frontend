@@ -257,6 +257,21 @@
                     <option value="Other">Khác</option>
                 </select>
             </div>
+            @{
+                var allChapters = novel.Volumes.SelectMany(v => v.Chapters).Where(c => c.Status == "Published").ToList();
+            }
+            @if (allChapters.Any())
+            {
+                <div class="form-group">
+                    <label class="form-label">Chương vi phạm <span class="text-muted" style="font-weight:400">(không bắt buộc)</span></label>
+                    <select class="form-select" name="targetChapterId">
+                        @foreach (var ch in allChapters)
+                        {
+                            <option value="@ch.Id">Ch.@ch.ChapterNumber — @ch.Title</option>
+                        }
+                    </select>
+                </div>
+            }
             <div class="form-group">
                 <label class="form-label">Mô tả</label>
                 <textarea class="form-textarea" name="description" placeholder="Chi tiết vi phạm..." rows="4" required></textarea>
