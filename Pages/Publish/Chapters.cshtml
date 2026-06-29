@@ -11,7 +11,8 @@
         <a asp-page="/Publish/Volumes" asp-route-novelId="@Model.Novel.Id">Tập</a><span class="breadcrumb__sep">/</span>
         <span class="breadcrumb__current">@Model.Volume.Title</span>
     </div>
-<div class="page-header">
+
+    <div class="page-header">
         <div>
             <h1 class="page-header__title">Quản lý chương</h1>
             <p class="page-header__subtitle">@Model.Volume.Title</p>
@@ -20,34 +21,29 @@
     </div>
 
     <div class="publish-table-card">
-        <table class="table publish-table">
+        <table class="table publish-table publish-table--chapters">
             <thead>
                 <tr>
-                    <th class="publish-col-center">#</th>
+                    <th class="publish-col-center">Chương</th>
                     <th>Tiêu đề</th>
                     <th class="publish-col-status">Trạng thái</th>
                     <th class="publish-col-center">Số từ</th>
-                    <th class="publish-col-center">Ngày tạo</th>
-                    <th class="publish-col-actions">Hành động</th>
+                    <th class="publish-col-center publish-col-updated">Ngày tạo</th>
+                    <th class="publish-col-actions publish-col-actions--chapters">Hành động</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var chapter in Model.Chapters.OrderBy(c => c.ChapterNumber))
                 {
                     var chapterStatus = chapter.Status ?? "Draft";
-                    <tr>
-                        <td data-label="#" class="publish-col-center">@chapter.ChapterNumber</td>
+                    <tr class="publish-row-link" data-href="@Url.Page("/Publish/ChapterPreview", new { id = chapter.Id, volumeId = Model.Volume.Id, novelId = Model.Novel.Id })">
+                        <td data-label="Chương" class="publish-col-center">@chapter.ChapterNumber</td>
                         <td data-label="Tiêu đề"><span class="font-medium">@chapter.Title</span></td>
                         <td data-label="Trạng thái" class="publish-col-status"><span class="status-badge status-@chapterStatus.ToLowerInvariant()">@DisplayText.Status(chapterStatus)</span></td>
                         <td data-label="Số từ" class="publish-col-center">@(chapter.WordCount > 0 ? chapter.WordCount.ToString("N0") : "—")</td>
-                        <td data-label="Ngày tạo" class="publish-col-center">@chapter.CreatedAt.ToString("dd/MM/yyyy")</td>
-                        <td data-label="Hành động" class="publish-col-actions">
-                            <div class="publish-actions">
-                                <a asp-page="/Publish/ChapterPreview" asp-route-id="@chapter.Id" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-secondary btn-sm">Xem</a>
-                                @if (Model.CanEditChapter(chapterStatus))
-                                {
-                                    <a asp-page="/Publish/ChapterEdit" asp-route-id="@chapter.Id" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-secondary btn-sm">Sửa</a>
-                                }
+                        <td data-label="Ngày tạo" class="publish-col-center publish-col-updated">@chapter.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td data-label="Hành động" class="publish-col-actions publish-col-actions--chapters">
+                            <div class="publish-actions" aria-label="Hành động chương">
                                 @if (Model.CanSubmitChapter(chapterStatus))
                                 {
                                     <form method="post" asp-page-handler="Submit" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" asp-route-id="@chapter.Id">
@@ -74,3 +70,15 @@
         </table>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.publish-row-link').forEach(row => {
+            row.addEventListener('click', event => {
+                if (event.target.closest('a, button, input, select, textarea, form')) return;
+                const href = row.dataset.href;
+                if (href) window.location.href = href;
+            });
+        });
+    </script>
+}

@@ -44,13 +44,7 @@
 
         <div class="publish-editor-bottom">
             <div class="publish-editor-meta">
-                <span><span data-rich-word-count>@Model.WordCount</span> từ</span>
-                @if (Model.WillSubmitForReviewAfterSave)
-                {
-                    <span class="status-badge status-pending">Sẽ gửi duyệt lại</span>
-                }
-                <label class="form-label">Ngày phát hành</label>
-                <input class="form-input" asp-for="Input.ReleaseDate" type="datetime-local" />
+                <span class="publish-word-count"><span data-rich-word-count>0</span> từ</span>
             </div>
             <div class="publish-actions">
                 <a asp-page="/Publish/Chapters" asp-route-volumeId="@Model.VolumeId" asp-route-novelId="@Model.NovelId" class="btn btn-secondary">Hủy</a>

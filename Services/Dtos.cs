@@ -513,14 +513,21 @@ public class ModerationHistoryDto
 public class AdminReportDto
 {
     public int Id { get; set; }
+    public string? Kind { get; set; }
     public string Type { get; set; } = "novel";
     public string ReportType { get; set; } = "Spam";
     public string Status { get; set; } = "Pending";
     public string ReporterName { get; set; } = "";
+    public UserSummaryDto? Reporter { get; set; }
+    public UserSummaryDto? ProcessedBy { get; set; }
+    public string? ProcessedByName { get; set; }
     public string TargetTitle { get; set; } = "";
     public string? TargetSubtitle { get; set; }
     public string? Description { get; set; }
+    public string? ActionTaken { get; set; }
+    public string? ResolutionNotes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAt { get; set; }
 }
 
 public class AuditLogDto

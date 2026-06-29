@@ -119,8 +119,8 @@
                     <div class="text-caption text-mute">Lượt thích</div>
                 </div>
                 <div class="novel-detail__stat">
-                    <div class="novel-detail__stat-value novel-detail__stat-value--rating">@novel.RatingAverage.ToString("0.0") ★</div>
-                    <div class="text-caption text-mute">@novel.RatingCount đánh giá</div>
+                    <div class="novel-detail__stat-value novel-detail__stat-value--rating">@(novel.RatingAverage > 0 ? novel.RatingAverage.ToString("0.0") : "0.0") ★</div>
+                    <div class="text-caption text-mute">@(novel.RatingCount > 0 ? $"{novel.RatingCount} đánh giá" : "0 Đánh giá")</div>
                 </div>
             </div>
 
@@ -174,10 +174,10 @@
 
     <div id="tab-reviews" class="hidden novel-detail__reviews">
         <section class="novel-detail__rating-summary">
-            <div class="novel-detail__rating-score">@novel.RatingAverage.ToString("0.0")</div>
+            <div class="novel-detail__rating-score">@(novel.RatingAverage > 0 ? novel.RatingAverage.ToString("0.0") : "0.0")</div>
             <div>
-                <div class="novel-detail__stars" aria-label="@novel.RatingAverage.ToString("0.0") trên 5">★★★★★</div>
-                <div class="text-caption text-mute">@novel.RatingCount đánh giá</div>
+                <div class="novel-detail__stars" aria-label="@(novel.RatingAverage > 0 ? novel.RatingAverage.ToString("0.0") : "0.0") trên 5">★★★★★</div>
+                <div class="text-caption text-mute">@(novel.RatingCount > 0 ? $"{novel.RatingCount} đánh giá" : "Chưa có số đánh giá")</div>
             </div>
         </section>
 

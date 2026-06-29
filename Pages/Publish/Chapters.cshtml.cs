@@ -9,6 +9,10 @@ public class ChaptersModel : PublishPageModel
     public NovelDetailDto Novel { get; set; } = new();
     public VolumeDto Volume { get; set; } = new();
     public List<ChapterNavDto> Chapters { get; set; } = [];
+    public new int Page { get; set; } = 1;
+    public int TotalPages { get; set; } = 1;
+    public int TotalElements { get; set; }
+    private const int PageSize = 20;
 
     public ChaptersModel(IApiService api, IAuthService auth) : base(api, auth) { }
 
@@ -18,10 +22,11 @@ public class ChaptersModel : PublishPageModel
     public bool CanDeleteChapter(string? status)
         => string.Equals(status, "Draft", StringComparison.OrdinalIgnoreCase) || IsApprovedChapterStatus(status);
 
-    public async Task<IActionResult> OnGetAsync(int volumeId, int novelId)
+    public async Task<IActionResult> OnGetAsync(int volumeId, int novelId, int page = 1)
     {
         var guard = RequireAuthor();
         if (guard != null) return guard;
+        Page = Math.Max(1, page);
         var loaded = await LoadAsync(volumeId, novelId);
         if (!loaded) return RedirectToPage("/Publish/Manage", new { id = novelId });
         return Page();
@@ -100,7 +105,7 @@ public class ChaptersModel : PublishPageModel
     private async Task<bool> LoadAsync(int volumeId, int novelId)
     {
         var novelTask = Api.GetAsync<NovelDetailDto>($"/api/novels/{novelId}", Token);
-        var chapterTask = Api.GetAsync<PagedData<ChapterNavDto>>($"/api/volumes/{volumeId}/chapters" + ODataQuery.Build(size: 50, orderBy: "ChapterNumber asc"), Token);
+        var chapterTask = Api.GetAsync<PagedData<ChapterNavDto>>($"/api/volumes/{volumeId}/chapters" + ODataQuery.Build(page: Page, size: PageSize, orderBy: "ChapterNumber asc"), Token);
         await Task.WhenAll(novelTask, chapterTask);
         if (!IsApiSuccess(novelTask.Result) || novelTask.Result?.Data == null)
         {
@@ -122,7 +127,27 @@ public class ChaptersModel : PublishPageModel
             TempData["Error"] = ApiFailureMessage(chapterTask.Result, "Không thể tải danh sách chương.");
         }
 
-        Chapters = chapterTask.Result?.Data?.Items ?? Novel.Volumes.FirstOrDefault(v => v.Id == volumeId)?.Chapters ?? [];
+        if (chapterTask.Result?.Data != null)
+        {
+            var data = chapterTask.Result.Data;
+            Chapters = data.Items ?? [];
+            TotalElements = data.TotalElements;
+            TotalPages = Math.Max(1, data.TotalPages);
+            Page = Math.Min(Page, TotalPages);
+        }
+        else
+        {
+            var allChapters = (Novel.Volumes.FirstOrDefault(v => v.Id == volumeId)?.Chapters ?? [])
+                .OrderBy(c => c.ChapterNumber)
+                .ToList();
+            TotalElements = allChapters.Count;
+            TotalPages = Math.Max(1, (int)Math.Ceiling(TotalElements / (double)PageSize));
+            Page = Math.Min(Page, TotalPages);
+            Chapters = allChapters
+                .Skip((Page - 1) * PageSize)
+                .Take(PageSize)
+                .ToList();
+        }
         await FillMissingWordCountsAsync();
         return true;
     }
@@ -150,12 +175,15 @@ public class ChaptersModel : PublishPageModel
         var text = ToPlainText(value);
         return string.IsNullOrWhiteSpace(text)
             ? 0
-            : text.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+            : Regex.Matches(text, @"[\p{L}\p{N}]+(?:['’.-][\p{L}\p{N}]+)*").Count;
     }
 
     private static string ToPlainText(string? value)
     {
         if (string.IsNullOrWhiteSpace(value)) return "";
-        return Regex.Replace(value, "<.*?>", " ").Replace("&nbsp;", " ").Trim();
+        return Regex.Replace(value, "<.*?>", " ")
+            .Replace("&nbsp;", " ")
+            .Replace('\u00a0', ' ')
+            .Trim();
     }
 }

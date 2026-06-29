@@ -44,9 +44,7 @@
 
         <div class="publish-editor-bottom">
             <div class="publish-editor-meta">
-                <span><span data-rich-word-count>@Model.WordCount</span> từ</span>
-                <label class="form-label">Ngày phát hành</label>
-                <input class="form-input" asp-for="Input.ReleaseDate" type="datetime-local" />
+                <span class="publish-word-count"><span data-rich-word-count>0</span> từ</span>
             </div>
             <div class="publish-actions">
                 <a asp-page="/Publish/Chapters" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-secondary">Hủy</a>
