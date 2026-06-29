@@ -5,30 +5,26 @@
     ViewData["ActiveNav"] = "catalog";
 }
 
-<!-- SCR-10: Novel Catalog -->
 <div class="container" style="padding-top:var(--space-xl); padding-bottom:var(--space-4xl);">
-    <!-- Page header -->
     <div class="page-header">
         <div>
             <h1 class="page-header__title">Thư viện truyện</h1>
             <p class="page-header__subtitle">@Model.TotalElements truyện</p>
         </div>
-        <!-- Sort -->
         <div class="flex gap-sm items-center">
             <label class="text-body-sm text-mute">Sắp xếp:</label>
-            <select class="form-select" style="width:auto;" onchange="updateQueryParam('sort', this.value)">
+            <select class="form-select" style="width:auto;" onchange="updateCatalogSort(this.value)">
                 <option value="updatedAt" selected="@(Model.Sort == "updatedAt")">Mới cập nhật</option>
                 <option value="viewCount" selected="@(Model.Sort == "viewCount")">Lượt xem</option>
-                <option value="ratingAverage" selected="@(Model.Sort == "ratingAverage")">Đánh giá</option>
             </select>
         </div>
     </div>
 
     <div class="flex gap-xl items-start">
-        <!-- Filter sidebar -->
         <aside class="filter-sidebar" style="display:block;">
-            <form method="get">
-                <!-- Search -->
+            <form method="get" id="catalogFilterForm">
+                <input type="hidden" name="sort" value="@Model.Sort" />
+
                 <div class="filter-section">
                     <div class="search-bar">
                         <svg class="search-bar__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -36,43 +32,59 @@
                     </div>
                 </div>
 
-                <!-- Status -->
                 <div class="filter-section">
                     <div class="filter-title">Trạng thái</div>
                     @foreach (var s in new[] { ("", "Tất cả"), ("Ongoing", "Đang ra"), ("Ended", "Hoàn thành"), ("Hiatus", "Tạm dừng") })
                     {
                         <label class="form-check" style="margin-bottom:var(--space-xs);">
-                            <input type="radio" name="status" value="@s.Item1" @(Model.Status == s.Item1 ? "checked" : "") onchange="this.form.submit()" />
+                            <input type="radio" name="status" value="@s.Item1" @(Model.Status == s.Item1 ? "checked" : "") />
                             @s.Item2
                         </label>
                     }
                 </div>
 
-                <!-- Categories -->
                 <div class="filter-section">
                     <div class="filter-title">Thể loại</div>
-                    <div class="flex gap-xs" style="flex-wrap:wrap;">
+                    <select class="form-select" name="categoryId">
+                        <option value="0">Tất cả thể loại</option>
                         @foreach (var cat in Model.Categories)
                         {
-                            <a href="?categoryId=@cat.Id&status=@Model.Status&keyword=@Model.Keyword"
-                               class="tag @(Model.CategoryId == cat.Id ? "active" : "")">
-                                @cat.Name
-                            </a>
+                            <option value="@cat.Id" selected="@(Model.CategoryId == cat.Id)">@cat.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="filter-section">
+                    <div class="filter-title">Tags</div>
+                    @if (Model.SelectedTagIds.Any())
+                    {
+                        <div class="catalog-selected-tags">
+                            @foreach (var tag in Model.Tags.Where(t => Model.SelectedTagIds.Contains(t.Id)))
+                            {
+                                <span class="catalog-selected-tag">@tag.Name</span>
+                            }
+                        </div>
+                    }
+                    <div class="catalog-tag-filter">
+                        @foreach (var tag in Model.Tags.OrderByDescending(t => Model.SelectedTagIds.Contains(t.Id)).ThenBy(t => t.Name))
+                        {
+                            var checkedAttr = Model.SelectedTagIds.Contains(tag.Id) ? "checked" : "";
+                            <label class="catalog-tag-option">
+                                <input type="checkbox" name="tagId" value="@tag.Id" @checkedAttr />
+                                <span>@tag.Name</span>
+                            </label>
                         }
                     </div>
                 </div>
 
-                <input type="hidden" name="sort" value="@Model.Sort" />
-                <input type="hidden" name="categoryId" value="@Model.CategoryId" />
                 <button type="submit" class="btn btn-primary" style="width:100%; border-radius:var(--radius-sm);">Áp dụng</button>
-                @if (!string.IsNullOrEmpty(Model.Keyword) || Model.CategoryId > 0 || !string.IsNullOrEmpty(Model.Status))
+                @if (HasFilters())
                 {
                     <a href="/Novels" class="btn btn-secondary" style="width:100%; border-radius:var(--radius-sm); margin-top:var(--space-xs); display:block; text-align:center;">Xóa bộ lọc</a>
                 }
             </form>
         </aside>
 
-        <!-- Novel grid -->
         <div style="flex:1; min-width:0;">
             @if (!Model.Novels.Any())
             {
@@ -101,31 +113,29 @@
                                 <div class="novel-card__title">@novel.Title</div>
                                 <div class="novel-card__author">@novel.Author?.Username</div>
                                 <div class="novel-card__meta">
-                                    <span>⭐ @novel.RatingAverage.ToString("0.0")</span>
-                                    <span class="status-badge status-@novel.Status.ToLower()">@novel.Status</span>
+                                    <span>★ @novel.RatingAverage.ToString("0.0")</span>
+                                    <span class="status-badge status-@novel.Status.ToLower()">@StatusLabel(novel.Status)</span>
                                 </div>
                             </div>
                         </a>
                     }
                 </div>
 
-                <!-- Pagination -->
                 @if (Model.TotalPages > 1)
                 {
                     <div class="flex justify-center mt-xl">
                         <div class="pagination">
                             @if (Model.Page > 1)
                             {
-                                <a href="?page=@(Model.Page-1)&sort=@Model.Sort&status=@Model.Status&keyword=@Model.Keyword&categoryId=@Model.CategoryId" class="pagination__btn">←</a>
+                                <a href="@PageUrl(Model.Page - 1)" class="pagination__btn">←</a>
                             }
-                            @for (int i = Math.Max(1, Model.Page - 2); i <= Math.Min(Model.TotalPages, Model.Page + 2); i++)
+                            @for (var i = Math.Max(1, Model.Page - 2); i <= Math.Min(Model.TotalPages, Model.Page + 2); i++)
                             {
-                                <a href="?page=@i&sort=@Model.Sort&status=@Model.Status&keyword=@Model.Keyword&categoryId=@Model.CategoryId"
-                                   class="pagination__btn @(i == Model.Page ? "active" : "")">@i</a>
+                                <a href="@PageUrl(i)" class="pagination__btn @(i == Model.Page ? "active" : "")">@i</a>
                             }
                             @if (Model.Page < Model.TotalPages)
                             {
-                                <a href="?page=@(Model.Page+1)&sort=@Model.Sort&status=@Model.Status&keyword=@Model.Keyword&categoryId=@Model.CategoryId" class="pagination__btn">→</a>
+                                <a href="@PageUrl(Model.Page + 1)" class="pagination__btn">→</a>
                             }
                         </div>
                     </div>
@@ -134,3 +144,41 @@
         </div>
     </div>
 </div>
+
+@functions {
+    private bool HasFilters()
+        => !string.IsNullOrWhiteSpace(Model.Keyword)
+            || Model.CategoryId > 0
+            || !string.IsNullOrWhiteSpace(Model.Status)
+            || Model.SelectedTagIds.Any();
+
+    private string PageUrl(int page)
+    {
+        var parts = new List<string> { $"page={page}", $"sort={Uri.EscapeDataString(Model.Sort)}" };
+        if (!string.IsNullOrWhiteSpace(Model.Keyword)) parts.Add($"keyword={Uri.EscapeDataString(Model.Keyword)}");
+        if (!string.IsNullOrWhiteSpace(Model.Status)) parts.Add($"status={Uri.EscapeDataString(Model.Status)}");
+        if (Model.CategoryId > 0) parts.Add($"categoryId={Model.CategoryId}");
+        parts.AddRange(Model.SelectedTagIds.Select(id => $"tagId={id}"));
+        return "/Novels?" + string.Join("&", parts);
+    }
+
+    private static string StatusLabel(string? status) => status?.Trim().ToLowerInvariant() switch
+    {
+        "ongoing" => "Đang ra",
+        "ended" => "Hoàn thành",
+        "hiatus" => "Tạm dừng",
+        "dropped" => "Đã bỏ",
+        _ => string.IsNullOrWhiteSpace(status) ? "Không rõ" : status
+    };
+}
+
+@section Scripts {
+<script>
+function updateCatalogSort(sort) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('sort', sort);
+    url.searchParams.delete('page');
+    window.location.href = url.toString();
+}
+</script>
+}

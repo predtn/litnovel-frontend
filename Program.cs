@@ -94,11 +94,13 @@ app.Use(async (context, next) =>
         return true;
     }
 
-    if (context.User.Identity?.IsAuthenticated == true &&
+    var auth = context.RequestServices.GetRequiredService<IAuthService>();
+    var hasAccessToken = !string.IsNullOrWhiteSpace(auth.GetToken(context));
+    var hasRefreshToken = !string.IsNullOrWhiteSpace(auth.GetRefreshToken(context));
+    if ((context.User.Identity?.IsAuthenticated == true || hasRefreshToken) &&
         !ShouldSkipSessionSync(context.Request.Path) &&
-        ShouldValidateNow(context.Session))
+        (!hasAccessToken || ShouldValidateNow(context.Session)))
     {
-        var auth = context.RequestServices.GetRequiredService<IAuthService>();
         var validation = await auth.ValidateSessionAsync(context);
         if (!string.IsNullOrWhiteSpace(validation.Message))
         {

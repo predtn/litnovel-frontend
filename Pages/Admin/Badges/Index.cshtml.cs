@@ -209,6 +209,6 @@ public class IndexModel(IApiService api, IAuthService auth, IWebHostEnvironment 
         await using var stream = System.IO.File.Create(filePath);
         await file.CopyToAsync(stream);
 
-        return $"{Request.Scheme}://{Request.Host}/uploads/badges/{fileName}";
+        return $"/uploads/badges/{fileName}";
     }
 }

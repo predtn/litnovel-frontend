@@ -165,6 +165,8 @@ async function markNotifRead(id) {
 
 // ─── Lightweight realtime fallback ───
 let lastUnreadCount = null;
+let notificationFallbackTimer = null;
+const notificationFallbackIntervalMs = 60000;
 
 async function loadUnreadNotificationSnapshot() {
     const bell = document.getElementById('notifBell');
@@ -172,6 +174,10 @@ async function loadUnreadNotificationSnapshot() {
 
     try {
         const res = await fetch('/api/notifications?isRead=false&page=1&size=1', { headers: getHeaders() });
+        if (res.status === 401 || res.status === 403) {
+            stopNotificationFallbackPolling();
+            return;
+        }
         if (!res.ok) return;
         const payload = await res.json();
         const data = payload?.data ?? payload;
@@ -187,6 +193,20 @@ async function loadUnreadNotificationSnapshot() {
     } catch (e) {
         // Ignore transient polling failures.
     }
+}
+
+function startNotificationFallbackPolling() {
+    const bell = document.getElementById('notifBell');
+    if (!bell || bell.dataset.authenticated !== 'true') return;
+    if (notificationFallbackTimer || window.litNovelNotificationSignalRConnected) return;
+
+    notificationFallbackTimer = setInterval(loadUnreadNotificationSnapshot, notificationFallbackIntervalMs);
+}
+
+function stopNotificationFallbackPolling() {
+    if (!notificationFallbackTimer) return;
+    clearInterval(notificationFallbackTimer);
+    notificationFallbackTimer = null;
 }
 
 function updateNotificationBadge(count) {
@@ -263,11 +283,20 @@ function renderHomepageAnnouncements(root, list, announcements) {
 
 function initRealtimeFallbacks() {
     loadUnreadNotificationSnapshot();
-    setInterval(loadUnreadNotificationSnapshot, 15000);
+    setTimeout(() => {
+        if (!window.litNovelNotificationSignalRConnected) {
+            startNotificationFallbackPolling();
+        }
+    }, 5000);
 
     loadHomepageAnnouncements();
     setInterval(loadHomepageAnnouncements, 30000);
 }
+
+window.loadUnreadNotificationSnapshot = loadUnreadNotificationSnapshot;
+window.updateNotificationBadge = updateNotificationBadge;
+window.startNotificationFallbackPolling = startNotificationFallbackPolling;
+window.stopNotificationFallbackPolling = stopNotificationFallbackPolling;
 
 // ─── Helpers ───
 function getHeaders() {

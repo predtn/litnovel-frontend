@@ -120,6 +120,6 @@ public class IndexModel : PageModel
             await AvatarFile.CopyToAsync(stream);
         }
 
-        return $"{Request.Scheme}://{Request.Host}/{relativePath.Replace('\\', '/')}";
+        return $"/{relativePath.Replace('\\', '/')}";
     }
 }

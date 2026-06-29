@@ -126,8 +126,17 @@
 
             @if (!string.IsNullOrWhiteSpace(novel.Description))
             {
-                <div class="novel-detail__description">
-                    @Html.Raw(novel.Description.Length > 400 ? novel.Description[..400] + "..." : novel.Description)
+                var shouldCollapseDescription = novel.Description.Length > 360;
+                <div class="novel-detail__description-wrap @(shouldCollapseDescription ? "is-collapsed" : "")" id="novelDescriptionWrap">
+                    <div class="novel-detail__description" id="novelDescription">
+                        @Html.Raw(novel.Description)
+                    </div>
+                    @if (shouldCollapseDescription)
+                    {
+                        <button type="button" class="novel-detail__description-toggle" onclick="toggleNovelDescription(this)">
+                            Xem thêm
+                        </button>
+                    }
                 </div>
             }
         </div>
@@ -285,6 +294,14 @@ function switchTab(tab) {
     document.querySelectorAll('[id^="tab-"]').forEach(c => c.classList.add('hidden'));
     document.querySelector(`[data-tab="${tab}"]`)?.classList.add('active');
     document.getElementById(`tab-${tab}`)?.classList.remove('hidden');
+}
+
+function toggleNovelDescription(btn) {
+    const wrap = document.getElementById('novelDescriptionWrap');
+    if (!wrap) return;
+
+    const collapsed = wrap.classList.toggle('is-collapsed');
+    btn.textContent = collapsed ? 'Xem thêm' : 'Thu gọn';
 }
 
 const stars = document.querySelectorAll('.star');
