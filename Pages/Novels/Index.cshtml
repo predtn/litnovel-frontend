@@ -143,7 +143,7 @@
                                 @if (novel.Tags != null && novel.Tags.Any())
                                 {
                                     <div class="novel-card__tags">
-                                        @foreach (var tag in novel.Tags.Take(4))
+                                        @foreach (var tag in novel.Tags.Take(8))
                                         {
                                             <span class="novel-card__tag">@tag.Name</span>
                                         }

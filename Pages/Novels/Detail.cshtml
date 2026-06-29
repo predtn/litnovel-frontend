@@ -85,7 +85,7 @@
                 {
                     <a href="/Novels?categoryId=@novel.Category.Id" class="badge badge-secondary">@novel.Category.Name</a>
                 }
-                @foreach (var tag in novel.Tags.Take(5))
+                @foreach (var tag in novel.Tags)
                 {
                     <a href="/Novels?tagId=@tag.Id" class="tag">@tag.Name</a>
                 }
