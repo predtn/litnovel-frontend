@@ -118,7 +118,7 @@ public class EditModel : PublishPageModel
             await CoverImageFile.CopyToAsync(stream);
         }
 
-        Input.CoverImage = $"{Request.Scheme}://{Request.Host}/{relativePath.Replace('\\', '/')}";
+        Input.CoverImage = $"/{relativePath.Replace('\\', '/')}";
     }
 
     private async Task<bool> LoadAsync(int id)

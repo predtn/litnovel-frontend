@@ -12,6 +12,7 @@ public class PendingChaptersModel : PageModel
     public new int Page { get; set; } = 1;
     public int TotalPages { get; set; } = 1;
     public int TotalElements { get; set; } = 0;
+    public StaffDashboardDto Dashboard { get; set; } = new();
 
     public PendingChaptersModel(IApiService api, IAuthService auth) { _api = api; _auth = auth; }
 
@@ -25,8 +26,10 @@ public class PendingChaptersModel : PageModel
         var user = _auth.GetCurrentUser(HttpContext);
         if (user != null) { ViewData["UserName"] = user.Username; ViewData["UserEmail"] = user.Email; }
 
+        var dashResult = await _api.GetAsync<StaffDashboardDto>("/api/staff/dashboard", token);
         var result = await _api.GetAsync<PagedData<PendingChapterDto>>($"/api/staff/chapters/pending?page={Page}&size=20", token);
         var data = result?.Data;
+        Dashboard     = dashResult?.Data ?? new();
         Chapters      = data?.Items ?? [];
         TotalPages    = data?.TotalPages ?? 1;
         TotalElements = data?.TotalElements ?? 0;

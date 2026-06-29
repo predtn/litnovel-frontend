@@ -5,30 +5,37 @@
     ViewData["ActiveNav"] = "catalog";
 }
 
-<!-- SCR-10: Novel Catalog -->
 <div class="container" style="padding-top:var(--space-xl); padding-bottom:var(--space-4xl);">
-    <!-- Page header -->
     <div class="page-header">
         <div>
             <h1 class="page-header__title">Thư viện truyện</h1>
             <p class="page-header__subtitle">@Model.TotalElements truyện</p>
         </div>
-        <!-- Sort -->
-        <div class="flex gap-sm items-center">
-            <label class="text-body-sm text-mute">Sắp xếp:</label>
-            <select class="form-select" style="width:auto;" onchange="updateQueryParam('sort', this.value)">
-                <option value="updatedAt" selected="@(Model.Sort == "updatedAt")">Mới cập nhật</option>
-                <option value="viewCount" selected="@(Model.Sort == "viewCount")">Lượt xem</option>
-                <option value="ratingAverage" selected="@(Model.Sort == "ratingAverage")">Đánh giá</option>
-            </select>
+        <div class="flex gap-md items-center">
+            <div class="flex gap-sm items-center">
+                <label class="text-body-sm text-mute">Sắp xếp:</label>
+                <select class="form-select" style="width:auto;" onchange="updateCatalogSort(this.value)">
+                    <option value="updatedAt" selected="@(Model.Sort == "updatedAt")">Mới cập nhật</option>
+                    <option value="viewCount" selected="@(Model.Sort == "viewCount")">Lượt xem</option>
+                </select>
+            </div>
+            
+            <div class="view-switcher" style="display: flex; gap: 4px; border: 1px solid var(--color-hairline); border-radius: var(--radius-sm); padding: 2px; background: var(--color-canvas-soft-2);">
+                <button type="button" class="view-switch-btn active" id="btnViewGrid" onclick="setCatalogView('grid')" title="Hiển thị dạng lưới">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                </button>
+                <button type="button" class="view-switch-btn" id="btnViewList" onclick="setCatalogView('list')" title="Hiển thị danh sách">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                </button>
+            </div>
         </div>
     </div>
 
     <div class="flex gap-xl items-start">
-        <!-- Filter sidebar -->
         <aside class="filter-sidebar" style="display:block;">
-            <form method="get">
-                <!-- Search -->
+            <form method="get" id="catalogFilterForm">
+                <input type="hidden" name="sort" value="@Model.Sort" />
+
                 <div class="filter-section">
                     <div class="search-bar">
                         <svg class="search-bar__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -36,43 +43,62 @@
                     </div>
                 </div>
 
-                <!-- Status -->
                 <div class="filter-section">
                     <div class="filter-title">Trạng thái</div>
                     @foreach (var s in new[] { ("", "Tất cả"), ("Ongoing", "Đang ra"), ("Ended", "Hoàn thành"), ("Hiatus", "Tạm dừng") })
                     {
+                        var isChecked = string.IsNullOrWhiteSpace(s.Item1)
+                            ? string.IsNullOrWhiteSpace(Model.Status)
+                            : string.Equals(Model.Status, s.Item1, StringComparison.OrdinalIgnoreCase);
                         <label class="form-check" style="margin-bottom:var(--space-xs);">
-                            <input type="radio" name="status" value="@s.Item1" @(Model.Status == s.Item1 ? "checked" : "") onchange="this.form.submit()" />
+                            <input type="radio" name="status" value="@s.Item1" @(isChecked ? "checked" : "") />
                             @s.Item2
                         </label>
                     }
                 </div>
 
-                <!-- Categories -->
                 <div class="filter-section">
                     <div class="filter-title">Thể loại</div>
-                    <div class="flex gap-xs" style="flex-wrap:wrap;">
+                    <select class="form-select" name="categoryId">
+                        <option value="0">Tất cả thể loại</option>
                         @foreach (var cat in Model.Categories)
                         {
-                            <a href="?categoryId=@cat.Id&status=@Model.Status&keyword=@Model.Keyword"
-                               class="tag @(Model.CategoryId == cat.Id ? "active" : "")">
-                                @cat.Name
-                            </a>
+                            <option value="@cat.Id" selected="@(Model.CategoryId == cat.Id)">@cat.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="filter-section">
+                    <div class="filter-title">Tags</div>
+                    @if (Model.SelectedTagIds.Any())
+                    {
+                        <div class="catalog-selected-tags">
+                            @foreach (var tag in Model.Tags.Where(t => Model.SelectedTagIds.Contains(t.Id)))
+                            {
+                                <span class="catalog-selected-tag">@tag.Name</span>
+                            }
+                        </div>
+                    }
+                    <div class="catalog-tag-filter">
+                        @foreach (var tag in Model.Tags.OrderByDescending(t => Model.SelectedTagIds.Contains(t.Id)).ThenBy(t => t.Name))
+                        {
+                            var checkedAttr = Model.SelectedTagIds.Contains(tag.Id) ? "checked" : "";
+                            <label class="catalog-tag-option">
+                                <input type="checkbox" name="tagId" value="@tag.Id" @checkedAttr />
+                                <span>@tag.Name</span>
+                            </label>
                         }
                     </div>
                 </div>
 
-                <input type="hidden" name="sort" value="@Model.Sort" />
-                <input type="hidden" name="categoryId" value="@Model.CategoryId" />
                 <button type="submit" class="btn btn-primary" style="width:100%; border-radius:var(--radius-sm);">Áp dụng</button>
-                @if (!string.IsNullOrEmpty(Model.Keyword) || Model.CategoryId > 0 || !string.IsNullOrEmpty(Model.Status))
+                @if (HasFilters())
                 {
                     <a href="/Novels" class="btn btn-secondary" style="width:100%; border-radius:var(--radius-sm); margin-top:var(--space-xs); display:block; text-align:center;">Xóa bộ lọc</a>
                 }
             </form>
         </aside>
 
-        <!-- Novel grid -->
         <div style="flex:1; min-width:0;">
             @if (!Model.Novels.Any())
             {
@@ -84,48 +110,100 @@
             }
             else
             {
-                <div class="grid-4" style="grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:var(--space-md);">
+                <div id="novelsCatalogList" class="catalog-list view-grid">
                     @foreach (var novel in Model.Novels)
                     {
                         var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
-                        <a href="/Novels/@novelUrl" class="novel-card">
-                            @if (!string.IsNullOrEmpty(novel.CoverImage))
-                            {
-                                <img class="novel-card__cover" src="@novel.CoverImage" alt="@novel.Title" loading="lazy" />
-                            }
-                            else
-                            {
-                                <div class="novel-card__cover-placeholder">📖</div>
-                            }
+                        <div class="novel-item-card" data-novel-id="@novel.Id">
+                            <button type="button" class="novel-card__fav-btn @(Model.FavoriteIds.Contains(novel.Id) ? "active" : "")" onclick="toggleFavorite(event, '@novel.Id')" title="Thêm vào yêu thích">
+                                <svg class="heart-icon" viewBox="0 0 24 24">
+                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                </svg>
+                            </button>
+                            <a href="/Novels/@novelUrl" class="novel-card__cover-wrapper">
+                                @if (!string.IsNullOrEmpty(novel.CoverImage))
+                                {
+                                    <img class="novel-card__cover" src="@novel.CoverImage" alt="@novel.Title" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <div class="novel-card__cover-placeholder">📖</div>
+                                }
+                            </a>
                             <div class="novel-card__body">
-                                <div class="novel-card__title">@novel.Title</div>
-                                <div class="novel-card__author">@novel.Author?.Username</div>
+                                <div class="novel-card__header">
+                                    <a href="/Novels/@novelUrl" class="novel-card__title">@novel.Title</a>
+                                    @if (novel.Category != null)
+                                    {
+                                        <span class="novel-card__category">@novel.Category.Name</span>
+                                    }
+                                </div>
+                                <div class="novel-card__author">Tác giả: <span>@novel.Author?.Username</span></div>
+                                
+                                @if (novel.Tags != null && novel.Tags.Any())
+                                {
+                                    <div class="novel-card__tags">
+                                        @foreach (var tag in novel.Tags.Take(8))
+                                        {
+                                            <span class="novel-card__tag">@tag.Name</span>
+                                        }
+                                    </div>
+                                }
+                                
                                 <div class="novel-card__meta">
-                                    <span>⭐ @novel.RatingAverage.ToString("0.0")</span>
-                                    <span class="status-badge status-@novel.Status.ToLower()">@novel.Status</span>
+                                    <span class="novel-card__metric novel-card__metric--rated" title="Đánh giá">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/></svg>
+                                        @novel.RatingAverage.ToString("0.0")
+                                    </span>
+                                    <span class="novel-card__metric novel-card__meta-item--volumes" title="Số tập">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line></svg>
+                                        @novel.TotalVolumes tập
+                                    </span>
+                                    <span class="novel-card__metric novel-card__meta-item--chapters" title="Số chương">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                                        @novel.TotalChapters chương
+                                    </span>
+                                    <span class="novel-card__metric novel-card__meta-item--views" title="Lượt xem">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                        @FormatCount(novel.ViewCount)
+                                    </span>
+                                    <span class="novel-card__metric novel-card__meta-item--favorites" title="Lượt yêu thích">
+                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
+                                         @FormatCount(novel.FavoritesCount)
+                                    </span>
+                                    <span class="status-badge status-@novel.Status.ToLower()">@StatusLabel(novel.Status)</span>
                                 </div>
                             </div>
-                        </a>
+                        </div>
                     }
                 </div>
+                
+                <script>
+                    (function() {
+                        const savedView = localStorage.getItem('catalog-view') || 'grid';
+                        if (savedView === 'list') {
+                            document.getElementById('novelsCatalogList').className = 'catalog-list view-list';
+                            document.getElementById('btnViewList').classList.add('active');
+                            document.getElementById('btnViewGrid').classList.remove('active');
+                        }
+                    })();
+                </script>
 
-                <!-- Pagination -->
                 @if (Model.TotalPages > 1)
                 {
                     <div class="flex justify-center mt-xl">
                         <div class="pagination">
                             @if (Model.Page > 1)
                             {
-                                <a href="?page=@(Model.Page-1)&sort=@Model.Sort&status=@Model.Status&keyword=@Model.Keyword&categoryId=@Model.CategoryId" class="pagination__btn">←</a>
+                                <a href="@PageUrl(Model.Page - 1)" class="pagination__btn">←</a>
                             }
-                            @for (int i = Math.Max(1, Model.Page - 2); i <= Math.Min(Model.TotalPages, Model.Page + 2); i++)
+                            @for (var i = Math.Max(1, Model.Page - 2); i <= Math.Min(Model.TotalPages, Model.Page + 2); i++)
                             {
-                                <a href="?page=@i&sort=@Model.Sort&status=@Model.Status&keyword=@Model.Keyword&categoryId=@Model.CategoryId"
-                                   class="pagination__btn @(i == Model.Page ? "active" : "")">@i</a>
+                                <a href="@PageUrl(i)" class="pagination__btn @(i == Model.Page ? "active" : "")">@i</a>
                             }
                             @if (Model.Page < Model.TotalPages)
                             {
-                                <a href="?page=@(Model.Page+1)&sort=@Model.Sort&status=@Model.Status&keyword=@Model.Keyword&categoryId=@Model.CategoryId" class="pagination__btn">→</a>
+                                <a href="@PageUrl(Model.Page + 1)" class="pagination__btn">→</a>
                             }
                         </div>
                     </div>
@@ -134,3 +212,113 @@
         </div>
     </div>
 </div>
+
+@functions {
+    private string FormatCount(int n) => n >= 1000000 ? $"{n / 1000000.0:0.#}M" : n >= 1000 ? $"{n / 1000.0:0.#}K" : n.ToString();
+
+    private bool HasFilters()
+        => !string.IsNullOrWhiteSpace(Model.Keyword)
+            || Model.CategoryId > 0
+            || !string.IsNullOrWhiteSpace(Model.Status)
+            || Model.SelectedTagIds.Any();
+
+    private string PageUrl(int page)
+    {
+        var parts = new List<string> { $"page={page}", $"sort={Uri.EscapeDataString(Model.Sort)}" };
+        if (!string.IsNullOrWhiteSpace(Model.Keyword)) parts.Add($"keyword={Uri.EscapeDataString(Model.Keyword)}");
+        if (!string.IsNullOrWhiteSpace(Model.Status)) parts.Add($"status={Uri.EscapeDataString(Model.Status)}");
+        if (Model.CategoryId > 0) parts.Add($"categoryId={Model.CategoryId}");
+        parts.AddRange(Model.SelectedTagIds.Select(id => $"tagId={id}"));
+        return "/Novels?" + string.Join("&", parts);
+    }
+
+    private static string StatusLabel(string? status) => status?.Trim().ToLowerInvariant() switch
+    {
+        "ongoing" => "Đang ra",
+        "ended" => "Hoàn thành",
+        "hiatus" => "Tạm dừng",
+        "dropped" => "Đã bỏ",
+        _ => string.IsNullOrWhiteSpace(status) ? "Không rõ" : status
+    };
+}
+
+@section Scripts {
+<script>
+function updateCatalogSort(sort) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('sort', sort);
+    url.searchParams.delete('page');
+    window.location.href = url.toString();
+}
+
+function setCatalogView(view) {
+    const container = document.getElementById('novelsCatalogList');
+    const btnGrid = document.getElementById('btnViewGrid');
+    const btnList = document.getElementById('btnViewList');
+    if (!container) return;
+    
+    if (view === 'list') {
+        container.classList.remove('view-grid');
+        container.classList.add('view-list');
+        btnGrid.classList.remove('active');
+        btnList.classList.add('active');
+        localStorage.setItem('catalog-view', 'list');
+    } else {
+        container.classList.remove('view-list');
+        container.classList.add('view-grid');
+        btnList.classList.remove('active');
+        btnGrid.classList.add('active');
+        localStorage.setItem('catalog-view', 'grid');
+    }
+}
+
+function toggleFavorite(event, novelId) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const btns = document.querySelectorAll(`.novel-item-card[data-novel-id="${novelId}"] .novel-card__fav-btn`);
+    const isActive = btns[0]?.classList.contains('active');
+    const method = isActive ? 'DELETE' : 'POST';
+    const url = `/api/novels/${novelId}/favorites`;
+
+    fetch(url, {
+        method: method,
+        headers: {
+            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+        }
+    })
+    .then(async response => {
+        if (response.status === 401) {
+            showToast("Vui lòng đăng nhập để thực hiện tính năng này.", "error");
+            return;
+        }
+        
+        const result = await response.json();
+        if (response.ok && result.success) {
+            if (isActive) {
+                btns.forEach(btn => btn.classList.remove('active'));
+                showToast("Đã xóa khỏi danh sách yêu thích.", "success");
+            } else {
+                btns.forEach(btn => {
+                    btn.classList.add('active');
+                    btn.style.transform = 'scale(1.25)';
+                    setTimeout(() => btn.style.transform = '', 300);
+                });
+                showToast("Đã thêm vào danh sách yêu thích.", "success");
+            }
+        } else {
+            showToast(result.message || "Đã xảy ra lỗi, vui lòng thử lại.", "error");
+        }
+    })
+    .catch(error => {
+        console.error(error);
+        showToast("Không thể kết nối tới máy chủ.", "error");
+    });
+}
+
+// Danh sách yêu thích được inject từ server (luôn chính xác khi tải trang)
+// Không cần AJAX để lấy trạng thái ban đầu - server đã render class 'active' vào HTML
+</script>
+}
+
+

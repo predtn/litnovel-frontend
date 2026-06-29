@@ -85,7 +85,7 @@
                 {
                     <a href="/Novels?categoryId=@novel.Category.Id" class="badge badge-secondary">@novel.Category.Name</a>
                 }
-                @foreach (var tag in novel.Tags.Take(5))
+                @foreach (var tag in novel.Tags)
                 {
                     <a href="/Novels?tagId=@tag.Id" class="tag">@tag.Name</a>
                 }
@@ -111,7 +111,7 @@
 
             <div class="novel-detail__stats">
                 <div class="novel-detail__stat">
-                    <div class="novel-detail__stat-value">@FormatNum(novel.ViewCount)</div>
+                    <div id="novelViewCount" class="novel-detail__stat-value" data-count="@novel.ViewCount">@FormatNum(novel.ViewCount)</div>
                     <div class="text-caption text-mute">Lượt xem</div>
                 </div>
                 <div class="novel-detail__stat">
@@ -126,8 +126,17 @@
 
             @if (!string.IsNullOrWhiteSpace(novel.Description))
             {
-                <div class="novel-detail__description">
-                    @Html.Raw(novel.Description.Length > 400 ? novel.Description[..400] + "..." : novel.Description)
+                var shouldCollapseDescription = novel.Description.Length > 360;
+                <div class="novel-detail__description-wrap @(shouldCollapseDescription ? "is-collapsed" : "")" id="novelDescriptionWrap">
+                    <div class="novel-detail__description" id="novelDescription">
+                        @Html.Raw(novel.Description)
+                    </div>
+                    @if (shouldCollapseDescription)
+                    {
+                        <button type="button" class="novel-detail__description-toggle" onclick="toggleNovelDescription(this)">
+                            Xem thêm
+                        </button>
+                    }
                 </div>
             }
         </div>
@@ -181,14 +190,35 @@
             </div>
         </section>
 
-        @if (User.Identity?.IsAuthenticated == true && novel.UserRating == null)
+        @if (User.Identity?.IsAuthenticated == true && Model.CurrentUserId != novel.Author?.Id)
         {
             <section class="novel-detail__review-form">
+                @if (novel.UserReviewId.HasValue)
+                {
+                    <h3 class="novel-detail__review-title">Chinh sua danh gia cua ban</h3>
+                    <form method="post" asp-page-handler="UpdateReview" class="novel-detail__review-form-body">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="reviewId" value="@novel.UserReviewId" />
+                        <div class="star-rating js-star-rating" data-input="editRatingInput" data-value="@(novel.UserRating ?? 0)">
+                            @for (var s = 1; s <= 5; s++)
+                            {
+                                <span class="star" data-val="@s">â˜…</span>
+                            }
+                        </div>
+                        <input type="hidden" id="editRatingInput" name="rating" value="@(novel.UserRating ?? 0)" />
+                        <div class="form-group">
+                            <textarea class="form-textarea" name="reviewText" placeholder="Chia se cam nhan cua ban..." rows="3">@novel.UserReview</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary novel-detail__review-submit">Luu danh gia</button>
+                    </form>
+                }
+                else
+                {
                 <h3 class="novel-detail__review-title">Viết đánh giá của bạn</h3>
                 <form method="post" asp-page-handler="Review" class="novel-detail__review-form-body">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@novel.Id" />
-                    <div class="star-rating" id="starRating">
+                    <div class="star-rating js-star-rating" id="starRating" data-input="ratingInput" data-value="0">
                         @for (var s = 1; s <= 5; s++)
                         {
                             <span class="star" data-val="@s">★</span>
@@ -200,6 +230,7 @@
                     </div>
                     <button type="submit" class="btn btn-primary novel-detail__review-submit">Gửi đánh giá</button>
                 </form>
+                }
             </section>
         }
 
@@ -248,6 +279,21 @@
                     <option value="Other">Khác</option>
                 </select>
             </div>
+            @{
+                var allChapters = novel.Volumes.SelectMany(v => v.Chapters).Where(c => c.Status == "Published").ToList();
+            }
+            @if (allChapters.Any())
+            {
+                <div class="form-group">
+                    <label class="form-label">Chương vi phạm <span class="text-muted" style="font-weight:400">(không bắt buộc)</span></label>
+                    <select class="form-select" name="targetChapterId">
+                        @foreach (var ch in allChapters)
+                        {
+                            <option value="@ch.Id">Ch.@ch.ChapterNumber — @ch.Title</option>
+                        }
+                    </select>
+                </div>
+            }
             <div class="form-group">
                 <label class="form-label">Mô tả</label>
                 <textarea class="form-textarea" name="description" placeholder="Chi tiết vi phạm..." rows="4" required></textarea>
@@ -287,18 +333,61 @@ function switchTab(tab) {
     document.getElementById(`tab-${tab}`)?.classList.remove('hidden');
 }
 
-const stars = document.querySelectorAll('.star');
-const input = document.getElementById('ratingInput');
-stars.forEach((star, i) => {
-    star.addEventListener('mouseover', () => stars.forEach((s, j) => s.style.color = j <= i ? '#d97706' : '#ebebeb'));
-    star.addEventListener('mouseleave', () => {
-        const val = parseInt(input?.value || 0);
-        stars.forEach((s, j) => s.style.color = j < val ? '#d97706' : '#ebebeb');
-    });
-    star.addEventListener('click', () => {
-        if (input) input.value = i + 1;
-        stars.forEach((s, j) => s.style.color = j <= i ? '#d97706' : '#ebebeb');
+function toggleNovelDescription(btn) {
+    const wrap = document.getElementById('novelDescriptionWrap');
+    if (!wrap) return;
+
+    const collapsed = wrap.classList.toggle('is-collapsed');
+    btn.textContent = collapsed ? 'Xem thêm' : 'Thu gọn';
+}
+
+document.querySelectorAll('.js-star-rating').forEach(container => {
+    const input = document.getElementById(container.dataset.input || '');
+    const stars = container.querySelectorAll('.star');
+    stars.forEach(s => s.textContent = '\u2605');
+
+    const paint = value => {
+        stars.forEach((s, j) => s.style.color = j < value ? '#d97706' : '#ebebeb');
+    };
+
+    if (input && !input.value) input.value = container.dataset.value || '0';
+    paint(parseInt(input?.value || container.dataset.value || '0', 10) || 0);
+
+    stars.forEach((star, i) => {
+        star.addEventListener('mouseover', () => paint(i + 1));
+        star.addEventListener('mouseleave', () => paint(parseInt(input?.value || '0', 10) || 0));
+        star.addEventListener('click', () => {
+            if (input) input.value = (i + 1).toString();
+            paint(i + 1);
+        });
     });
 });
+
+let novelViewRecorded = false;
+setTimeout(async () => {
+    if (novelViewRecorded) return;
+    novelViewRecorded = true;
+
+    try {
+        const res = await fetch('/api/novels/@novel.Id/views', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            keepalive: true
+        });
+        if (!res.ok) return;
+
+        const viewCount = document.getElementById('novelViewCount');
+        if (!viewCount) return;
+
+        const current = Number.parseInt(viewCount.dataset.count || viewCount.textContent || '0', 10) || 0;
+        const next = current + 1;
+        viewCount.dataset.count = next.toString();
+        viewCount.textContent = typeof formatCompactNumber === 'function'
+            ? formatCompactNumber(next)
+            : next.toString();
+    } catch (e) {
+        // View tracking should not interrupt reading.
+    }
+}, 10000);
 </script>
 }

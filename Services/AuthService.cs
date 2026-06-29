@@ -1,4 +1,4 @@
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -136,7 +136,7 @@ public class AuthService : IAuthService
             if (loginUser.Status.Equals("Banned", StringComparison.OrdinalIgnoreCase))
             {
                 await LogoutAsync(ctx);
-                return (false, "Tài khoản của bạn đã bị cấm.", null);
+                return (false, "TĂ i khoáº£n cá»§a báº¡n Ä‘Ă£ bá»‹ cáº¥m.", null);
             }
 
             result.Data.User = loginUser;
@@ -145,7 +145,7 @@ public class AuthService : IAuthService
             return (true, null, loginUser);
         }
 
-        return (false, result?.Message ?? "Thông tin đăng nhập không hợp lệ.", null);
+        return (false, result?.Message ?? "ThĂ´ng tin Ä‘Äƒng nháº­p khĂ´ng há»£p lá»‡.", null);
     }
 
     public async Task<(bool Success, string? Error)> RegisterAsync(HttpContext ctx, string username, string email, string password)
@@ -153,7 +153,7 @@ public class AuthService : IAuthService
         var result = await _api.PostAsync<object>("/api/auth/register", new RegisterRequest { Username = username, Email = email, Password = password });
         return result?.Success == true
             ? (true, null)
-            : (false, result?.Message ?? "Đăng ký thất bại.");
+            : (false, result?.Message ?? "ÄÄƒng kĂ½ tháº¥t báº¡i.");
     }
 
     public async Task<(bool Success, string? Error)> ForgotPasswordAsync(string email)
@@ -161,7 +161,7 @@ public class AuthService : IAuthService
         var result = await _api.PostAsync<object>("/api/auth/forgot-password", new ForgotPasswordRequest { Email = email });
         return result?.Success == true
             ? (true, null)
-            : (false, result?.Message ?? "Không thể gửi yêu cầu đặt lại mật khẩu.");
+            : (false, result?.Message ?? "KhĂ´ng thá»ƒ gá»­i yĂªu cáº§u Ä‘áº·t láº¡i máº­t kháº©u.");
     }
 
     public async Task<(bool Success, string? Error)> ResetPasswordAsync(string token, string newPassword, string confirmPassword)
@@ -175,7 +175,7 @@ public class AuthService : IAuthService
 
         return result?.Success == true
             ? (true, null)
-            : (false, result?.Message ?? "Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.");
+            : (false, result?.Message ?? "Token Ä‘áº·t láº¡i máº­t kháº©u khĂ´ng há»£p lá»‡ hoáº·c Ä‘Ă£ háº¿t háº¡n.");
     }
 
     public async Task LogoutAsync(HttpContext ctx)
@@ -195,12 +195,22 @@ public class AuthService : IAuthService
     public async Task<SessionValidationResult> ValidateSessionAsync(HttpContext ctx)
     {
         var token = GetToken(ctx);
-        if (string.IsNullOrWhiteSpace(token)) return new(SessionValidationState.Valid);
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return await TryRefreshSessionAsync(ctx)
+                ? new(SessionValidationState.Updated)
+                : new(SessionValidationState.Valid);
+        }
 
         var current = GetCurrentUser(ctx);
         var result = await _api.GetAsync<UserDetailDto>("/api/users/me", token);
         if (result?.Success != true || result.Data == null)
         {
+            if (await TryRefreshSessionAsync(ctx))
+            {
+                return new(SessionValidationState.Updated);
+            }
+
             await LogoutAsync(ctx);
             return new(SessionValidationState.LoggedOut, "Phiên đăng nhập đã hết hạn hoặc tài khoản không còn được phép truy cập.", "/Auth/Login");
         }
@@ -270,6 +280,29 @@ public class AuthService : IAuthService
                 Expires = DateTimeOffset.UtcNow.AddDays(30)
             });
         }
+    }
+
+    private async Task<bool> TryRefreshSessionAsync(HttpContext ctx)
+    {
+        var refreshToken = GetRefreshToken(ctx);
+        if (string.IsNullOrWhiteSpace(refreshToken)) return false;
+
+        var result = await _api.PostAsync<LoginResponse>("/api/auth/refresh", new { refreshToken });
+        if (result?.Success != true || result.Data == null) return false;
+
+        var loginUser = result.Data.User ?? ParseUserFromToken(result.Data.AccessToken);
+        loginUser.AccessToken = result.Data.AccessToken;
+        loginUser.RefreshToken = result.Data.RefreshToken;
+
+        if (loginUser.Status.Equals("Banned", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        result.Data.User = loginUser;
+        SetTokenCookies(ctx, result.Data.AccessToken, result.Data.RefreshToken, result.Data.ExpiresIn);
+        await SignInCookieAsync(ctx, result.Data);
+        return true;
     }
 
     private static async Task SignInCookieAsync(HttpContext ctx, LoginResponse login)

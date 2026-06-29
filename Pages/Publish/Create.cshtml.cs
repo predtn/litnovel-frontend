@@ -214,7 +214,7 @@ public class CreateModel : PublishPageModel
             await CoverImageFile.CopyToAsync(stream);
         }
 
-        Input.CoverImage = $"{Request.Scheme}://{Request.Host}/{relativePath.Replace('\\', '/')}";
+        Input.CoverImage = $"/{relativePath.Replace('\\', '/')}";
     }
 
     private async Task LoadLookupsAsync()

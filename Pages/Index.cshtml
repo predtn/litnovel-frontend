@@ -2,9 +2,44 @@
 @model IndexModel
 @{
     ViewData["Title"] = "Đọc truyện, Khám phá thế giới mới";
-    ViewData["Description"] = "LitNovel — Nền tảng đọc và xuất bản truyện chữ trực tuyến hàng đầu Việt Nam.";
+    ViewData["Description"] = "LitNovel — Nơi thỏa sức sáng tạo viết lên câu truyện của chính mình.";
     var writeUrl = User.Identity?.IsAuthenticated == true ? Url.Page("/Publish/Index") : Url.Page("/Auth/Register");
+
+    // Prepare random/dynamic marquee content belonging to the project
+    var marqueeItems = new List<string>();
+    if (Model.TrendingNovels != null && Model.TrendingNovels.Any())
+    {
+        foreach (var novel in Model.TrendingNovels.Take(5))
+        {
+            marqueeItems.Add($"     HOT: {novel.Title} - {novel.Author?.Username} ({novel.RatingAverage.ToString("0.0")})");
+        }
+    }
+    if (Model.NewNovels != null && Model.NewNovels.Any())
+    {
+        foreach (var novel in Model.NewNovels.Take(5))
+        {
+            marqueeItems.Add($"     MỚI: {novel.Title} - Ch. {novel.TotalChapters}");
+        }
+    }
+    marqueeItems.Add("     Chào mừng bạn đến với LitNovel - Welcome!");
+    marqueeItems.Add("     Bạn có ý tưởng truyện độc đáo? Hãy nhấn 'Bắt đầu viết' để chia sẻ tác phẩm của mình ngay hôm nay!");
+    marqueeItems.Add("     Đăng ký tài khoản miễn phí để lưu lịch sử đọc truyện và nhận thông báo khi có chương mới!");
+    marqueeItems.Add("     Tham gia Diễn đàn thảo luận cùng hàng nghìn độc giả và tác giả khác!");
+    marqueeItems.Add("     Đọc truyện hay, khám phá những thế giới kỳ bí đầy màu sắc.");
+
+    var random = new Random();
+    var shuffledMarquee = marqueeItems.OrderBy(x => random.Next()).ToList();
+    var marqueeText = string.Join("   ✦   ", shuffledMarquee);
 }
+
+<!-- Marquee Line -->
+<div class="marquee-wrapper">
+    <div class="marquee-track">
+        <div class="marquee-content">
+            @marqueeText   ✦   @marqueeText
+        </div>
+    </div>
+</div>
 
 <!-- SCR-01: Landing Page -->
 
@@ -16,8 +51,8 @@
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             Nền tảng truyện chữ hàng đầu
         </div>
-        <h1 class="hero__title">Đọc truyện hay,<br>Khám phá thế giới mới.</h1>
-        <p class="hero__subtitle">Hàng nghìn tiểu thuyết từ các tác giả tài năng. Đọc miễn phí, mọi lúc, mọi nơi.</p>
+        <h1 class="hero__title">Tự tay sáng tạo,<br>Hãy viết lên câu truyện của chính mình.</h1>
+        <p class="hero__subtitle">Hàng nghìn tiểu thuyết từ các tác giả tự do tài năng. Đọc miễn phí, mọi lúc, mọi nơi.</p>
         <div class="hero__cta">
             <a href="/Novels" class="btn btn-primary-lg">Khám phá ngay</a>
             <a href="@writeUrl" class="btn btn-secondary-lg">Bắt đầu viết</a>
@@ -115,7 +150,7 @@
                         <div class="novel-card__title">@novel.Title</div>
                         <div class="novel-card__author">@novel.Author?.Username</div>
                         <div class="novel-card__meta">
-                            <span class="novel-card__metric"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/></svg>@(novel.RatingAverage > 0 ? novel.RatingAverage.ToString("0.0") : "0.0")</span>
+                            <span class="novel-card__metric novel-card__metric--rated"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/></svg>@(novel.RatingAverage > 0 ? novel.RatingAverage.ToString("0.0") : "0.0")</span>
                             <span class="novel-card__metric"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="3"/></svg>@FormatCount(novel.ViewCount)</span>
                         </div>
                     </div>
@@ -140,40 +175,53 @@
             </div>
             <a href="/Novels?sort=updatedAt&order=desc&status=Ongoing" class="btn btn-ghost">Xem tất cả →</a>
         </div>
-        <div class="home-update-grid">
+        <div class="home-latest-grid">
             @foreach (var novel in Model.NewNovels)
             {
                 var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
-                <a href="/Novels/@novelUrl" class="home-update-card">
-                    @if (!string.IsNullOrEmpty(novel.CoverImage))
-                    {
-                        <img src="@novel.CoverImage" alt="@novel.Title" class="home-update-card__cover" loading="lazy" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
-                        <div class="home-update-card__cover home-update-card__cover--placeholder hidden">Sách</div>
-                    }
-                    else
-                    {
-                        <div class="home-update-card__cover home-update-card__cover--placeholder">Sách</div>
-                    }
-                    <div class="home-update-card__body">
-                        <div class="text-body-sm font-medium text-ink truncate">@novel.Title</div>
-                        <div class="text-caption text-mute mt-sm">@novel.Author?.Username</div>
-                        <div class="home-update-card__badges mt-sm">
-                            <span class="status-badge status-@novel.Status.ToLower()">@novel.Status</span>
+                var chapterUrl = !string.IsNullOrWhiteSpace(novel.LatestChapterSlug) ? novel.LatestChapterSlug : null;
+                var latestChapterNumber = novel.LatestChapterNumber ?? novel.TotalChapters;
+                var latestChapterTitle = !string.IsNullOrWhiteSpace(novel.LatestChapterTitle) ? novel.LatestChapterTitle : "Chuong moi nhat";
+                <article class="novel-item-card home-latest-card" data-novel-id="@novel.Id">
+                    <a href="/Novels/@novelUrl" class="novel-card__cover-wrapper home-latest-card__cover-link" aria-label="@novel.Title">
+                        @if (!string.IsNullOrWhiteSpace(novel.CoverImage))
+                        {
+                            <img class="novel-card__cover home-latest-card__cover" src="@novel.CoverImage" alt="@novel.Title" loading="lazy" />
+                        }
+                        else
+                        {
+                            <div class="novel-card__cover-placeholder home-latest-card__cover"><span class="cover-placeholder-icon" aria-hidden="true"></span></div>
+                        }
+                    </a>
+                    <div class="home-latest-card__main">
+                        <a href="/Novels/@novelUrl" class="home-latest-card__title">@novel.Title</a>
+                        <div class="home-latest-card__line">
                             @if (novel.Category != null)
                             {
-                                <span class="badge badge-secondary">@novel.Category.Name</span>
+                                <span class="novel-card__category">@novel.Category.Name</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(chapterUrl))
+                            {
+                                <a href="/Novels/@novelUrl/@chapterUrl/read" class="home-latest-card__chapter-text">Ch. @latestChapterNumber - @latestChapterTitle</a>
+                            }
+                            else
+                            {
+                                <span class="home-latest-card__chapter-text">Ch. @latestChapterNumber - @latestChapterTitle</span>
                             }
                         </div>
-                        <div class="text-caption text-mute mt-sm">
-                            Ch.@novel.TotalChapters · Cập nhật @TimeAgo(novel.UpdatedAt)
-                        </div>
                     </div>
-                </a>
+                    <div class="home-latest-card__meta">
+                        <div class="home-latest-card__author">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            <span>@(novel.Author?.Username ?? "Unknown")</span>
+                        </div>
+                        <time class="home-latest-card__time" datetime="@novel.UpdatedAt.ToString("O")">@TimeAgo(novel.UpdatedAt)</time>
+                    </div>
+                </article>
             }
         </div>
     </div>
 </section>
-
 <!-- Top Rated -->
 <section class="section">
     <div class="container">
@@ -244,4 +292,61 @@
         if (diff.TotalDays < 30) return $"{(int)diff.TotalDays} ngày trước";
         return dt.ToString("dd/MM/yyyy");
     }
+    private static string StatusLabel(string? status) => status?.Trim().ToLowerInvariant() switch
+    {
+        "ongoing" => "Đang ra",
+        "ended" => "Hoàn thành",
+        "hiatus" => "Tạm dừng",
+        "dropped" => "Đã bỏ",
+        _ => string.IsNullOrWhiteSpace(status) ? "Không rõ" : status
+    };
 }
+
+@section Scripts {
+<script>
+function toggleFavorite(event, novelId) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const btns = document.querySelectorAll(`.novel-item-card[data-novel-id="${novelId}"] .novel-card__fav-btn`);
+    const isActive = btns[0]?.classList.contains('active');
+    const method = isActive ? 'DELETE' : 'POST';
+    const url = `/api/novels/${novelId}/favorites`;
+
+    fetch(url, {
+        method: method,
+        headers: {
+            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+        }
+    })
+    .then(async response => {
+        if (response.status === 401) {
+            showToast("Vui lòng đăng nhập để thực hiện tính năng này.", "error");
+            return;
+        }
+        
+        const result = await response.json();
+        if (response.ok && result.success) {
+            if (isActive) {
+                btns.forEach(btn => btn.classList.remove('active'));
+                showToast("Đã xóa khỏi danh sách yêu thích.", "success");
+            } else {
+                btns.forEach(btn => {
+                    btn.classList.add('active');
+                    btn.style.transform = 'scale(1.25)';
+                    setTimeout(() => btn.style.transform = '', 300);
+                });
+                showToast("Đã thêm vào danh sách yêu thích.", "success");
+            }
+        } else {
+            showToast(result.message || "Đã xảy ra lỗi, vui lòng thử lại.", "error");
+        }
+    })
+    .catch(error => {
+        console.error(error);
+        showToast("Không thể kết nối tới máy chủ.", "error");
+    });
+}
+</script>
+}
+
