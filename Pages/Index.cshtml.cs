@@ -14,6 +14,7 @@ public class IndexModel : PageModel
     public List<NovelSummaryDto> TopRatedNovels { get; set; } = [];
     public List<AnnouncementDto> Announcements { get; set; } = [];
     public List<ReadingProgressDto> ContinueReading { get; set; } = [];
+    public HashSet<int> FavoriteIds { get; set; } = [];
 
     public IndexModel(IApiService api, IAuthService auth)
     {
@@ -37,8 +38,11 @@ public class IndexModel : PageModel
         var unreadTask       = !string.IsNullOrWhiteSpace(token)
             ? LoadUnreadCountAsync(token)
             : Task.FromResult(0);
+        var favTask          = !string.IsNullOrWhiteSpace(token)
+            ? _api.GetAsync<PagedData<NovelSummaryDto>>("/api/users/me/favorites?page=1&size=200", token)
+            : Task.FromResult<ApiResponse<PagedData<NovelSummaryDto>>?>(null);
 
-        await Task.WhenAll(catTask, trendingTask, newTask, topTask, announcementTask, readingTask, unreadTask);
+        await Task.WhenAll(catTask, trendingTask, newTask, topTask, announcementTask, readingTask, unreadTask, favTask);
 
         Categories      = catTask.Result?.Data ?? [];
         TrendingNovels  = trendingTask.Result?.Data?.Items ?? [];
@@ -47,6 +51,11 @@ public class IndexModel : PageModel
         Announcements   = announcementTask.Result;
         ContinueReading = readingTask.Result;
         ViewData["UnreadCount"] = unreadTask.Result;
+
+        if (favTask != null && favTask.Result?.Data?.Items != null)
+        {
+            FavoriteIds = favTask.Result.Data.Items.Select(f => f.Id).ToHashSet();
+        }
 
         // Set user info for layout
         var user = _auth.GetCurrentUser(HttpContext);
@@ -107,5 +116,4 @@ public class IndexModel : PageModel
             .Take(3)
             .ToList();
     }
-
 }

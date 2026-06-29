@@ -20,6 +20,7 @@ public class IndexModel : PageModel
     public int CategoryId { get; set; }
     public List<int> SelectedTagIds { get; set; } = [];
     public string Sort { get; set; } = "updatedAt";
+    public HashSet<int> FavoriteIds { get; set; } = [];
 
     public IndexModel(IApiService api, IAuthService auth) { _api = api; _auth = auth; }
 
@@ -42,7 +43,17 @@ public class IndexModel : PageModel
         var novelTask = _api.GetAsync<PagedData<NovelSummaryDto>>(qs, token);
         var catTask   = _api.GetAsync<List<CategoryDto>>("/api/categories");
         var tagTask   = _api.GetAsync<List<TagDto>>("/api/tags");
-        await Task.WhenAll(novelTask, catTask, tagTask);
+
+        // Fetch danh sách yêu thích server-side nếu người dùng đã đăng nhập
+        Task<ApiResponse<PagedData<NovelSummaryDto>>?>? favTask = null;
+        if (!string.IsNullOrWhiteSpace(token))
+        {
+            favTask = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/users/me/favorites?page=1&size=200", token);
+        }
+
+        await Task.WhenAll(
+            novelTask, catTask, tagTask,
+            favTask ?? Task.FromResult<ApiResponse<PagedData<NovelSummaryDto>>?>(null));
 
         var data = novelTask.Result?.Data;
         Novels        = data?.Items ?? [];
@@ -50,5 +61,13 @@ public class IndexModel : PageModel
         TotalElements = data?.TotalElements ?? Novels.Count;
         Categories    = catTask.Result?.Data ?? [];
         Tags          = tagTask.Result?.Data ?? [];
+
+        if (favTask != null)
+        {
+            FavoriteIds = favTask.Result?.Data?.Items
+                .Select(f => f.Id)
+                .ToHashSet() ?? [];
+        }
     }
 }
+

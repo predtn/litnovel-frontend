@@ -78,6 +78,29 @@ public static class ApiProxyEndpoints
             return ToProxyResult(result);
         });
 
+        endpoints.MapPost("/api/novels/{id:int}/views", async (
+            int id,
+            IApiService api) =>
+        {
+            var result = await api.PostAsync<object>($"/api/novels/{id}/views", null);
+            return ToProxyResult(result);
+        });
+
+        endpoints.MapGet("/api/users/me/favorites", async (
+            HttpContext context,
+            IApiService api,
+            IAuthService auth) =>
+        {
+            var token = auth.GetToken(context);
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return Results.Unauthorized();
+            }
+
+            var result = await api.GetAsync<System.Text.Json.JsonElement>("/api/users/me/favorites?page=1&size=100", token);
+            return Results.Json(result);
+        });
+
         return endpoints;
     }
 
