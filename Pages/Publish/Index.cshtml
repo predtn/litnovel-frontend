@@ -51,7 +51,7 @@
                 <thead>
                     <tr>
                         <th>Truyện</th>
-                        <th>Trạng thái</th>
+                        <th class="publish-col-status">Trạng thái</th>
                         <th class="publish-col-center">Chương</th>
                         <th class="publish-col-center">Lượt xem</th>
                         <th class="publish-col-center">Đánh giá</th>
@@ -81,7 +81,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td data-label="Trạng thái"><span class="status-badge status-@novel.Status.ToLowerInvariant()">@DisplayText.Status(novel.Status)</span></td>
+                            <td data-label="Trạng thái" class="publish-col-status"><span class="status-badge status-@novel.Status.ToLowerInvariant()">@DisplayText.Status(novel.Status)</span></td>
                             <td data-label="Chương" class="publish-col-center">@novel.TotalChapters</td>
                             <td data-label="Lượt xem" class="publish-col-center">@novel.ViewCount.ToString("N0")</td>
                             <td data-label="Đánh giá" class="publish-col-center">@novel.RatingAverage.ToString("0.0")</td>

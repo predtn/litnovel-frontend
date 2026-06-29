@@ -13,7 +13,9 @@ public class EditModel : PublishPageModel
     public NovelDetailDto Novel { get; set; } = new();
     public List<CategoryDto> Categories { get; set; } = [];
     public List<TagDto> Tags { get; set; } = [];
-    public bool CanEditNovel => CanEditSubmittedContent(Novel.Status);
+    public bool CanEditNovel => CanEditNovelStatus(Novel.Status);
+    public bool WillSubmitForReviewAfterSave => ShouldMoveNovelToPendingAfterEdit(Novel.Status);
+    public string SaveButtonText => WillSubmitForReviewAfterSave ? "Lưu và gửi duyệt lại" : "Lưu bản nháp";
 
     public EditModel(IApiService api, IAuthService auth, IWebHostEnvironment environment) : base(api, auth)
     {
@@ -28,7 +30,7 @@ public class EditModel : PublishPageModel
         if (!loaded) return RedirectToPage("/Publish/Index");
         if (!CanEditNovel)
         {
-            TempData["Error"] = "Truyện đã được duyệt hoặc đang chờ duyệt nên không thể chỉnh sửa trực tiếp.";
+            TempData["Error"] = EditBlockedMessage("truyện");
             return RedirectToPage("/Publish/Manage", new { id });
         }
 
@@ -53,11 +55,12 @@ public class EditModel : PublishPageModel
         if (!loaded) return RedirectToPage("/Publish/Index");
         if (!CanEditNovel)
         {
-            TempData["Error"] = "Truyện đã được duyệt hoặc đang chờ duyệt nên không thể chỉnh sửa trực tiếp.";
+            TempData["Error"] = EditBlockedMessage("truyện");
             return RedirectToPage("/Publish/Manage", new { id });
         }
 
         Input.TagIds = SelectedTagIds.Distinct().ToList();
+        Input.Status = WillSubmitForReviewAfterSave ? "Pending" : "Draft";
         await ApplyCoverImageAsync();
 
         if (string.IsNullOrWhiteSpace(Input.Title))
@@ -77,9 +80,16 @@ public class EditModel : PublishPageModel
             return Page();
         }
 
-        TempData["Success"] = "Đã cập nhật truyện.";
+        TempData["Success"] = WillSubmitForReviewAfterSave
+            ? "Đã lưu thay đổi và gửi truyện vào hàng chờ duyệt."
+            : "Đã lưu bản nháp truyện.";
         return RedirectToPage("/Publish/Manage", new { id });
     }
+
+    private string EditBlockedMessage(string contentName)
+        => IsPendingReview(Novel.Status)
+            ? $"{char.ToUpperInvariant(contentName[0])}{contentName[1..]} đang chờ duyệt. Vui lòng hủy gửi duyệt trước khi chỉnh sửa."
+            : $"{char.ToUpperInvariant(contentName[0])}{contentName[1..]} đang bị khóa nên không thể chỉnh sửa.";
 
     private async Task ApplyCoverImageAsync()
     {

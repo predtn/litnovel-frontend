@@ -20,6 +20,7 @@ public static class DisplayText
         "Completed" => "Hoàn tất",
         "InProgress" => "Đang chạy",
         "Scheduled" => "Đã lên lịch",
+        "Locked" => "Bị khóa",
         _ => string.IsNullOrWhiteSpace(value) ? "-" : value
     };
 
