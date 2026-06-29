@@ -11,7 +11,9 @@ public class ChapterEditModel : PublishPageModel
     public int VolumeId { get; set; }
     public int NovelId { get; set; }
     public int WordCount => CountWords(Input.Content);
-    public bool CanEditChapter => CanEditSubmittedContent(Chapter.Status);
+    public bool CanEditChapter => CanEditChapterStatus(Chapter.Status);
+    public bool WillSubmitForReviewAfterSave => ShouldMoveChapterToPendingAfterEdit(Chapter.Status);
+    public string SaveButtonText => WillSubmitForReviewAfterSave ? "Lưu và gửi duyệt lại" : "Lưu bản nháp";
 
     public ChapterEditModel(IApiService api, IAuthService auth) : base(api, auth) { }
 
@@ -23,7 +25,7 @@ public class ChapterEditModel : PublishPageModel
         if (!loaded) return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
         if (!CanEditChapter)
         {
-            TempData["Error"] = "Chương đã được duyệt hoặc đang chờ duyệt nên không thể chỉnh sửa trực tiếp.";
+            TempData["Error"] = EditBlockedMessage();
             return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
         }
 
@@ -32,7 +34,8 @@ public class ChapterEditModel : PublishPageModel
             ChapterNumber = Chapter.ChapterNumber,
             Title = Chapter.Title,
             Content = Chapter.Content,
-            ReleaseDate = Chapter.ReleaseDate
+            ReleaseDate = Chapter.ReleaseDate,
+            Status = Chapter.Status
         };
         return Page();
     }
@@ -45,10 +48,11 @@ public class ChapterEditModel : PublishPageModel
         if (!loaded) return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
         if (!CanEditChapter)
         {
-            TempData["Error"] = "Chương đã được duyệt hoặc đang chờ duyệt nên không thể chỉnh sửa trực tiếp.";
+            TempData["Error"] = EditBlockedMessage();
             return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
         }
 
+        Input.Status = WillSubmitForReviewAfterSave ? "Pending" : "Draft";
         if (string.IsNullOrWhiteSpace(Input.Title) || !HasText(Input.Content))
         {
             ModelState.AddModelError("", "Cần nhập tiêu đề và nội dung chương.");
@@ -64,9 +68,16 @@ public class ChapterEditModel : PublishPageModel
             return Page();
         }
 
-        TempData["Success"] = "Đã cập nhật chương.";
+        TempData["Success"] = WillSubmitForReviewAfterSave
+            ? "Đã lưu thay đổi và gửi chương vào hàng chờ duyệt."
+            : "Đã lưu bản nháp chương.";
         return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
     }
+
+    private string EditBlockedMessage()
+        => IsPendingReview(Chapter.Status)
+            ? "Chương đang chờ duyệt. Vui lòng hủy gửi duyệt trước khi chỉnh sửa."
+            : "Chương đang bị khóa nên không thể chỉnh sửa.";
 
     private async Task<bool> LoadAsync(int id, int volumeId, int novelId)
     {

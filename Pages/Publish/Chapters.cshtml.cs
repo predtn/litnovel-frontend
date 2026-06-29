@@ -13,7 +13,7 @@ public class ChaptersModel : PublishPageModel
     public ChaptersModel(IApiService api, IAuthService auth) : base(api, auth) { }
 
     public bool CanSubmitChapter(string? status) => CanSubmitForReview(status);
-    public bool CanEditChapter(string? status) => CanEditSubmittedContent(status);
+    public bool CanEditChapter(string? status) => CanEditChapterStatus(status);
     public bool CanWithdrawChapter(string? status) => IsPendingReview(status);
     public bool CanDeleteChapter(string? status)
         => string.Equals(status, "Draft", StringComparison.OrdinalIgnoreCase) || IsApprovedChapterStatus(status);

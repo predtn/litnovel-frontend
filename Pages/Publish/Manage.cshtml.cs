@@ -10,7 +10,7 @@ public class ManageModel : PublishPageModel
         .SelectMany(volume => volume.Chapters)
         .Any(chapter => IsPendingReview(chapter.Status));
     public bool CanSubmitNovel => CanSubmitForReview(Novel.Status);
-    public bool CanEditNovel => CanEditSubmittedContent(Novel.Status);
+    public bool CanEditNovel => CanEditNovelStatus(Novel.Status);
     public bool CanCancelReview => IsPendingReview(Novel.Status);
     public bool CanDeleteNovel => !IsPendingReview(Novel.Status) && !HasPendingChapters;
 

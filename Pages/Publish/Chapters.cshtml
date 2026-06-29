@@ -25,7 +25,7 @@
                 <tr>
                     <th class="publish-col-center">#</th>
                     <th>Tiêu đề</th>
-                    <th>Trạng thái</th>
+                    <th class="publish-col-status">Trạng thái</th>
                     <th class="publish-col-center">Số từ</th>
                     <th class="publish-col-center">Ngày tạo</th>
                     <th class="publish-col-actions">Hành động</th>
@@ -38,7 +38,7 @@
                     <tr>
                         <td data-label="#" class="publish-col-center">@chapter.ChapterNumber</td>
                         <td data-label="Tiêu đề"><span class="font-medium">@chapter.Title</span></td>
-                        <td data-label="Trạng thái"><span class="status-badge status-@chapterStatus.ToLowerInvariant()">@DisplayText.Status(chapterStatus)</span></td>
+                        <td data-label="Trạng thái" class="publish-col-status"><span class="status-badge status-@chapterStatus.ToLowerInvariant()">@DisplayText.Status(chapterStatus)</span></td>
                         <td data-label="Số từ" class="publish-col-center">@(chapter.WordCount > 0 ? chapter.WordCount.ToString("N0") : "—")</td>
                         <td data-label="Ngày tạo" class="publish-col-center">@chapter.CreatedAt.ToString("dd/MM/yyyy")</td>
                         <td data-label="Hành động" class="publish-col-actions">

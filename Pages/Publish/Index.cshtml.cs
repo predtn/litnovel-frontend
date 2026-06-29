@@ -14,7 +14,7 @@ public class IndexModel : PublishPageModel
     public int TotalChapters => Novels.Sum(n => n.TotalChapters);
     public int TotalViews => Novels.Sum(n => n.ViewCount);
     public double AverageRating => Novels.Where(n => n.RatingAverage > 0).DefaultIfEmpty().Average(n => n?.RatingAverage ?? 0);
-    public bool CanEditNovel(string? status) => CanEditSubmittedContent(status);
+    public bool CanEditNovel(string? status) => CanEditNovelStatus(status);
 
     public IndexModel(IApiService api, IAuthService auth) : base(api, auth) { }
 
