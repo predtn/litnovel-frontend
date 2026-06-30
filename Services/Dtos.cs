@@ -95,6 +95,7 @@ public class NovelSummaryDto
     public string Title { get; set; } = "";
     public string Slug { get; set; } = "";
     public string? CoverImage { get; set; }
+    public string? Description { get; set; }
     public UserSummaryDto? Author { get; set; }
     public CategoryDto? Category { get; set; }
     public List<TagDto> Tags { get; set; } = [];
@@ -117,7 +118,6 @@ public class NovelSummaryDto
 
 public class NovelDetailDto : NovelSummaryDto
 {
-    public string? Description { get; set; }
     public bool? IsFavorited { get; set; }
     public bool? IsLiked { get; set; }
     public int? UserReviewId { get; set; }
