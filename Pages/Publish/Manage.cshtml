@@ -84,6 +84,21 @@
 
         <aside class="card publish-side-panel">
             <h2 class="text-display-sm publish-side-panel__title">Hành động</h2>
+            @if (Model.CanChangeLifecycleStatus)
+            {
+                <form method="post" asp-page-handler="UpdateLifecycleStatus" asp-route-id="@Model.Novel.Id" class="publish-lifecycle-form">
+                    <div class="form-group">
+                        <label class="form-label" asp-for="LifecycleStatus">Trạng thái truyện</label>
+                        <select class="form-select" asp-for="LifecycleStatus">
+                            @foreach (var status in Model.LifecycleStatusOptions)
+                            {
+                                <option value="@status">@DisplayText.Status(status)</option>
+                            }
+                        </select>
+                    </div>
+                    <button class="btn btn-primary w-full" type="submit">Cập nhật trạng thái</button>
+                </form>
+            }
             @if (Model.CanSubmitNovel)
             {
                 <form method="post" asp-page-handler="Submit" asp-route-id="@Model.Novel.Id" class="mb-sm">

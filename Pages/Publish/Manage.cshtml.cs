@@ -6,11 +6,14 @@ namespace litnovel_frontend.Pages.Publish;
 public class ManageModel : PublishPageModel
 {
     public NovelDetailDto Novel { get; set; } = new();
+    [BindProperty] public string LifecycleStatus { get; set; } = "";
+    public IReadOnlyList<string> LifecycleStatusOptions { get; } = ["Ongoing", "Ended", "Hiatus", "Dropped"];
     public bool HasPendingChapters => Novel.Volumes
         .SelectMany(volume => volume.Chapters)
         .Any(chapter => IsPendingReview(chapter.Status));
     public bool CanSubmitNovel => CanSubmitForReview(Novel.Status);
     public bool CanEditNovel => CanEditNovelStatus(Novel.Status);
+    public bool CanChangeLifecycleStatus => CanChangeNovelLifecycleStatus(Novel.Status);
     public bool CanCancelReview => IsPendingReview(Novel.Status);
     public bool CanDeleteNovel => !IsPendingReview(Novel.Status) && !HasPendingChapters;
     public string EditUnavailableMessage => IsPendingReview(Novel.Status)
@@ -31,7 +34,33 @@ public class ManageModel : PublishPageModel
         }
 
         Novel = result.Data;
+        LifecycleStatus = Novel.Status;
         return Page();
+    }
+
+    public async Task<IActionResult> OnPostUpdateLifecycleStatusAsync(int id)
+    {
+        var guard = RequireAuthor();
+        if (guard != null) return guard;
+
+        var novel = await LoadNovelForActionAsync(id);
+        if (novel == null) return RedirectToPage("/Publish/Index");
+        if (!CanChangeNovelLifecycleStatus(novel.Status))
+        {
+            TempData["Error"] = "Chỉ có thể đổi trạng thái vòng đời khi truyện đang xuất bản.";
+            return RedirectToPage(new { id });
+        }
+
+        if (!IsAllowedNovelLifecycleStatus(LifecycleStatus))
+        {
+            TempData["Error"] = "Trạng thái vòng đời phải là: Đang tiến hành, Đã kết thúc, Tạm ngưng, Đã bỏ.";
+            return RedirectToPage(new { id });
+        }
+
+        var request = new NovelLifecycleStatusRequest { Status = LifecycleStatus };
+        var result = await Api.PatchAsync<NovelSummaryDto>($"/api/novels/{id}/lifecycle-status", request, Token);
+        SetApiResultMessage(result, "Đã cập nhật trạng thái truyện.", "Chưa thể cập nhật trạng thái truyện lúc này.");
+        return RedirectToPage(new { id });
     }
 
     public async Task<IActionResult> OnPostSubmitAsync(int id)
