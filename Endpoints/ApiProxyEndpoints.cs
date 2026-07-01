@@ -10,6 +10,7 @@ public static class ApiProxyEndpoints
         endpoints.MapCommentProxyEndpoints();
         endpoints.MapNotificationProxyEndpoints();
         endpoints.MapAnnouncementProxyEndpoints();
+        endpoints.MapReportProxyEndpoints();
         return endpoints;
     }
 
@@ -230,6 +231,27 @@ public static class ApiProxyEndpoints
 
             var token = auth.GetToken(context);
             var result = await api.GetAsync<List<AnnouncementDto>>("/api/announcements", token);
+            return ToProxyResult(result);
+        });
+
+        return endpoints;
+    }
+
+    private static IEndpointRouteBuilder MapReportProxyEndpoints(this IEndpointRouteBuilder endpoints)
+    {
+        endpoints.MapPost("/api/reports/users", async (
+            HttpContext context,
+            IApiService api,
+            IAuthService auth) =>
+        {
+            var token = auth.GetToken(context);
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return Results.Unauthorized();
+            }
+
+            var request = await context.Request.ReadFromJsonAsync<object>();
+            var result = await api.PostAsync<object>("/api/reports/users", request, token);
             return ToProxyResult(result);
         });
 

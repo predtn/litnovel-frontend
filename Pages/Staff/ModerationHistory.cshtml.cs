@@ -12,6 +12,7 @@ public class ModerationHistoryModel : PageModel
     public new int Page { get; set; } = 1;
     public int TotalPages { get; set; } = 1;
     public int TotalElements { get; set; } = 0;
+    public StaffDashboardDto Dashboard { get; set; } = new();
 
     public ModerationHistoryModel(IApiService api, IAuthService auth) { _api = api; _auth = auth; }
 
@@ -24,6 +25,9 @@ public class ModerationHistoryModel : PageModel
         Page = page < 1 ? 1 : page;
         var user = _auth.GetCurrentUser(HttpContext);
         if (user != null) { ViewData["UserName"] = user.Username; ViewData["UserEmail"] = user.Email; }
+
+        var dbResult = await _api.GetAsync<StaffDashboardDto>($"/api/staff/dashboard", token);
+        Dashboard = dbResult?.Data ?? new();
 
         var result = await _api.GetAsync<PagedData<ModerationHistoryDto>>($"/api/staff/history?page={Page}&size=20", token);
         var data = result?.Data;

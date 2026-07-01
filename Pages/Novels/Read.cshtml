@@ -116,6 +116,40 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="reportCommentModal">
+    <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal__header">
+            <div class="modal__title">Báo cáo bình luận</div>
+            <button type="button" class="modal__close" onclick="closeModal('reportCommentModal')">×</button>
+        </div>
+        <form id="reportCommentForm" onsubmit="submitReportComment(event)">
+            <input type="hidden" id="reportCommentId" name="TargetCommentId" />
+            <input type="hidden" id="reportUserId" name="TargetUserId" />
+            <input type="hidden" name="ReportKind" value="User" />
+            
+            <div class="modal__body" style="padding:var(--space-md);">
+                <div class="form-group mb-sm">
+                    <label class="form-label">Loại vi phạm</label>
+                    <select name="ReportType" class="form-control" required>
+                        <option value="Spam">Spam / Quảng cáo</option>
+                        <option value="Inappropriate">Ngôn từ không phù hợp / Xúc phạm</option>
+                        <option value="Harassment">Quấy rối / Công kích cá nhân</option>
+                        <option value="Other">Khác</option>
+                    </select>
+                </div>
+                <div class="form-group mb-md">
+                    <label class="form-label">Mô tả thêm (Không bắt buộc)</label>
+                    <textarea name="Description" class="form-textarea" rows="3" placeholder="Chi tiết vi phạm..."></textarea>
+                </div>
+            </div>
+            <div class="modal__footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('reportCommentModal')">Hủy</button>
+                <button type="submit" class="btn btn-danger" id="submitReportBtn">Gửi báo cáo</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="reader-layout reader-layout--main" id="readerLayout">
     <div class="reader-header">
         <div class="reader-novel-title">
@@ -230,6 +264,10 @@
                                 <span class="comment-like-count">@comment.LikeCount</span>
                             </button>
                             <button type="button" class="comment__action" onclick="showReply(@comment.Id)">Trả lời</button>
+                            @if (Model.CurrentUserId != comment.User?.Id)
+                            {
+                                <button type="button" class="comment__action text-mute" onclick="reportComment(@comment.Id, @(comment.User?.Id ?? 0))" title="Báo cáo bình luận">Báo cáo</button>
+                            }
                         }
                         else
                         {
@@ -295,6 +333,10 @@
                                                     <span class="comment-like-text">@(reply.IsLiked ? "Bỏ thích" : "Thích")</span>
                                                     <span class="comment-like-count">@reply.LikeCount</span>
                                                 </button>
+                                                @if (Model.CurrentUserId != reply.User?.Id)
+                                                {
+                                                    <button type="button" class="comment__action text-mute" onclick="reportComment(@reply.Id, @(reply.User?.Id ?? 0))" title="Báo cáo bình luận">Báo cáo</button>
+                                                }
                                             }
                                             else
                                             {
@@ -425,6 +467,48 @@ async function confirmDeleteComment() {
         showToast('Đã xóa bình luận.', 'success');
     } catch {
         showToast('Không thể xóa bình luận.', 'error');
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+function reportComment(commentId, targetUserId) {
+    if (targetUserId === 0) return;
+    document.getElementById('reportCommentId').value = commentId;
+    document.getElementById('reportUserId').value = targetUserId;
+    document.getElementById('reportCommentForm').reset();
+    openModal('reportCommentModal');
+}
+
+async function submitReportComment(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitReportBtn');
+    if (btn) btn.disabled = true;
+
+    const form = e.target;
+    const data = {
+        TargetUserId: parseInt(form.TargetUserId.value),
+        TargetCommentId: parseInt(form.TargetCommentId.value),
+        ReportType: form.ReportType.value,
+        Description: form.Description.value
+    };
+
+    try {
+        const res = await fetch('/api/reports/users', {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+            showToast('Đã gửi báo cáo bình luận thành công.', 'success');
+            closeModal('reportCommentModal');
+        } else {
+            const error = await res.json();
+            showToast(error?.message || 'Không thể gửi báo cáo.', 'error');
+        }
+    } catch {
+        showToast('Có lỗi xảy ra khi gửi báo cáo.', 'error');
     } finally {
         if (btn) btn.disabled = false;
     }
