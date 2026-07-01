@@ -1,6 +1,5 @@
 @using Microsoft.AspNetCore.Http
 @inject IAuthService AuthService
-@inject IApiService ApiService
 @{
     var sessionNotice = Context.Session.GetString("SessionNotice");
     var sessionNoticeType = Context.Session.GetString("SessionNoticeType") ?? "info";
@@ -21,17 +20,7 @@
         Context.Session.Remove("SessionNoticeType");
     }
     var signalRToken = AuthService.GetToken(Context) ?? "";
-    var isAdminViewer = Context.User.IsInRole("Admin");
     var layoutAnnouncements = new List<AnnouncementDto>();
-    if (!isAdminViewer)
-    {
-        var announcementResult = await ApiService.GetAsync<List<AnnouncementDto>>("/api/announcements", signalRToken);
-        layoutAnnouncements = ((announcementResult?.Success == true ? announcementResult.Data : null) ?? [])
-            .Where(item => item.IsActive)
-            .OrderByDescending(item => item.StartDate)
-            .Take(3)
-            .ToList();
-    }
 }
 <!DOCTYPE html>
 <html lang="vi">
