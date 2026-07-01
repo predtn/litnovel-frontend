@@ -86,30 +86,6 @@ function highlightStars(stars, upTo) {
     stars.forEach((s, i) => s.classList.toggle('star-filled', i <= upTo));
 }
 
-// ─── Reading Progress (auto-save) ───
-let progressTimer = null;
-function initReadingProgress(chapterId) {
-    const content = document.getElementById('chapterContent');
-    if (!content) return;
-    window.addEventListener('scroll', () => {
-        clearTimeout(progressTimer);
-        progressTimer = setTimeout(() => {
-            const scrolled = window.scrollY + window.innerHeight;
-            const total = document.documentElement.scrollHeight;
-            const pct = Math.min(100, Math.round((scrolled / total) * 100));
-            saveProgress(chapterId, pct);
-        }, 1000);
-    });
-}
-async function saveProgress(chapterId, pct) {
-    try {
-        await fetch(`/api/chapters/${chapterId}/progress`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ progressPercentage: pct })
-        });
-    } catch (e) { /* silent */ }
-}
 // ─── Favorite toggle ───
 async function toggleFavorite(novelId, btn) {
     const isFav = btn.dataset.favorited === 'true';

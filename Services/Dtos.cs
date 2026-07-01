@@ -25,6 +25,7 @@ public class UserSummaryDto
     public string? Avatar { get; set; }
     public string Role { get; set; } = "User";
     public string Status { get; set; } = "Offline";
+    public List<BadgeDto> Badges { get; set; } = [];
 }
 
 public class UserDetailDto : UserSummaryDto
@@ -32,7 +33,6 @@ public class UserDetailDto : UserSummaryDto
     public string Email { get; set; } = "";
     public string? Bio { get; set; }
     public int Reputation { get; set; }
-    public List<BadgeDto> Badges { get; set; } = [];
     public UserStatsDto Stats { get; set; } = new();
     public List<UserWarningDto> Warnings { get; set; } = [];
     public DateTime CreatedAt { get; set; }
@@ -123,6 +123,8 @@ public class NovelDetailDto : NovelSummaryDto
     public int? UserReviewId { get; set; }
     public byte? UserRating { get; set; }
     public string? UserReview { get; set; }
+    public int ReadChapterCount { get; set; }
+    public int ReadingProgressPercentage { get; set; }
     public List<VolumeWithChaptersDto> Volumes { get; set; } = [];
 }
 
@@ -151,6 +153,7 @@ public class ChapterNavDto
     public string Status { get; set; } = "Draft";
     public int WordCount { get; set; }
     public DateTime? ReleaseDate { get; set; }
+    public bool IsRead { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }
