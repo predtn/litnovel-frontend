@@ -80,6 +80,16 @@ public class EditModel : PublishPageModel
             return Page();
         }
 
+        var submitResult = await Api.PostAsync<object>($"/api/novels/{id}/submit", null, Token);
+        if (!IsApiSuccess(submitResult))
+        {
+            var verifyResult = await Api.GetAsync<NovelDetailDto>($"/api/novels/{id}", Token);
+            if (!IsPendingReview(verifyResult?.Data?.Status))
+            {
+                ModelState.AddModelError("", ApiFailureMessage(submitResult, "Đã lưu thay đổi nhưng chưa thể gửi duyệt truyện."));
+                return Page();
+            }
+        }
         TempData["Success"] = "Đã lưu thay đổi và gửi truyện vào hàng chờ duyệt.";
         return RedirectToPage("/Publish/Manage", new { id });
     }

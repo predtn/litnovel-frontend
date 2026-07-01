@@ -28,7 +28,7 @@ public class ChapterPreviewModel : PublishPageModel
         if (!IsApiSuccess(result))
         {
             TempData["Error"] = ApiFailureMessage(result, "Không thể tải bản xem trước chương.");
-            return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
+            return RedirectToManageVolumes(novelId);
         }
 
         Chapter = result?.Data ?? new();
@@ -42,6 +42,7 @@ public class ChapterPreviewModel : PublishPageModel
         return Page();
     }
 
+    private IActionResult RedirectToManageVolumes(int novelId) => RedirectToPage("/Publish/Manage", pageHandler: null, routeValues: new { id = novelId }, fragment: "volumes");
     public async Task<IActionResult> OnPostRestoreAsync(int id, int volumeId, int novelId)
     {
         var guard = RequireAuthor();
@@ -51,17 +52,17 @@ public class ChapterPreviewModel : PublishPageModel
         if (!IsApiSuccess(chapterResult) || chapterResult?.Data == null)
         {
             TempData["Error"] = ApiFailureMessage(chapterResult, "Không thể tải thông tin chương.");
-            return RedirectToPage("/Publish/Chapters", new { volumeId, novelId, status = "PendingDeletion" });
+            return RedirectToManageVolumes(novelId);
         }
 
         if (!IsPendingDeletion(chapterResult.Data.Status))
         {
             TempData["Error"] = "Chỉ có thể khôi phục chương đang chờ xóa.";
-            return RedirectToPage(new { id, volumeId, novelId });
+            return RedirectToManageVolumes(novelId);
         }
 
         var result = await Api.PostAsync<ChapterNavDto>($"/api/chapters/{id}/restore", null, Token);
         SetApiResultMessage(result, "Đã khôi phục chương.", "Chưa thể khôi phục chương lúc này.");
-        return RedirectToPage(new { id, volumeId, novelId });
+        return RedirectToManageVolumes(novelId);
     }
 }

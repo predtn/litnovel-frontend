@@ -298,14 +298,7 @@
         return items;
     }
 
-    private static string StatusLabel(string? status) => status?.Trim().ToLowerInvariant() switch
-    {
-        "ongoing" => "Đang ra",
-        "ended" => "Hoàn thành",
-        "hiatus" => "Tạm dừng",
-        "dropped" => "Đã bỏ",
-        _ => string.IsNullOrWhiteSpace(status) ? "Không rõ" : status
-    };
+    private static string StatusLabel(string? status) => DisplayText.Status(status);
 }
 
 @section Scripts {

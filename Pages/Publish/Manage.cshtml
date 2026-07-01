@@ -33,7 +33,7 @@
                 }
                 else
                 {
-                    <button class="btn btn-secondary" type="button" title="@Model.EditUnavailableMessage" onclick="alert('@Model.EditUnavailableMessage')">Chỉnh sửa thông tin truyện</button>
+                    <button class="btn btn-secondary" type="button" title="@Model.EditUnavailableMessage" data-blocked-modal data-message="@Model.EditUnavailableMessage">Chỉnh sửa thông tin truyện</button>
                 }
             </div>
 
@@ -79,25 +79,23 @@
                 <a href="#overview" class="tab active">Tổng quan</a>
                 <a href="#volumes" class="tab">Tập & chương</a>
             </div>
-            <div id="overview" class="publish-richtext">@Html.Raw(Model.Novel.Description)</div>
-            <div class="divider"></div>
-            <div class="flex gap-xs" style="flex-wrap:wrap;">
-                @foreach (var tag in Model.Novel.Tags)
-                {
-                    <span class="badge badge-secondary">@tag.Name</span>
-                }
+            <div id="overview" class="publish-manage-panel" data-manage-panel="overview">
+                <div class="publish-richtext">@Html.Raw(Model.Novel.Description)</div>
+                <div class="divider"></div>
+                <div class="flex gap-xs" style="flex-wrap:wrap;">
+                    @foreach (var tag in Model.Novel.Tags)
+                    {
+                        <span class="badge badge-secondary">@tag.Name</span>
+                    }
+                </div>
             </div>
 
-            <div class="divider"></div>
-
-            <section class="publish-manage-section" id="volumes">
+            <section class="publish-manage-section" id="volumes" data-manage-panel="volumes">
                 <div class="publish-section-heading">
                     <div>
                         <h2 class="text-display-sm">Tập & chương</h2>
                         <p class="text-body-sm text-mute">Quản lý cấu trúc truyện ngay tại màn hình này.</p>
-                    </div>
-                    <a asp-page="/Publish/Volumes" asp-route-novelId="@Model.Novel.Id" class="btn btn-secondary btn-sm">Mở màn riêng</a>
-                </div>
+                    </div>                </div>
 
                 @if (Model.CanCreateVolume)
                 {
@@ -125,7 +123,7 @@
                                     <h3 class="publish-manage-volume__title">@volume.Title</h3>
                                     <div class="publish-meta-row">
                                         <span>@chapters.Count chương</span>
-                                        <span>Tạo ngày @DisplayDateTime.Format(volume.CreatedAt, "dd/MM/yyyy HH:mm")</span>
+                                        <span>Tạo ngày @(volume.CreatedAt == default ? "Vừa tạo" : DisplayDateTime.Format(volume.CreatedAt, "dd/MM/yyyy HH:mm"))</span>
                                     </div>
                                 </div>
                                 <span class="publish-manage-volume__chevron" aria-hidden="true">⌄</span>
@@ -136,7 +134,7 @@
                                     <form method="post" asp-page-handler="EditVolume" asp-route-id="@Model.Novel.Id" asp-route-volumeId="@volume.Id" class="publish-volume-edit-form">
                                         <input type="hidden" name="volumeNumber" value="@volume.VolumeNumber" />
                                         <input type="hidden" name="title" value="@volume.Title" data-volume-title />
-                                        <button class="btn btn-secondary btn-sm" type="submit" data-volume-edit>Sửa tên</button>
+                                        <button class="btn btn-secondary btn-sm" type="button" data-volume-edit>Sửa tên</button>
                                     </form>
                                     <form method="post" asp-page-handler="DeleteVolume" asp-route-id="@Model.Novel.Id" asp-route-volumeId="@volume.Id" onsubmit="return confirmSubmit(this, 'Xóa tập này?');">
                                         <button class="btn btn-danger btn-sm" type="submit">Xóa tập</button>
@@ -149,7 +147,7 @@
                                         @foreach (var chapter in chapters)
                                         {
                                             var chapterStatus = chapter.Status ?? "Draft";
-                                            <div class="publish-manage-chapter">
+                                            <div class="publish-manage-chapter publish-manage-chapter--link" data-href='@Url.Page("/Publish/ChapterPreview", new { id = chapter.Id, volumeId = volume.Id, novelId = Model.Novel.Id })' role="link" tabindex="0">
                                                 <div class="publish-manage-chapter__main">
                                                     <span class="publish-manage-chapter__number">Ch.@chapter.ChapterNumber</span>
                                                     <div>
@@ -161,11 +159,7 @@
                                                 </div>
                                                 <span class="status-badge status-@chapterStatus.ToLowerInvariant()">@DisplayText.Status(chapterStatus)</span>
                                                 <div class="publish-actions publish-manage-chapter__actions">
-                                                    <a asp-page="/Publish/ChapterPreview" asp-route-id="@chapter.Id" asp-route-volumeId="@volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-secondary btn-sm">Xem</a>
-                                                    @if (Model.CanEditChapter(chapterStatus))
-                                                    {
-                                                        <a asp-page="/Publish/ChapterEdit" asp-route-id="@chapter.Id" asp-route-volumeId="@volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-secondary btn-sm">Sửa</a>
-                                                    }
+
                                                     @if (Model.CanSubmitChapter(chapterStatus))
                                                     {
                                                         <form method="post" asp-page-handler="SubmitChapter" asp-route-id="@Model.Novel.Id" asp-route-chapterId="@chapter.Id">
@@ -262,29 +256,100 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="publishBlockedModal" role="dialog" aria-modal="true" aria-labelledby="publishBlockedModalTitle">
+    <div class="modal">
+        <div class="modal__header">
+            <div class="modal__title" id="publishBlockedModalTitle">Không thể chỉnh sửa</div>
+            <button type="button" class="modal__close" onclick="closeModal('publishBlockedModal')" aria-label="Đóng">×</button>
+        </div>
+        <p class="text-body-sm text-body" id="publishBlockedModalMessage"></p>
+        <div class="modal__footer">
+            <button type="button" class="btn btn-primary" onclick="closeModal('publishBlockedModal')">Đã hiểu</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="volumeEditModal" role="dialog" aria-modal="true" aria-labelledby="volumeEditModalTitle">
+    <div class="modal">
+        <div class="modal__header">
+            <div class="modal__title" id="volumeEditModalTitle">Sửa tên tập</div>
+            <button type="button" class="modal__close" onclick="closeModal('volumeEditModal')" aria-label="Đóng">×</button>
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="volumeEditTitle">Tên tập</label>
+            <input class="form-input" id="volumeEditTitle" maxlength="200" />
+        </div>
+        <div class="modal__footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('volumeEditModal')">Hủy</button>
+            <button type="button" class="btn btn-primary" data-volume-save>Lưu</button>
+        </div>
+    </div>
+</div>
 @section Scripts {
     <script>
+        const tabs = document.querySelectorAll('.publish-manage-tabs .tab');
+        const panels = document.querySelectorAll('[data-manage-panel]');
+
+        function activateManageTab(hash) {
+            const active = hash === '#volumes' ? 'volumes' : 'overview';
+            tabs.forEach(tab => tab.classList.toggle('active', tab.getAttribute('href') === `#${active}`));
+            panels.forEach(panel => panel.classList.toggle('hidden', panel.dataset.managePanel !== active));
+        }
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => window.setTimeout(() => activateManageTab(window.location.hash), 0));
+        });
+        activateManageTab(window.location.hash);
+
+        document.querySelectorAll('[data-blocked-modal]').forEach(button => {
+            button.addEventListener('click', () => {
+                const message = button.dataset.message || button.getAttribute('title') || 'Nội dung đang bị khóa nên không thể chỉnh sửa.';
+                const target = document.getElementById('publishBlockedModalMessage');
+                if (target) target.textContent = message;
+                openModal('publishBlockedModal');
+            });
+        });
+
+        let activeVolumeForm = null;
+        const volumeTitleInput = document.getElementById('volumeEditTitle');
         document.querySelectorAll('[data-volume-edit]').forEach(button => {
-            button.addEventListener('click', event => {
-                const form = button.closest('form');
-                const input = form?.querySelector('[data-volume-title]');
-                if (!form || !input) return;
+            button.addEventListener('click', () => {
+                activeVolumeForm = button.closest('form');
+                const input = activeVolumeForm?.querySelector('[data-volume-title]');
+                if (!activeVolumeForm || !input || !volumeTitleInput) return;
+                volumeTitleInput.value = input.value || '';
+                openModal('volumeEditModal');
+                volumeTitleInput.focus();
+                volumeTitleInput.select();
+            });
+        });
 
-                const currentTitle = input.value || '';
-                const nextTitle = window.prompt('Nhập tên tập mới', currentTitle);
-                if (nextTitle === null) {
+        document.querySelector('[data-volume-save]')?.addEventListener('click', () => {
+            const nextTitle = (volumeTitleInput?.value || '').trim();
+            if (!nextTitle) {
+                showToast('Cần nhập tiêu đề tập.', 'error');
+                return;
+            }
+            const input = activeVolumeForm?.querySelector('[data-volume-title]');
+            if (!activeVolumeForm || !input) return;
+            input.value = nextTitle;
+            activeVolumeForm.submit();
+        });
+
+        document.querySelectorAll('.publish-manage-chapter--link').forEach(row => {
+            const go = () => {
+                const href = row.dataset.href;
+                if (href) window.location.href = href;
+            };
+            row.addEventListener('click', event => {
+                if (event.target.closest('a, button, input, select, textarea, form')) return;
+                go();
+            });
+            row.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
-                    return;
+                    go();
                 }
-
-                const trimmedTitle = nextTitle.trim();
-                if (!trimmedTitle) {
-                    event.preventDefault();
-                    alert('Cần nhập tiêu đề tập.');
-                    return;
-                }
-
-                input.value = trimmedTitle;
             });
         });
     </script>

@@ -66,8 +66,10 @@ public class ChapterCreateModel : PublishPageModel
         }
 
         TempData["Success"] = submit ? "Chương đã được lưu và gửi duyệt." : "Đã lưu bản nháp chương.";
-        return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
+        return RedirectToManageVolumes(novelId);
     }
+
+    private IActionResult RedirectToManageVolumes(int novelId) => RedirectToPage("/Publish/Manage", pageHandler: null, routeValues: new { id = novelId }, fragment: "volumes");
 
     private static bool IsDraft(string? status)
         => string.Equals(status, "Draft", StringComparison.OrdinalIgnoreCase);

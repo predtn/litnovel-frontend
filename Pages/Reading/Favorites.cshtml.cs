@@ -10,6 +10,8 @@ public class FavoritesModel : PageModel
     private readonly IAuthService _auth;
 
     public List<NovelSummaryDto> Novels { get; set; } = [];
+    public int PageNumber { get; set; } = 1;
+    public int TotalPages { get; set; }
 
     public FavoritesModel(IApiService api, IAuthService auth)
     {
@@ -17,13 +19,22 @@ public class FavoritesModel : PageModel
         _auth = auth;
     }
 
-    public async Task<IActionResult> OnGetAsync()
+    public async Task<IActionResult> OnGetAsync(int page = 1)
     {
         var token = _auth.GetToken(HttpContext);
         if (string.IsNullOrEmpty(token)) return RedirectToPage("/Auth/Login");
 
-        var result = await _api.GetAsync<PagedData<NovelSummaryDto>>("/api/users/me/favorites?page=1&size=50", token);
-        Novels = result?.Data?.Items ?? [];
+        PageNumber = GetQueryInt("page", page);
+        var result = await _api.GetAsync<PagedData<NovelSummaryDto>>($"/api/users/me/favorites?page={PageNumber}&size=12", token);
+        var data = result?.Data;
+        if (data is { TotalPages: > 0 } && PageNumber > data.TotalPages)
+        {
+            PageNumber = data.TotalPages;
+            data = (await _api.GetAsync<PagedData<NovelSummaryDto>>($"/api/users/me/favorites?page={PageNumber}&size=12", token))?.Data;
+        }
+
+        Novels = data?.Items ?? [];
+        TotalPages = data?.TotalPages ?? 0;
 
         var user = _auth.GetCurrentUser(HttpContext);
         if (user != null)
@@ -35,7 +46,7 @@ public class FavoritesModel : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostAsync(int novelId)
+    public async Task<IActionResult> OnPostAsync(int novelId, int page = 1)
     {
         var token = _auth.GetToken(HttpContext);
         if (string.IsNullOrEmpty(token)) return RedirectToPage("/Auth/Login");
@@ -45,6 +56,18 @@ public class FavoritesModel : PageModel
             ? "Đã bỏ yêu thích."
             : (result?.Message ?? "Không thể bỏ yêu thích.");
 
-        return RedirectToPage();
+        return RedirectToPage(new { page });
+    }
+
+    private int GetQueryInt(string key, int fallback)
+    {
+        if (Request.Query.TryGetValue(key, out var values)
+            && int.TryParse(values.FirstOrDefault(), out var value)
+            && value > 0)
+        {
+            return value;
+        }
+
+        return Math.Max(1, fallback);
     }
 }

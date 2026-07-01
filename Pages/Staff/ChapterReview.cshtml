@@ -53,7 +53,7 @@
                         </div>
                         <h2 class="card__title">@c.Title</h2>
                     </div>
-                    <span class="status-badge status-@c.Status.ToLower()">@c.Status</span>
+                    <span class="status-badge status-@c.Status.ToLower()">@DisplayText.Status(c.Status)</span>
                 </div>
                 <div class="card__body">
                     <div class="meta-grid">

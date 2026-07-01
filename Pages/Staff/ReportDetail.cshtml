@@ -47,7 +47,7 @@
                         <span class="badge @(r.Kind == "Novel" ? "badge-primary" : "badge-secondary") mr-xs">@r.Kind</span>
                         <span class="badge badge-secondary">@r.ReportType</span>
                     </div>
-                    <span class="status-badge status-@r.Status.ToLower()">@r.Status</span>
+                    <span class="status-badge status-@r.Status.ToLower()">@DisplayText.Status(r.Status)</span>
                 </div>
                 <div class="card__body">
                     <div class="meta-grid">

@@ -22,7 +22,7 @@
 
     <div class="publish-toolbar">
         <div class="tabs publish-tabs">
-            @foreach (var tab in new[] { ("", "Tất cả"), ("Draft", "Bản nháp"), ("Pending", "Chờ duyệt"), ("Ongoing", "Đang tiến hành"), ("Ended", "Đã kết thúc") })
+            @foreach (var tab in new[] { ("", "Tất cả"), ("Draft", "Bản nháp"), ("Pending", "Chờ duyệt"), ("Ongoing", "Đang tiến hành"), ("Ended", "Đã kết thúc"), ("PendingDeletion", "Ch&#7901; x&#243;a") })
             {
                 <a class="tab @(Model.Status == tab.Item1 ? "active" : "")" asp-page="/Publish/Index" asp-route-status="@tab.Item1" asp-route-keyword="@Model.Keyword" asp-route-sort="@Model.Sort">@tab.Item2</a>
             }

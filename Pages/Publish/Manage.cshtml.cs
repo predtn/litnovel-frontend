@@ -1,5 +1,6 @@
 using litnovel_frontend.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.RegularExpressions;
 
 namespace litnovel_frontend.Pages.Publish;
 
@@ -37,6 +38,7 @@ public class ManageModel : PublishPageModel
         }
 
         Novel = result.Data;
+        await FillMissingWordCountsAsync();
         LifecycleStatus = Novel.Status;
         PrepareVolumeInput();
         return Page();
@@ -59,13 +61,13 @@ public class ManageModel : PublishPageModel
         if (!CanChangeNovelLifecycleStatus(novel.Status))
         {
             TempData["Error"] = "Chỉ có thể đổi trạng thái vòng đời khi truyện đang xuất bản.";
-            return RedirectToPage(new { id });
+            return RedirectToManageVolumes(id);
         }
 
         if (!IsAllowedNovelLifecycleStatus(LifecycleStatus))
         {
             TempData["Error"] = "Trạng thái vòng đời phải là: Đang tiến hành, Đã kết thúc, Tạm ngưng, Đã bỏ.";
-            return RedirectToPage(new { id });
+            return RedirectToManageVolumes(id);
         }
 
         var request = new NovelLifecycleStatusRequest { Status = LifecycleStatus };
@@ -84,7 +86,7 @@ public class ManageModel : PublishPageModel
         if (!CanSubmitForReview(novel.Status))
         {
             TempData["Error"] = "Truyện chỉ có thể gửi duyệt khi đang là bản nháp hoặc cần chỉnh sửa.";
-            return RedirectToPage(new { id });
+            return RedirectToManageVolumes(id);
         }
 
         var result = await Api.PostAsync<object>($"/api/novels/{id}/submit", null, Token);
@@ -102,13 +104,13 @@ public class ManageModel : PublishPageModel
         if (IsPendingReview(novel.Status))
         {
             TempData["Error"] = "Truyện đang chờ duyệt nên chưa thể xóa.";
-            return RedirectToPage(new { id });
+            return RedirectToManageVolumes(id);
         }
 
         if (novel.Volumes.SelectMany(volume => volume.Chapters).Any(chapter => IsPendingReview(chapter.Status)))
         {
             TempData["Error"] = "Truyện còn chương đang chờ duyệt nên chưa thể xóa.";
-            return RedirectToPage(new { id });
+            return RedirectToManageVolumes(id);
         }
 
         var result = await Api.DeleteAsync<object>($"/api/novels/{id}", Token);
@@ -126,12 +128,12 @@ public class ManageModel : PublishPageModel
         if (IsPendingDeletion(novel.Status) || IsPendingReview(novel.Status))
         {
             TempData["Error"] = "Không thể thêm tập khi truyện đang chờ duyệt hoặc chờ xóa.";
-            return RedirectToPage(new { id });
+            return RedirectToManageVolumes(id);
         }
 
         var result = await Api.PostAsync<VolumeDto>($"/api/novels/{id}/volumes", VolumeInput, Token);
         SetApiResultMessage(result, "Tạo tập thành công.", "Không thể tạo tập.");
-        return RedirectToPage(new { id });
+        return RedirectToManageVolumes(id);
     }
 
     public async Task<IActionResult> OnPostEditVolumeAsync(int id, int volumeId, int volumeNumber, string title)
@@ -142,7 +144,7 @@ public class ManageModel : PublishPageModel
         if (string.IsNullOrWhiteSpace(title))
         {
             TempData["Error"] = "Cần nhập tiêu đề tập.";
-            return RedirectToPage(new { id });
+            return RedirectToManageVolumes(id);
         }
 
         var input = new VolumeUpsertRequest
@@ -152,7 +154,7 @@ public class ManageModel : PublishPageModel
         };
         var result = await Api.PutAsync<VolumeDto>($"/api/volumes/{volumeId}", input, Token);
         SetApiResultMessage(result, "Đã cập nhật tên tập.", "Không thể cập nhật tên tập.");
-        return RedirectToPage(new { id });
+        return RedirectToManageVolumes(id);
     }
 
     public async Task<IActionResult> OnPostDeleteVolumeAsync(int id, int volumeId)
@@ -162,7 +164,7 @@ public class ManageModel : PublishPageModel
 
         var result = await Api.DeleteAsync<object>($"/api/volumes/{volumeId}", Token);
         SetApiResultMessage(result, "Đã xóa tập.", "Không thể xóa tập.");
-        return RedirectToPage(new { id });
+        return RedirectToManageVolumes(id);
     }
 
     public async Task<IActionResult> OnPostSubmitChapterAsync(int id, int chapterId)
@@ -174,12 +176,12 @@ public class ManageModel : PublishPageModel
         if (IsApiSuccess(chapterResult) && chapterResult?.Data != null && !CanSubmitForReview(chapterResult.Data.Status))
         {
             TempData["Error"] = "Chương chỉ có thể gửi duyệt khi đang là bản nháp hoặc cần chỉnh sửa.";
-            return RedirectToPage(new { id });
+            return RedirectToManageVolumes(id);
         }
 
         var result = await Api.PostAsync<object>($"/api/chapters/{chapterId}/submit", null, Token);
         SetApiResultMessage(result, "Chương đã được gửi duyệt.", "Chưa thể gửi duyệt chương lúc này.");
-        return RedirectToPage(new { id });
+        return RedirectToManageVolumes(id);
     }
 
     public async Task<IActionResult> OnPostWithdrawChapterAsync(int id, int chapterId)
@@ -191,12 +193,12 @@ public class ManageModel : PublishPageModel
         if (IsApiSuccess(chapterResult) && chapterResult?.Data != null && !IsPendingReview(chapterResult.Data.Status))
         {
             TempData["Error"] = "Chỉ có thể hủy gửi duyệt khi chương đang chờ duyệt.";
-            return RedirectToPage(new { id });
+            return RedirectToManageVolumes(id);
         }
 
         var result = await Api.PostAsync<ChapterNavDto>($"/api/chapters/{chapterId}/withdraw", null, Token);
         SetApiResultMessage(result, "Đã hủy gửi duyệt. Chương đã trở lại bản nháp.", "Chưa thể hủy gửi duyệt chương lúc này.");
-        return RedirectToPage(new { id });
+        return RedirectToManageVolumes(id);
     }
 
     public async Task<IActionResult> OnPostDeleteChapterAsync(int id, int chapterId)
@@ -208,18 +210,18 @@ public class ManageModel : PublishPageModel
         if (!IsApiSuccess(chapterResult) || chapterResult?.Data == null)
         {
             TempData["Error"] = ApiFailureMessage(chapterResult, "Không thể tải thông tin chương.");
-            return RedirectToPage(new { id });
+            return RedirectToManageVolumes(id);
         }
 
         if (!CanDeleteChapter(chapterResult.Data.Status))
         {
             TempData["Error"] = "Chỉ có thể xóa chương đang là bản nháp hoặc đã được duyệt.";
-            return RedirectToPage(new { id });
+            return RedirectToManageVolumes(id);
         }
 
         var result = await Api.DeleteAsync<object>($"/api/chapters/{chapterId}", Token);
         SetApiResultMessage(result, "Đã xóa chương.", "Chưa thể xóa chương lúc này.");
-        return RedirectToPage(new { id });
+        return RedirectToManageVolumes(id);
     }
 
     public async Task<IActionResult> OnPostRestoreChapterAsync(int id, int chapterId)
@@ -231,18 +233,18 @@ public class ManageModel : PublishPageModel
         if (!IsApiSuccess(chapterResult) || chapterResult?.Data == null)
         {
             TempData["Error"] = ApiFailureMessage(chapterResult, "Không thể tải thông tin chương.");
-            return RedirectToPage(new { id });
+            return RedirectToManageVolumes(id);
         }
 
         if (!IsPendingDeletion(chapterResult.Data.Status))
         {
             TempData["Error"] = "Chỉ có thể khôi phục chương đang chờ xóa.";
-            return RedirectToPage(new { id });
+            return RedirectToManageVolumes(id);
         }
 
         var result = await Api.PostAsync<ChapterNavDto>($"/api/chapters/{chapterId}/restore", null, Token);
         SetApiResultMessage(result, "Đã khôi phục chương.", "Chưa thể khôi phục chương lúc này.");
-        return RedirectToPage(new { id });
+        return RedirectToManageVolumes(id);
     }
 
     public async Task<IActionResult> OnPostRestoreAsync(int id)
@@ -255,7 +257,7 @@ public class ManageModel : PublishPageModel
         if (!IsPendingDeletion(novel.Status))
         {
             TempData["Error"] = "Chỉ có thể khôi phục truyện đang chờ xóa.";
-            return RedirectToPage(new { id });
+            return RedirectToManageVolumes(id);
         }
 
         var result = await Api.PostAsync<NovelSummaryDto>($"/api/novels/{id}/restore", null, Token);
@@ -273,21 +275,21 @@ public class ManageModel : PublishPageModel
         if (!IsPendingReview(novel.Status))
         {
             TempData["Error"] = "Chỉ có thể hủy gửi duyệt khi truyện đang chờ duyệt.";
-            return RedirectToPage(new { id });
+            return RedirectToManageVolumes(id);
         }
 
         var result = await Api.PostAsync<NovelSummaryDto>($"/api/novels/{id}/withdraw", null, Token);
         if (!IsApiSuccess(result))
         {
             TempData["Error"] = ApiFailureMessage(result, "Chưa thể hủy gửi duyệt lúc này.");
-            return RedirectToPage(new { id });
+            return RedirectToManageVolumes(id);
         }
 
         var verifyResult = await Api.GetAsync<NovelDetailDto>($"/api/novels/{id}", Token);
         if (!string.Equals(verifyResult?.Data?.Status, "Draft", StringComparison.OrdinalIgnoreCase))
         {
             TempData["Error"] = "Hệ thống chưa cập nhật truyện về bản nháp. Vui lòng thử lại sau.";
-            return RedirectToPage(new { id });
+            return RedirectToManageVolumes(id);
         }
 
         TempData["Success"] = "Đã hủy gửi duyệt. Truyện đã trở lại bản nháp.";
@@ -302,6 +304,46 @@ public class ManageModel : PublishPageModel
         TempData["Error"] = ApiFailureMessage(result, "Không thể tải thông tin truyện.");
         return null;
     }
+
+    private async Task FillMissingWordCountsAsync()
+    {
+        var chapters = Novel.Volumes
+            .SelectMany(volume => volume.Chapters)
+            .Where(chapter => chapter.WordCount <= 0)
+            .ToList();
+        if (chapters.Count == 0) return;
+
+        var detailTasks = chapters.ToDictionary(
+            chapter => chapter.Id,
+            chapter => Api.GetAsync<ChapterDetailDto>($"/api/chapters/{chapter.Id}", Token));
+
+        await Task.WhenAll(detailTasks.Values);
+
+        foreach (var chapter in chapters)
+        {
+            var detail = detailTasks[chapter.Id].Result?.Data;
+            chapter.WordCount = CountWords(detail?.Content);
+        }
+    }
+
+    private static int CountWords(string? value)
+    {
+        var text = ToPlainText(value);
+        return string.IsNullOrWhiteSpace(text)
+            ? 0
+            : Regex.Matches(text, @"[\p{L}\p{N}]+(?:['’.-][\p{L}\p{N}]+)*").Count;
+    }
+
+    private static string ToPlainText(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return "";
+        return Regex.Replace(value, "<.*?>", " ")
+            .Replace("&nbsp;", " ")
+            .Replace('\u00a0', ' ')
+            .Trim();
+    }
+
+    private IActionResult RedirectToManageVolumes(int id) => RedirectToPage("/Publish/Manage", pageHandler: null, routeValues: new { id }, fragment: "volumes");
 
     private void PrepareVolumeInput()
     {

@@ -43,7 +43,7 @@
             <div class="card">
                 <div class="card__header">
                     <h2 class="card__title">@n.Title</h2>
-                    <span class="status-badge status-@n.Status.ToLower()">@n.Status</span>
+                    <span class="status-badge status-@n.Status.ToLower()">@DisplayText.Status(n.Status)</span>
                 </div>
                 <div class="card__body">
                     @if (!string.IsNullOrEmpty(n.Description))
@@ -85,7 +85,7 @@
                             <div class="chapter-item">
                                 <span class="chapter-num">Chương @ch.ChapterNumber</span>
                                 <span class="chapter-title">@ch.Title</span>
-                                <span class="status-badge status-@ch.Status.ToLower() badge-sm">@ch.Status</span>
+                                <span class="status-badge status-@ch.Status.ToLower() badge-sm">@DisplayText.Status(ch.Status)</span>
                                 <a href="/Staff/ChapterReview?id=@ch.Id" class="btn btn-secondary btn-xs">Xem</a>
                             </div>
                         }

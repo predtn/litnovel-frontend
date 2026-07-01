@@ -29,7 +29,7 @@ public class IndexModel : PageModel
         // Load homepage content in parallel.
         var catTask          = _api.GetAsync<List<CategoryDto>>("/api/categories");
         var trendingTask     = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=viewCount&order=desc&page=1&size=24");
-        var newTask          = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=updatedAt&order=desc&page=1&size=8");
+        var newTask          = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=latestChapterUpdatedAt&order=desc&page=1&size=8");
         var topTask          = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=ratingAverage&order=desc&page=1&size=24");
         var announcementTask = LoadAnnouncementsAsync(token);
         var readingTask      = !string.IsNullOrWhiteSpace(token)

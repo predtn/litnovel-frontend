@@ -612,6 +612,12 @@ ul, ol { list-style: none; }
   fill: currentColor;
   stroke: none;
 }
+.novel-card__meta .status-badge {
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
 
 /* ─── 8. Badges & Tags ─── */
 .badge {
@@ -649,7 +655,7 @@ ul, ol { list-style: none; }
   line-height: 1;
   background: rgba(0, 0, 0, 0.08);
   color: var(--color-body, #4d4d4d);
-  text-transform: capitalize;
+  text-transform: none;
 }
 .status-badge::before {
   content: '';
@@ -3509,6 +3515,13 @@ ul, ol { list-style: none; }
   gap: var(--space-sm);
   padding: var(--space-sm) var(--space-md);
   border-bottom: 1px solid var(--color-hairline);
+}
+.publish-manage-chapter--link {
+  cursor: pointer;
+}
+.publish-manage-chapter--link:hover,
+.publish-manage-chapter--link:focus-visible {
+  background: var(--color-canvas-soft);
 }
 .publish-manage-chapter:last-child {
   border-bottom: 0;

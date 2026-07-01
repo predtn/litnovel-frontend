@@ -58,14 +58,6 @@
                         {
                             <a href="/Novels/@novelUrl/@chapterUrl/read" class="btn btn-primary btn-sm" style="border-radius:var(--radius-sm);">Tiếp tục</a>
                         }
-                        @if (novel != null)
-                        {
-                            <form method="post" asp-page-handler="Delete" asp-route-page="@Model.PageNumber" style="margin:0;">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="novelId" value="@novel.Id" />
-                                <button type="submit" class="btn btn-secondary btn-sm" style="border-radius:var(--radius-sm);">Xóa</button>
-                            </form>
-                        }
                     </div>
                 </div>
             }
@@ -73,16 +65,51 @@
 
         @if (Model.TotalPages > 1)
         {
-            <div class="flex justify-center gap-sm mt-xl">
-                @if (Model.PageNumber > 1)
-                {
-                    <a class="btn btn-secondary btn-sm" href="/Reading/History?page=@(Model.PageNumber - 1)">Trước</a>
-                }
-                <span class="text-caption text-mute" style="align-self:center;">@Model.PageNumber / @Model.TotalPages</span>
-                @if (Model.PageNumber < Model.TotalPages)
-                {
-                    <a class="btn btn-secondary btn-sm" href="/Reading/History?page=@(Model.PageNumber + 1)">Sau</a>
-                }
+            <div class="flex justify-center mt-xl">
+                <div class="pagination">
+                    @if (Model.PageNumber > 1)
+                    {
+                        <a href="@PageUrl(Model.PageNumber - 1)" class="pagination__btn">←</a>
+                    }
+                    @foreach (var item in PaginationItems())
+                    {
+                        if (item.HasValue)
+                        {
+                            var pageNumber = item.Value;
+                            <a href="@PageUrl(pageNumber)" class="pagination__btn @(pageNumber == Model.PageNumber ? "active" : "")">@pageNumber</a>
+                        }
+                        else
+                        {
+                            <span class="pagination__btn disabled">...</span>
+                        }
+                    }
+                    @if (Model.PageNumber < Model.TotalPages)
+                    {
+                        <a href="@PageUrl(Model.PageNumber + 1)" class="pagination__btn">→</a>
+                    }
+                    <button type="button" class="pagination__btn" onclick="openModal('historyPageModal')" title="Chọn trang" aria-label="Chọn trang">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                            <line x1="4" y1="7" x2="20" y2="7"></line>
+                            <line x1="4" y1="12" x2="20" y2="12"></line>
+                            <line x1="4" y1="17" x2="20" y2="17"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="modal-overlay" id="historyPageModal">
+                <div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="historyPageModalTitle">
+                    <div class="modal__header">
+                        <div class="modal__title" id="historyPageModalTitle">Chọn trang</div>
+                        <button type="button" class="modal__close" onclick="closeModal('historyPageModal')" aria-label="Đóng">×</button>
+                    </div>
+                    <div class="catalog-page-modal">
+                        @for (var pageNumber = 1; pageNumber <= Model.TotalPages; pageNumber++)
+                        {
+                            <a href="@PageUrl(pageNumber)" class="pagination__btn @(pageNumber == Model.PageNumber ? "active" : "")">@pageNumber</a>
+                        }
+                    </div>
+                </div>
             </div>
         }
     }
@@ -90,5 +117,59 @@
 
 @functions
 {
-    string TimeAgo(DateTime dt) => DisplayDateTime.Relative(dt);
+    string TimeAgo(DateTime dt)
+    {
+        var d = DateTime.UtcNow - dt;
+        if (d.TotalMinutes < 1) return "vừa xong";
+        if (d.TotalMinutes < 60) return $"{(int)d.TotalMinutes} phút trước";
+        if (d.TotalHours < 24) return $"{(int)d.TotalHours} giờ trước";
+        return $"{(int)d.TotalDays} ngày trước";
+    }
+
+    private string PageUrl(int page) => $"/Reading/History?page={page}";
+
+    private List<int?> PaginationItems()
+    {
+        var total = Model.TotalPages;
+        var current = Math.Min(Math.Max(Model.PageNumber, 1), total);
+        var visiblePages = new SortedSet<int>();
+
+        void AddPage(int page)
+        {
+            if (page >= 1 && page <= total) visiblePages.Add(page);
+        }
+
+        if (total <= 7)
+        {
+            for (var page = 1; page <= total; page++) AddPage(page);
+        }
+        else
+        {
+            AddPage(1);
+            AddPage(total);
+
+            for (var page = current - 1; page <= current + 1; page++) AddPage(page);
+
+            if (current <= 4)
+            {
+                for (var page = 2; page <= 5; page++) AddPage(page);
+            }
+
+            if (current >= total - 3)
+            {
+                for (var page = total - 4; page < total; page++) AddPage(page);
+            }
+        }
+
+        var items = new List<int?>();
+        int? previous = null;
+        foreach (var page in visiblePages)
+        {
+            if (previous.HasValue && page - previous.Value > 1) items.Add(null);
+            items.Add(page);
+            previous = page;
+        }
+
+        return items;
+    }
 }

@@ -326,20 +326,7 @@
 @functions {
     string FormatNum(int n) => n >= 1000000 ? $"{n / 1000000.0:0.#}M" : n >= 1000 ? $"{n / 1000.0:0.#}K" : n.ToString();
 
-    static string StatusLabel(string? status) => status?.Trim().ToLowerInvariant() switch
-    {
-        "draft" => "Bản nháp",
-        "pending" => "Chờ duyệt",
-        "ongoing" => "Đang ra",
-        "published" => "Đã xuất bản",
-        "ended" => "Hoàn thành",
-        "dropped" => "Đã bỏ",
-        "rejected" => "Bị từ chối",
-        "hiatus" => "Tạm dừng",
-        "locked" => "Đã khóa",
-        "pendingdeletion" => "Chờ xóa",
-        _ => string.IsNullOrWhiteSpace(status) ? "Không rõ" : status
-    };
+    static string StatusLabel(string? status) => DisplayText.Status(status);
 
     static bool IsPendingDeletion(string? status)
         => string.Equals(status, "PendingDeletion", StringComparison.OrdinalIgnoreCase);

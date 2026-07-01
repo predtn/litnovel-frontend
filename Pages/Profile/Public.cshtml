@@ -1,4 +1,4 @@
-﻿@page "/Profile/{userId:int}"
+@page "/Profile/{userId:int}"
 @model litnovel_frontend.Pages.Profile.PublicModel
 @{
     ViewData["Title"] = Model.User?.Username ?? "Hồ sơ";
@@ -160,18 +160,7 @@
             || icon.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string StatusLabel(string status) => status?.Trim().ToLowerInvariant() switch
-    {
-        "draft" => "Bản nháp",
-        "pending" => "Chờ duyệt",
-        "ongoing" => "Đang ra",
-        "published" => "Đã xuất bản",
-        "ended" => "Hoàn thành",
-        "rejected" => "Bị từ chối",
-        "hiatus" => "Tạm dừng",
-        "locked" => "Đã khóa",
-        _ => string.IsNullOrWhiteSpace(status) ? "Không rõ" : status
-    };
+    private static string StatusLabel(string? status) => DisplayText.Status(status);
 
     private static string UserStatusLabel(string? status) => status?.Trim().ToLowerInvariant() switch
     {
