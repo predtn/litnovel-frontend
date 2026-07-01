@@ -82,7 +82,7 @@
                             {
                                 var chapterUrl = !string.IsNullOrWhiteSpace(chapter.Slug) ? chapter.Slug : chapter.Id.ToString();
                                 var isActive = chapter.Id == ch.Id;
-                                <a href="/Novels/@novelUrl/@chapterUrl/read" class="reader-chapter-link @(isActive ? "active" : "")">
+                                <a href="/Novels/@novelUrl/@chapterUrl/read" class="reader-chapter-link @(isActive ? "active" : "") @(chapter.IsRead ? "read" : "")">
                                     <span class="reader-chapter-link__number">Ch.@chapter.ChapterNumber</span>
                                     <span class="reader-chapter-link__title">@chapter.Title</span>
                                 </a>
@@ -186,7 +186,18 @@
                 <div class="comment__body">
                     <div class="comment__header">
                         <span class="comment__author">@comment.User?.Username</span>
-                        <span class="comment__time">@TimeAgo(comment.CreatedAt)</span>
+                        @if (comment.User?.Badges?.Any() == true)
+                        {
+                            <span class="comment-user-badges">
+                                @foreach (var badge in comment.User.Badges)
+                                {
+                                    var badgeColor = string.IsNullOrWhiteSpace(badge.Color) ? "#111827" : badge.Color;
+                                    <span class="comment-user-badge" title="@badge.Name" style="--badge-color:@badgeColor;">
+                                        <span>@badge.Name</span>
+                                    </span>
+                                }
+                            </span>
+                        }
                         @if (Model.CurrentUserId == comment.User?.Id)
                         {
                             <button type="button" class="comment__delete" onclick="deleteComment(@comment.Id)" title="Xóa bình luận" aria-label="Xóa bình luận">
@@ -212,6 +223,7 @@
                         {
                             <span class="comment__action">Thích @comment.LikeCount</span>
                         }
+                        <span class="comment__time">@TimeAgo(comment.CreatedAt)</span>
                     </div>
 
                     @if (User.Identity?.IsAuthenticated == true)
@@ -240,7 +252,18 @@
                                     <div class="comment__body">
                                         <div class="comment__header">
                                             <span class="comment__author">@reply.User?.Username</span>
-                                            <span class="comment__time">@TimeAgo(reply.CreatedAt)</span>
+                                            @if (reply.User?.Badges?.Any() == true)
+                                            {
+                                                <span class="comment-user-badges">
+                                                    @foreach (var badge in reply.User.Badges)
+                                                    {
+                                                        var badgeColor = string.IsNullOrWhiteSpace(badge.Color) ? "#111827" : badge.Color;
+                                                        <span class="comment-user-badge" title="@badge.Name" style="--badge-color:@badgeColor;">
+                                                            <span>@badge.Name</span>
+                                                        </span>
+                                                    }
+                                                </span>
+                                            }
                                             @if (Model.CurrentUserId == reply.User?.Id)
                                             {
                                                 <button type="button" class="comment__delete" onclick="deleteComment(@reply.Id)" title="Xóa bình luận" aria-label="Xóa bình luận">
@@ -265,6 +288,7 @@
                                             {
                                                 <span class="comment__action">Thích @reply.LikeCount</span>
                                             }
+                                            <span class="comment__time">@TimeAgo(reply.CreatedAt)</span>
                                         </div>
                                     </div>
                                 </div>
@@ -315,8 +339,6 @@
 
 @section Scripts {
 <script>
-initReadingProgress(@ch.Id);
-
 let fontSize = 17;
 function changeFontSize(delta) {
     fontSize = Math.max(14, Math.min(24, fontSize + delta));

@@ -135,7 +135,7 @@
                                     <a href="/Novels/@novelUrl" class="novel-card__title">@novel.Title</a>
                                     @if (novel.Category != null)
                                     {
-                                        <span class="novel-card__category">@novel.Category.Name</span>
+                                        <a href="/Novels?categoryId=@novel.Category.Id" class="novel-card__category">@novel.Category.Name</a>
                                     }
                                 </div>
                                 <div class="novel-card__author">Tác giả: <span>@novel.Author?.Username</span></div>
@@ -145,7 +145,7 @@
                                     <div class="novel-card__tags">
                                         @foreach (var tag in novel.Tags.Take(8))
                                         {
-                                            <span class="novel-card__tag">@tag.Name</span>
+                                            <a href="/Novels?tagId=@tag.Id" class="tag novel-card__tag">@tag.Name</a>
                                         }
                                     </div>
                                 }
@@ -320,5 +320,3 @@ function toggleFavorite(event, novelId) {
 // Không cần AJAX để lấy trạng thái ban đầu - server đã render class 'active' vào HTML
 </script>
 }
-
-

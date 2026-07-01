@@ -1,38 +1,101 @@
 @page
 @model litnovel_frontend.Pages.Reading.HistoryModel
-@{ ViewData["Title"] = "Lịch sử đọc"; }
-<!-- SCR-14: Reading History -->
+@{
+    ViewData["Title"] = "Lịch sử đọc";
+}
+
 <div class="container" style="padding-top:var(--space-xl);padding-bottom:var(--space-4xl);">
     <div class="page-header">
         <h1 class="page-header__title">Lịch sử đọc</h1>
+        <p class="page-header__subtitle">@Model.History.Count truyện</p>
     </div>
+
     @if (!Model.History.Any())
     {
-        <div class="empty-state"><div class="empty-state__icon">📚</div><div class="empty-state__title">Chưa có lịch sử đọc</div><div class="empty-state__desc">Bắt đầu đọc truyện để theo dõi tiến trình.</div><a href="/Novels" class="btn btn-primary mt-md">Khám phá truyện</a></div>
+        <div class="empty-state">
+            <div class="empty-state__icon">Sách</div>
+            <div class="empty-state__title">Chưa có lịch sử đọc</div>
+            <div class="empty-state__desc">Bắt đầu đọc truyện để theo dõi tiến độ.</div>
+            <a href="/Novels" class="btn btn-primary mt-md">Khám phá truyện</a>
+        </div>
     }
     else
     {
         <div style="display:flex;flex-direction:column;gap:var(--space-sm);">
             @foreach (var h in Model.History)
             {
-                var novelUrl = !string.IsNullOrWhiteSpace(h.Novel?.Slug) ? h.Novel.Slug : h.Novel?.Id.ToString();
-                var chapterUrl = !string.IsNullOrWhiteSpace(h.LastChapter?.Slug) ? h.LastChapter.Slug : h.LastChapter?.Id.ToString();
+                var novel = h.Novel;
+                var chapter = h.LastChapter;
+                var novelUrl = !string.IsNullOrWhiteSpace(novel?.Slug) ? novel.Slug : novel?.Id.ToString();
+                var chapterUrl = !string.IsNullOrWhiteSpace(chapter?.Slug) ? chapter.Slug : chapter?.Id.ToString();
+
                 <div class="flex gap-md" style="background:var(--color-canvas);border-radius:var(--radius-md);padding:var(--space-md);border:1px solid var(--color-hairline);">
-                    <div style="width:56px;height:76px;background:var(--color-canvas-soft-2);border-radius:var(--radius-xs);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">📖</div>
+                    <div style="width:56px;height:76px;flex-shrink:0;">
+                        @if (!string.IsNullOrWhiteSpace(novel?.CoverImage))
+                        {
+                            <img src="@novel.CoverImage" alt="@novel.Title" loading="lazy" style="width:56px;height:76px;object-fit:cover;border-radius:var(--radius-xs);background:var(--color-canvas-soft-2);" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
+                            <div class="hidden" style="width:56px;height:76px;background:var(--color-canvas-soft-2);border-radius:var(--radius-xs);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--color-mute);">Sách</div>
+                        }
+                        else
+                        {
+                            <div style="width:56px;height:76px;background:var(--color-canvas-soft-2);border-radius:var(--radius-xs);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--color-mute);">Sách</div>
+                        }
+                    </div>
+
                     <div style="flex:1;min-width:0;">
-                        <a href="/Novels/@novelUrl" class="text-body-sm font-medium text-ink">@h.Novel?.Title</a>
-                        <div class="text-caption text-mute mt-xs">Đọc đến: @h.LastChapter?.Title</div>
+                        <a href="/Novels/@novelUrl" class="text-body-sm font-medium text-ink">@novel?.Title</a>
+                        <div class="text-caption text-mute mt-xs">Đọc đến: @chapter?.Title</div>
                         <div style="margin-top:var(--space-xs);">
-                            <div class="progress" style="margin-bottom:4px;"><div class="progress__bar" style="width:@h.ProgressPercentage%;"></div></div>
-                            <span class="text-caption text-mute">@h.ProgressPercentage% · @TimeAgo(h.LastReadAt)</span>
+                            <div class="progress" style="margin-bottom:4px;">
+                                <div class="progress__bar" style="width:@h.ProgressPercentage%;"></div>
+                            </div>
+                            <span class="text-caption text-mute">@h.ProgressPercentage% số chương - @TimeAgo(h.LastReadAt)</span>
                         </div>
                     </div>
-                    <div style="flex-shrink:0;">
-                        <a href="/Novels/@novelUrl/@chapterUrl/read" class="btn btn-primary btn-sm" style="border-radius:var(--radius-sm);">Tiếp tục</a>
+
+                    <div style="flex-shrink:0;display:flex;gap:var(--space-xs);align-items:center;">
+                        @if (!string.IsNullOrWhiteSpace(novelUrl) && !string.IsNullOrWhiteSpace(chapterUrl))
+                        {
+                            <a href="/Novels/@novelUrl/@chapterUrl/read" class="btn btn-primary btn-sm" style="border-radius:var(--radius-sm);">Tiếp tục</a>
+                        }
+                        @if (novel != null)
+                        {
+                            <form method="post" asp-page-handler="Delete" asp-route-page="@Model.PageNumber" style="margin:0;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="novelId" value="@novel.Id" />
+                                <button type="submit" class="btn btn-secondary btn-sm" style="border-radius:var(--radius-sm);">Xóa</button>
+                            </form>
+                        }
                     </div>
                 </div>
             }
         </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <div class="flex justify-center gap-sm mt-xl">
+                @if (Model.PageNumber > 1)
+                {
+                    <a class="btn btn-secondary btn-sm" href="/Reading/History?page=@(Model.PageNumber - 1)">Trước</a>
+                }
+                <span class="text-caption text-mute" style="align-self:center;">@Model.PageNumber / @Model.TotalPages</span>
+                @if (Model.PageNumber < Model.TotalPages)
+                {
+                    <a class="btn btn-secondary btn-sm" href="/Reading/History?page=@(Model.PageNumber + 1)">Sau</a>
+                }
+            </div>
+        }
     }
 </div>
-@functions { string TimeAgo(DateTime dt) { var d = DateTime.UtcNow - dt; return d.TotalMinutes < 60 ? $"{(int)d.TotalMinutes}p trước" : d.TotalHours < 24 ? $"{(int)d.TotalHours}h trước" : $"{(int)d.TotalDays}d trước"; } }
+
+@functions
+{
+    string TimeAgo(DateTime dt)
+    {
+        var d = DateTime.UtcNow - dt;
+        if (d.TotalMinutes < 1) return "vừa xong";
+        if (d.TotalMinutes < 60) return $"{(int)d.TotalMinutes} phút trước";
+        if (d.TotalHours < 24) return $"{(int)d.TotalHours} giờ trước";
+        return $"{(int)d.TotalDays} ngày trước";
+    }
+}

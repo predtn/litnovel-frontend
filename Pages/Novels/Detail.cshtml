@@ -9,7 +9,7 @@
 {
     <div class="container" style="padding-top:80px;">
         <div class="empty-state">
-            <div class="empty-state__icon">⌕</div>
+            <div class="empty-state__icon">Không tìm thấy</div>
             <div class="empty-state__title">Không tìm thấy truyện</div>
             <a href="/Novels" class="btn btn-primary mt-md">Quay lại thư viện</a>
         </div>
@@ -32,18 +32,21 @@
             }
             else
             {
-                <div class="novel-detail__cover-empty">No cover</div>
+                <div class="novel-detail__cover-empty">Không có bìa</div>
             }
 
             <div class="novel-detail__actions">
                 @{
                     var firstChapter = novel.Volumes.SelectMany(v => v.Chapters).FirstOrDefault();
+                    var continueChapter = Model.CurrentReadingProgress?.LastChapter;
+                    var targetChapter = continueChapter ?? firstChapter;
                     var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
                 }
-                @if (firstChapter != null)
+                @if (targetChapter != null)
                 {
-                    var firstChapterUrl = !string.IsNullOrWhiteSpace(firstChapter.Slug) ? firstChapter.Slug : firstChapter.Id.ToString();
-                    <a href="/Novels/@novelUrl/@firstChapterUrl/read" class="btn btn-primary novel-detail__action">Đọc ngay</a>
+                    var targetChapterUrl = !string.IsNullOrWhiteSpace(targetChapter.Slug) ? targetChapter.Slug : targetChapter.Id.ToString();
+                    var readActionText = continueChapter != null ? "Đọc tiếp" : "Đọc ngay";
+                    <a href="/Novels/@novelUrl/@targetChapterUrl/read" class="btn btn-primary novel-detail__action">@readActionText</a>
                 }
                 else
                 {
@@ -120,7 +123,7 @@
                 </div>
                 <div class="novel-detail__stat">
                     <div class="novel-detail__stat-value novel-detail__stat-value--rating">@(novel.RatingAverage > 0 ? novel.RatingAverage.ToString("0.0") : "0.0") ★</div>
-                    <div class="text-caption text-mute">@(novel.RatingCount > 0 ? $"{novel.RatingCount} đánh giá" : "0 Đánh giá")</div>
+                    <div class="text-caption text-mute">@(novel.RatingCount > 0 ? $"{novel.RatingCount} đánh giá" : "0 đánh giá")</div>
                 </div>
             </div>
 
@@ -156,7 +159,7 @@
                     @foreach (var ch in vol.Chapters)
                     {
                         var chapterUrl = !string.IsNullOrWhiteSpace(ch.Slug) ? ch.Slug : ch.Id.ToString();
-                        <a href="/Novels/@novelUrl/@chapterUrl/read" class="novel-detail__chapter">
+                        <a href="/Novels/@novelUrl/@chapterUrl/read" class="novel-detail__chapter @(ch.IsRead ? "novel-detail__chapter--read" : "")">
                             <span class="novel-detail__chapter-number">Ch.@ch.ChapterNumber</span>
                             <span class="truncate">@ch.Title</span>
                             @if (string.Equals(ch.Status, "Published", StringComparison.OrdinalIgnoreCase))
@@ -175,7 +178,7 @@
         @if (!novel.Volumes.Any())
         {
             <div class="empty-state">
-                <div class="empty-state__icon">□</div>
+                <div class="empty-state__icon">Trống</div>
                 <div class="empty-state__title">Chưa có chương nào</div>
             </div>
         }
@@ -186,7 +189,7 @@
             <div class="novel-detail__rating-score">@(novel.RatingAverage > 0 ? novel.RatingAverage.ToString("0.0") : "0.0")</div>
             <div>
                 <div class="novel-detail__stars" aria-label="@(novel.RatingAverage > 0 ? novel.RatingAverage.ToString("0.0") : "0.0") trên 5">★★★★★</div>
-                <div class="text-caption text-mute">@(novel.RatingCount > 0 ? $"{novel.RatingCount} đánh giá" : "Chưa có số đánh giá")</div>
+                <div class="text-caption text-mute">@(novel.RatingCount > 0 ? $"{novel.RatingCount} đánh giá" : "Chưa có đánh giá")</div>
             </div>
         </section>
 
@@ -195,41 +198,41 @@
             <section class="novel-detail__review-form">
                 @if (novel.UserReviewId.HasValue)
                 {
-                    <h3 class="novel-detail__review-title">Chinh sua danh gia cua ban</h3>
+                    <h3 class="novel-detail__review-title">Chỉnh sửa đánh giá của bạn</h3>
                     <form method="post" asp-page-handler="UpdateReview" class="novel-detail__review-form-body">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="reviewId" value="@novel.UserReviewId" />
                         <div class="star-rating js-star-rating" data-input="editRatingInput" data-value="@(novel.UserRating ?? 0)">
                             @for (var s = 1; s <= 5; s++)
                             {
-                                <span class="star" data-val="@s">â˜…</span>
+                                <span class="star" data-val="@s">★</span>
                             }
                         </div>
                         <input type="hidden" id="editRatingInput" name="rating" value="@(novel.UserRating ?? 0)" />
                         <div class="form-group">
-                            <textarea class="form-textarea" name="reviewText" placeholder="Chia se cam nhan cua ban..." rows="3">@novel.UserReview</textarea>
+                            <textarea class="form-textarea" name="reviewText" placeholder="Chia sẻ cảm nhận của bạn..." rows="3">@novel.UserReview</textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary novel-detail__review-submit">Luu danh gia</button>
+                        <button type="submit" class="btn btn-primary novel-detail__review-submit">Lưu đánh giá</button>
                     </form>
                 }
                 else
                 {
-                <h3 class="novel-detail__review-title">Viết đánh giá của bạn</h3>
-                <form method="post" asp-page-handler="Review" class="novel-detail__review-form-body">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="id" value="@novel.Id" />
-                    <div class="star-rating js-star-rating" id="starRating" data-input="ratingInput" data-value="0">
-                        @for (var s = 1; s <= 5; s++)
-                        {
-                            <span class="star" data-val="@s">★</span>
-                        }
-                    </div>
-                    <input type="hidden" id="ratingInput" name="rating" value="0" />
-                    <div class="form-group">
-                        <textarea class="form-textarea" name="reviewText" placeholder="Chia sẻ cảm nhận của bạn..." rows="3"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary novel-detail__review-submit">Gửi đánh giá</button>
-                </form>
+                    <h3 class="novel-detail__review-title">Viết đánh giá của bạn</h3>
+                    <form method="post" asp-page-handler="Review" class="novel-detail__review-form-body">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@novel.Id" />
+                        <div class="star-rating js-star-rating" id="starRating" data-input="ratingInput" data-value="0">
+                            @for (var s = 1; s <= 5; s++)
+                            {
+                                <span class="star" data-val="@s">★</span>
+                            }
+                        </div>
+                        <input type="hidden" id="ratingInput" name="rating" value="0" />
+                        <div class="form-group">
+                            <textarea class="form-textarea" name="reviewText" placeholder="Chia sẻ cảm nhận của bạn..." rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary novel-detail__review-submit">Gửi đánh giá</button>
+                    </form>
                 }
             </section>
         }
@@ -289,7 +292,7 @@
                     <select class="form-select" name="targetChapterId">
                         @foreach (var ch in allChapters)
                         {
-                            <option value="@ch.Id">Ch.@ch.ChapterNumber — @ch.Title</option>
+                            <option value="@ch.Id">Ch.@ch.ChapterNumber - @ch.Title</option>
                         }
                     </select>
                 </div>
