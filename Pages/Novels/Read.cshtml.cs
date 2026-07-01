@@ -46,6 +46,12 @@ public class ReadModel : PageModel
     {
         var token = _auth.GetToken(HttpContext);
         if (string.IsNullOrEmpty(token)) return RedirectToPage("/Auth/Login");
+        if (await IsInteractionLockedAsync(chapterId, token))
+        {
+            TempData["Error"] = "N\u1ed9i dung \u0111ang ch\u1edd x\u00f3a n\u00ean kh\u00f4ng th\u1ec3 b\u00ecnh lu\u1eadn.";
+            return RedirectToPage(new { novelSlug, chapterSlug });
+        }
+
         await _api.PostAsync<object>($"/api/chapters/{chapterId}/comments", new { content }, token);
         return RedirectToPage(new { novelSlug, chapterSlug });
     }
@@ -54,8 +60,24 @@ public class ReadModel : PageModel
     {
         var token = _auth.GetToken(HttpContext);
         if (string.IsNullOrEmpty(token)) return RedirectToPage("/Auth/Login");
+        if (await IsInteractionLockedAsync(chapterId, token))
+        {
+            TempData["Error"] = "N\u1ed9i dung \u0111ang ch\u1edd x\u00f3a n\u00ean kh\u00f4ng th\u1ec3 tr\u1ea3 l\u1eddi b\u00ecnh lu\u1eadn.";
+            return RedirectToPage(new { novelSlug, chapterSlug });
+        }
+
         await _api.PostAsync<object>($"/api/comments/{parentCommentId}/replies", new { content }, token);
         return RedirectToPage(new { novelSlug, chapterSlug });
     }
+
+    private async Task<bool> IsInteractionLockedAsync(int chapterId, string token)
+    {
+        var chapterResult = await _api.GetAsync<ChapterDetailDto>($"/api/chapters/{chapterId}", token);
+        var chapter = chapterResult?.Data;
+        return IsPendingDeletion(chapter?.Status) || IsPendingDeletion(chapter?.Novel?.Status);
+    }
+
+    private static bool IsPendingDeletion(string? status)
+        => string.Equals(status, "PendingDeletion", StringComparison.OrdinalIgnoreCase);
 
 }

@@ -5,6 +5,7 @@
     var ch = Model.Chapter;
     var novelUrl = !string.IsNullOrWhiteSpace(ch?.Novel?.Slug) ? ch.Novel.Slug : ch?.Novel?.Id.ToString();
     var allVolumes = Model.Novel?.Volumes ?? [];
+    var interactionsLocked = ch != null && (IsPendingDeletion(ch.Novel?.Status) || IsPendingDeletion(ch.Status));
 }
 @if (ch == null)
 {
@@ -121,7 +122,7 @@
             <a href="/Novels/@novelUrl" style="color:var(--color-mute); text-decoration:none;">@ch.Novel?.Title</a>
         </div>
         <h1 class="reader-chapter-title">@ch.Title</h1>
-        @if (IsPendingDeletion(ch.Novel?.Status) || IsPendingDeletion(ch.Status))
+        @if (interactionsLocked)
         {
             var hardDeleteAt = ch.ScheduledHardDeleteAt ?? ch.Novel?.ScheduledHardDeleteAt;
             <div class="alert alert-info mt-md">
@@ -164,7 +165,11 @@
     <div class="reader-layout" style="padding-top:0; padding-bottom:0;">
         <h2 class="text-display-sm mb-xl">Bình luận (@Model.TotalComments)</h2>
 
-        @if (User.Identity?.IsAuthenticated == true)
+        @if (interactionsLocked)
+        {
+            <div class="alert alert-info mb-xl">N&#7897;i dung &#273;ang &#7903; tr&#7841;ng th&#225;i ch&#7901; x&#243;a n&#234;n b&#236;nh lu&#7853;n &#273;&#227; t&#7841;m kh&#243;a.</div>
+        }
+        else if (User.Identity?.IsAuthenticated == true)
         {
             <form method="post" asp-page-handler="Comment" class="mb-xl">
                 @Html.AntiForgeryToken()
@@ -214,7 +219,7 @@
                     </div>
                     <div class="comment__content">@comment.Content</div>
                     <div class="comment__actions">
-                        @if (User.Identity?.IsAuthenticated == true)
+                        @if (User.Identity?.IsAuthenticated == true && !interactionsLocked)
                         {
                             <button type="button"
                                     class="comment__action @(comment.IsLiked ? "active" : "")"
@@ -233,7 +238,7 @@
                         <span class="comment__time">@TimeAgo(comment.CreatedAt)</span>
                     </div>
 
-                    @if (User.Identity?.IsAuthenticated == true)
+                    @if (User.Identity?.IsAuthenticated == true && !interactionsLocked)
                     {
                         <form method="post" asp-page-handler="Reply" id="replyForm-@comment.Id" class="hidden mt-sm" style="margin-left:0;">
                             @Html.AntiForgeryToken()
@@ -280,7 +285,7 @@
                                         </div>
                                         <div class="comment__content">@reply.Content</div>
                                         <div class="comment__actions">
-                                            @if (User.Identity?.IsAuthenticated == true)
+                                            @if (User.Identity?.IsAuthenticated == true && !interactionsLocked)
                                             {
                                                 <button type="button"
                                                         class="comment__action @(reply.IsLiked ? "active" : "")"
