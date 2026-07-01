@@ -326,6 +326,11 @@ public class NovelUpsertRequest
     public string? Status { get; set; }
 }
 
+public class NovelLifecycleStatusRequest
+{
+    public string Status { get; set; } = "";
+}
+
 public class VolumeUpsertRequest
 {
     public int VolumeNumber { get; set; }

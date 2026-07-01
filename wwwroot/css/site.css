@@ -3122,6 +3122,12 @@ ul, ol { list-style: none; }
   text-align: center;
   margin-bottom: var(--space-md);
 }
+.publish-lifecycle-form {
+  margin: var(--space-md) 0 var(--space-lg);
+}
+.publish-lifecycle-form .form-group {
+  margin-bottom: var(--space-md);
+}
 .publish-inline-form {
   display: flex;
   align-items: flex-end;

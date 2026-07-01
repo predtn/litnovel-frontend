@@ -60,6 +60,15 @@ public abstract class PublishPageModel : PageModel
     protected static bool CanEditChapterStatus(string? status)
         => IsDraftLikeStatus(status) || IsPublicChapterStatus(status);
 
+    protected static bool CanChangeNovelLifecycleStatus(string? status)
+        => IsAllowedNovelLifecycleStatus(status);
+
+    protected static bool IsAllowedNovelLifecycleStatus(string? status)
+        => string.Equals(status, "Ongoing", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "Ended", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "Hiatus", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "Dropped", StringComparison.OrdinalIgnoreCase);
+
     protected static bool ShouldMoveNovelToPendingAfterEdit(string? status)
         => IsPublicNovelStatus(status);
 
