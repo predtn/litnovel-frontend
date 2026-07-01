@@ -65,7 +65,7 @@
     <div class="container">
         <div class="home-category-strip__scroller">
             <a href="/Novels" class="tab-pill active">Tất cả</a>
-            @foreach (var cat in Model.Categories)
+            @foreach (var cat in Model.Categories.Take(10))
             {
                 <a href="/Novels?categoryId=@cat.Id" class="tab-pill">@cat.Name</a>
             }
@@ -295,7 +295,7 @@
 <!-- Call to action (unauthenticated) -->
 @if (!User.Identity!.IsAuthenticated)
 {
-    <section class="home-cta">
+    <section class="home-cta">        
         <div class="container">
             <h2 class="home-cta__title">
                 Bắt đầu hành trình của bạn.

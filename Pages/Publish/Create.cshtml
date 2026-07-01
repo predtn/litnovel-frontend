@@ -16,7 +16,7 @@
         </div>
     </div>
 
-    <form method="post" enctype="multipart/form-data" class="card publish-form publish-form--compact">
+    <form method="post" enctype="multipart/form-data" class="card publish-form publish-form--compact" data-publish-create-form>
         @if (!string.IsNullOrWhiteSpace(Model.ResponseMessage))
         {
             <div class="alert alert-error publish-response-message" role="alert">
@@ -101,6 +101,32 @@
 
 @section Scripts {
     <script>
+        document.querySelector('[data-publish-create-form]')?.addEventListener('submit', event => {
+            const form = event.currentTarget;
+            if (form.dataset.submitting === 'true') {
+                event.preventDefault();
+                return;
+            }
+
+            form.dataset.submitting = 'true';
+            const submitter = event.submitter;
+            if (submitter?.name) {
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = submitter.name;
+                hidden.value = submitter.value;
+                form.appendChild(hidden);
+            }
+
+            form.querySelectorAll('button[type="submit"]').forEach(button => {
+                button.disabled = true;
+            });
+
+            if (submitter) {
+                submitter.textContent = 'Đang xử lý...';
+            }
+        });
+
         document.querySelectorAll('[data-cover-input]').forEach(input => {
             input.addEventListener('change', () => {
                 const file = input.files && input.files[0];

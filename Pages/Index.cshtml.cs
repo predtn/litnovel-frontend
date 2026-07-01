@@ -47,12 +47,12 @@ public class IndexModel : PageModel
         Categories      = catTask.Result?.Data ?? [];
         TrendingNovels  = (trendingTask.Result?.Data?.Items ?? [])
             .Where(novel => novel.ViewCount > 0)
-            .Take(8)
+            .Take(6)
             .ToList();
         NewNovels       = newTask.Result?.Data?.Items ?? [];
         TopRatedNovels  = (topTask.Result?.Data?.Items ?? [])
             .Where(novel => novel.RatingAverage > 0)
-            .Take(8)
+            .Take(6)
             .ToList();
         Announcements   = announcementTask.Result;
         ContinueReading = readingTask.Result;
