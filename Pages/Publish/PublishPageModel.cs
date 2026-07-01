@@ -84,6 +84,9 @@ public abstract class PublishPageModel : PageModel
     protected static bool IsLockedStatus(string? status)
         => string.Equals(status, "Locked", StringComparison.OrdinalIgnoreCase);
 
+    protected static bool IsPendingDeletion(string? status)
+        => string.Equals(status, "PendingDeletion", StringComparison.OrdinalIgnoreCase);
+
     private static bool IsDraftLikeStatus(string? status)
         => string.Equals(status, "Draft", StringComparison.OrdinalIgnoreCase)
             || string.Equals(status, "Rejected", StringComparison.OrdinalIgnoreCase);

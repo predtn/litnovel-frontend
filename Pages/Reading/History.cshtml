@@ -90,12 +90,5 @@
 
 @functions
 {
-    string TimeAgo(DateTime dt)
-    {
-        var d = DateTime.UtcNow - dt;
-        if (d.TotalMinutes < 1) return "vừa xong";
-        if (d.TotalMinutes < 60) return $"{(int)d.TotalMinutes} phút trước";
-        if (d.TotalHours < 24) return $"{(int)d.TotalHours} giờ trước";
-        return $"{(int)d.TotalDays} ngày trước";
-    }
+    string TimeAgo(DateTime dt) => DisplayDateTime.Relative(dt);
 }

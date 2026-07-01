@@ -36,7 +36,7 @@
         {
             <tr>
                 <td class="text-mono">@backup.Id</td>
-                <td>@backup.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                <td>@DisplayDateTime.Format(backup.CreatedAt, "dd/MM/yyyy HH:mm")</td>
                 <td>@backup.SizeFormatted</td>
                 <td><span class="status-badge @(backup.Status == "Completed" ? "status-resolved" : "status-rejected")">@backup.Status</span></td>
                 <td class="col-actions">

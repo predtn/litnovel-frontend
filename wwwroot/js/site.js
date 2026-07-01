@@ -384,11 +384,36 @@ function getCookie(name) {
 // ─── Confirm dialog ───
 function confirmAction(message, onConfirm) {
     const modal = document.getElementById('confirmModal');
-    if (!modal) { if (confirm(message)) onConfirm(); return; }
-    document.getElementById('confirmMessage').textContent = message;
-    document.getElementById('confirmBtn').onclick = () => { closeModal('confirmModal'); onConfirm(); };
+    if (!modal) return;
+    const messageEl = document.getElementById('confirmMessage');
+    const confirmBtn = document.getElementById('confirmBtn');
+    if (!messageEl || !confirmBtn) return;
+    messageEl.textContent = message;
+    confirmBtn.onclick = () => { closeModal('confirmModal'); onConfirm(); };
     openModal('confirmModal');
 }
+
+function confirmSubmit(form, message) {
+    if (!form) return false;
+    if (form.dataset.confirmed === 'true') {
+        delete form.dataset.confirmed;
+        return true;
+    }
+
+    confirmAction(message, () => {
+        form.dataset.confirmed = 'true';
+        if (typeof form.requestSubmit === 'function') {
+            form.requestSubmit();
+        } else {
+            form.submit();
+        }
+    });
+
+    return false;
+}
+
+window.confirmAction = confirmAction;
+window.confirmSubmit = confirmSubmit;
 
 // ─── Search debounce ───
 function debounce(fn, delay) {

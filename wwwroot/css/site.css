@@ -668,6 +668,7 @@ ul, ol { list-style: none; }
 .status-rejected::before  { background-color: var(--color-error-deep); }
 .status-hiatus::before    { background-color: #d97706; }
 .status-scheduled::before { background-color: var(--color-cyan-deep); }
+.status-pendingdeletion::before { background-color: var(--color-error-deep); }
 .status-resolved::before  { background-color: #065f46; }
 .status-banned::before    { background-color: var(--color-error-deep); }
 .status-online::before    { background-color: #065f46; }
@@ -3001,6 +3002,49 @@ ul, ol { list-style: none; }
   overflow: visible;
 }
 .publish-sort { width: 180px; flex-shrink: 0; }
+.publish-search-row,
+.publish-filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-top: calc(-1 * var(--space-xs));
+  margin-bottom: var(--space-lg);
+}
+.publish-filter-row {
+  margin-top: 0;
+}
+.publish-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  max-width: 560px;
+  flex: 1;
+}
+.publish-search .form-input {
+  flex: 1;
+  min-width: 0;
+}
+.publish-trash-link {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  color: var(--color-mute);
+  background: var(--color-canvas);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.publish-trash-link:hover,
+.publish-trash-link.active {
+  color: var(--color-error-deep);
+  border-color: #fecaca;
+  background: var(--color-error-soft);
+  box-shadow: var(--shadow-1);
+}
 .publish-table-card {
   background: var(--color-canvas);
   border: 1px solid var(--color-hairline);
@@ -4083,6 +4127,19 @@ ul, ol { list-style: none; }
   .publish-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .publish-toolbar { align-items: stretch; flex-direction: column; }
   .publish-sort { width: 100%; }
+  .publish-search-row,
+  .publish-filter-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .publish-search {
+    align-items: stretch;
+    flex-direction: column;
+    max-width: none;
+  }
+  .publish-trash-link {
+    align-self: flex-end;
+  }
   .publish-form-grid,
   .publish-form-layout,
   .publish-detail-grid,

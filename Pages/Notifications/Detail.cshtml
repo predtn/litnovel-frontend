@@ -34,7 +34,7 @@
                     </div>
                     <div>
                         <div class="text-display-sm font-medium text-ink">@NotifTitle(n)</div>
-                        <div class="text-caption text-mute mt-xs">@TimeAgo(n.CreatedAt) · @n.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                        <div class="text-caption text-mute mt-xs">@TimeAgo(n.CreatedAt) · @DisplayDateTime.Format(n.CreatedAt, "dd/MM/yyyy HH:mm")</div>
                     </div>
                 </div>
 
@@ -119,12 +119,5 @@
         };
     }
 
-    string TimeAgo(DateTime dt) {
-        var d = DateTime.UtcNow - dt;
-        if (d.TotalMinutes < 1)  return "Vừa xong";
-        if (d.TotalMinutes < 60) return $"{(int)d.TotalMinutes} phút trước";
-        if (d.TotalHours < 24)   return $"{(int)d.TotalHours} giờ trước";
-        if (d.TotalDays < 30)    return $"{(int)d.TotalDays} ngày trước";
-        return dt.ToString("dd/MM/yyyy");
-    }
+    string TimeAgo(DateTime dt) => DisplayDateTime.Relative(dt);
 }

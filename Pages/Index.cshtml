@@ -225,7 +225,7 @@
                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             <span>@(novel.Author?.Username ?? "Unknown")</span>
                         </div>
-                        <time class="home-latest-card__time" datetime="@novel.UpdatedAt.ToString("O")">@TimeAgo(novel.UpdatedAt)</time>
+                        <time class="home-latest-card__time" datetime="@DisplayDateTime.IsoUtc(novel.UpdatedAt)">@DisplayDateTime.Relative(novel.UpdatedAt)</time>
                     </div>
                 </article>
             }
@@ -313,13 +313,7 @@
 
 @functions {
     string FormatCount(int n) => n >= 1000000 ? $"{n / 1000000.0:0.#}M" : n >= 1000 ? $"{n / 1000.0:0.#}K" : n.ToString();
-    string TimeAgo(DateTime dt) {
-        var diff = DateTime.UtcNow - dt;
-        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes} phút trước";
-        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours} giờ trước";
-        if (diff.TotalDays < 30) return $"{(int)diff.TotalDays} ngày trước";
-        return dt.ToString("dd/MM/yyyy");
-    }
+    string TimeAgo(DateTime dt) => DisplayDateTime.Relative(dt);
     private static string StatusLabel(string? status) => status?.Trim().ToLowerInvariant() switch
     {
         "ongoing" => "Đang ra",

@@ -229,6 +229,20 @@
         <div class="server-toast" data-message="@toast.Message" data-type="@toast.Type" hidden></div>
     }
 
+    <div class="modal-overlay" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+        <div class="modal">
+            <div class="modal__header">
+                <div class="modal__title" id="confirmTitle">X&aacute;c nh&#7853;n thao t&aacute;c</div>
+                <button class="modal__close" type="button" onclick="closeModal('confirmModal')" aria-label="&Dstrok;&oacute;ng">&times;</button>
+            </div>
+            <div id="confirmMessage" class="text-body"></div>
+            <div class="modal__footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('confirmModal')">H&#7911;y</button>
+                <button type="button" class="btn btn-danger" id="confirmBtn">X&aacute;c nh&#7853;n</button>
+            </div>
+        </div>
+    </div>
+
     <!-- JS -->
     <script src="~/js/site.js" asp-append-version="true"></script>
     @if (!string.IsNullOrEmpty(signalRToken))

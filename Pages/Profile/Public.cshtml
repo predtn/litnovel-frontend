@@ -39,7 +39,7 @@
                 <div><span class="text-display-sm font-semibold">@u.Stats.NovelsCreated</span> <span class="text-caption text-mute">Truyện</span></div>
                 <div><span class="text-display-sm font-semibold">@u.Stats.ChaptersPublished</span> <span class="text-caption text-mute">Chương</span></div>
             </div>
-            <div class="text-caption text-mute">Tham gia từ @joinedAt?.ToString("dd/MM/yyyy")</div>
+            <div class="text-caption text-mute">Tham gia từ @DisplayDateTime.Format(joinedAt, "dd/MM/yyyy")</div>
         </div>
     </div>
 
@@ -73,7 +73,7 @@
                             <div class="profile-badge-card__name">@b.Name</div>
                             @if (b.EarnedAt != default)
                             {
-                                <div class="profile-badge-card__meta">Nhận @b.EarnedAt.ToString("dd/MM/yyyy")</div>
+                                <div class="profile-badge-card__meta">Nhận @DisplayDateTime.Format(b.EarnedAt, "dd/MM/yyyy")</div>
                             }
                         </div>
                     </div>
@@ -142,7 +142,7 @@
                             <div><span>Số volume: @n.TotalVolumes</span></div>
                             <div><span>Số chương: @n.TotalChapters</span></div>
                             <div><span>Đánh giá: ★ @n.RatingAverage.ToString("0.0")</span></div>
-                            <div><span>Cập nhật: @n.UpdatedAt.ToString("dd/MM/yyyy")</span></div>
+                            <div><span>Cập nhật: @DisplayDateTime.Format(n.UpdatedAt, "dd/MM/yyyy")</span></div>
                         </div>
                     </div>
                 </a>

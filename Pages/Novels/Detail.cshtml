@@ -96,6 +96,13 @@
 
             <h1 style="font-size:var(--text-display-md); font-weight:600; letter-spacing:var(--ls-display-md); color:var(--color-ink); margin-bottom:var(--space-xs);">@novel.Title</h1>
 
+            @if (IsPendingDeletion(novel.Status))
+            {
+                <div class="alert alert-info mb-md">
+                    Tác giả đã lên lịch xóa truyện này@(novel.ScheduledHardDeleteAt.HasValue ? $", nội dung sẽ được dọn vào {FormatDateTime(novel.ScheduledHardDeleteAt.Value)}" : "").
+                </div>
+            }
+
             <div class="novel-detail__meta">
                 <a href="/Profile/@novel.Author?.Id" class="novel-detail__author">
                     @if (!string.IsNullOrWhiteSpace(novel.Author?.Avatar))
@@ -164,7 +171,7 @@
                             <span class="truncate">@ch.Title</span>
                             @if (string.Equals(ch.Status, "Published", StringComparison.OrdinalIgnoreCase))
                             {
-                                <span class="novel-detail__chapter-date">@ch.CreatedAt.ToString("dd/MM")</span>
+                                <span class="novel-detail__chapter-date">@DisplayDateTime.Format(ch.CreatedAt, "dd/MM")</span>
                             }
                             else
                             {
@@ -245,7 +252,7 @@
                         <div class="avatar-placeholder avatar-sm">@(review.User?.Username?.Substring(0, 1).ToUpper() ?? "U")</div>
                         <div>
                             <div class="text-body-sm font-medium">@review.User?.Username</div>
-                            <div class="text-caption text-mute">@review.CreatedAt.ToString("dd/MM/yyyy")</div>
+                            <div class="text-caption text-mute">@DisplayDateTime.Format(review.CreatedAt, "dd/MM/yyyy")</div>
                         </div>
                         <div class="flex gap-xxs ml-auto">
                             @for (var s = 1; s <= 5; s++)
@@ -323,8 +330,14 @@
         "rejected" => "Bị từ chối",
         "hiatus" => "Tạm dừng",
         "locked" => "Đã khóa",
+        "pendingdeletion" => "Chờ xóa",
         _ => string.IsNullOrWhiteSpace(status) ? "Không rõ" : status
     };
+
+    static bool IsPendingDeletion(string? status)
+        => string.Equals(status, "PendingDeletion", StringComparison.OrdinalIgnoreCase);
+
+    static string FormatDateTime(DateTime value) => DisplayDateTime.Format(value, "dd/MM/yyyy HH:mm");
 }
 
 @section Scripts {

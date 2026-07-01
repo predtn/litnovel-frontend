@@ -36,7 +36,12 @@ public static class ODataQuery
         return value <= 0 ? "" : $"{property} eq {value.ToString(CultureInfo.InvariantCulture)}";
     }
 
-    public static string ContainsAny(string value, params string[] properties)
+    public static string Ne(string property, string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "" : $"{property} ne '{Escape(value)}'";
+    }
+
+    public static string ContainsAny(string? value, params string[] properties)
     {
         if (string.IsNullOrWhiteSpace(value)) return "";
 

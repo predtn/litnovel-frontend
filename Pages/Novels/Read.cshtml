@@ -121,7 +121,14 @@
             <a href="/Novels/@novelUrl" style="color:var(--color-mute); text-decoration:none;">@ch.Novel?.Title</a>
         </div>
         <h1 class="reader-chapter-title">@ch.Title</h1>
-        <div class="text-caption text-mute mt-xs">Chương @ch.ChapterNumber · @ch.CreatedAt.ToString("dd/MM/yyyy")</div>
+        @if (IsPendingDeletion(ch.Novel?.Status) || IsPendingDeletion(ch.Status))
+        {
+            var hardDeleteAt = ch.ScheduledHardDeleteAt ?? ch.Novel?.ScheduledHardDeleteAt;
+            <div class="alert alert-info mt-md">
+                Tác giả đã lên lịch xóa nội dung này@(hardDeleteAt.HasValue ? $", nội dung sẽ được dọn vào {FormatDateTime(hardDeleteAt.Value)}" : "").
+            </div>
+        }
+        <div class="text-caption text-mute mt-xs">Chương @ch.ChapterNumber · @DisplayDateTime.Format(ch.CreatedAt, "dd/MM/yyyy")</div>
     </div>
 
     <div class="reader-content" id="chapterContent">
@@ -313,12 +320,13 @@
 @functions {
     string TimeAgo(DateTime dt)
     {
-        var d = DateTime.UtcNow - dt;
-        if (d.TotalMinutes < 60) return $"{Math.Max(0, (int)d.TotalMinutes)}p trước";
-        if (d.TotalHours < 24) return $"{(int)d.TotalHours}h trước";
-        if (d.TotalDays < 30) return $"{(int)d.TotalDays}d trước";
-        return dt.ToString("dd/MM/yy");
+        return DisplayDateTime.Relative(dt);
     }
+
+    static bool IsPendingDeletion(string? status)
+        => string.Equals(status, "PendingDeletion", StringComparison.OrdinalIgnoreCase);
+
+    static string FormatDateTime(DateTime value) => DisplayDateTime.Format(value, "dd/MM/yyyy HH:mm");
 
     Microsoft.AspNetCore.Html.IHtmlContent RenderAvatar(string? username, string? avatar, string cssClass)
     {

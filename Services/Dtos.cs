@@ -112,6 +112,8 @@ public class NovelSummaryDto
     public int RatingCount { get; set; }
     public DateTime UpdatedAt { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime? DeletionRequestedAt { get; set; }
+    public DateTime? ScheduledHardDeleteAt { get; set; }
     // For reading history
     public DateTime? FavoritedAt { get; set; }
 }
@@ -156,6 +158,8 @@ public class ChapterNavDto
     public bool IsRead { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public DateTime? DeletionRequestedAt { get; set; }
+    public DateTime? ScheduledHardDeleteAt { get; set; }
 }
 
 public class ChapterDetailDto
@@ -172,6 +176,8 @@ public class ChapterDetailDto
     public ChapterNavDto? PrevChapter { get; set; }
     public ChapterNavDto? NextChapter { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime? DeletionRequestedAt { get; set; }
+    public DateTime? ScheduledHardDeleteAt { get; set; }
 }
 
 public class CommentDto

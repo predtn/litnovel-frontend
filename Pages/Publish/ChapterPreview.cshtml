@@ -20,13 +20,25 @@
                 <span>Chương @ch.ChapterNumber</span>
                 @if (ch.ReleaseDate.HasValue)
                 {
-                    <span>Phát hành @ch.ReleaseDate.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                    <span>Phát hành @DisplayDateTime.Format(ch.ReleaseDate.Value, "dd/MM/yyyy HH:mm")</span>
                 }
             </div>
             <h1 class="page-header__title">@ch.Title</h1>
             <p class="page-header__subtitle">@ch.Novel?.Title</p>
+            @if (Model.CanRestoreChapter)
+            {
+                <div class="alert alert-info mt-md">
+                    Chương đang nằm trong thùng rác và sẽ bị xóa vĩnh viễn@(ch.ScheduledHardDeleteAt.HasValue ? $" vào {ch.ScheduledHardDeleteAt.Value:dd/MM/yyyy HH:mm}" : "").
+                </div>
+            }
         </div>
         <div class="publish-actions">
+            @if (Model.CanRestoreChapter)
+            {
+                <form method="post" asp-page-handler="Restore" asp-route-id="@ch.Id" asp-route-volumeId="@Model.VolumeId" asp-route-novelId="@Model.NovelId" onsubmit="return confirmSubmit(this, 'Khôi phục chương này?');">
+                    <button class="btn btn-primary" type="submit">Khôi phục</button>
+                </form>
+            }
             @if (Model.CanEditChapter)
             {
                 <a asp-page="/Publish/ChapterEdit" asp-route-id="@ch.Id" asp-route-volumeId="@Model.VolumeId" asp-route-novelId="@Model.NovelId" class="btn btn-primary">Sửa</a>

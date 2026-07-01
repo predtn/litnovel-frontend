@@ -15,7 +15,8 @@ public class ManageModel : PublishPageModel
     public bool CanEditNovel => CanEditNovelStatus(Novel.Status);
     public bool CanChangeLifecycleStatus => CanChangeNovelLifecycleStatus(Novel.Status);
     public bool CanCancelReview => IsPendingReview(Novel.Status);
-    public bool CanDeleteNovel => !IsPendingReview(Novel.Status) && !HasPendingChapters;
+    public bool CanDeleteNovel => !IsPendingReview(Novel.Status) && !IsPendingDeletion(Novel.Status) && !HasPendingChapters;
+    public bool CanRestoreNovel => IsPendingDeletion(Novel.Status);
     public string EditUnavailableMessage => IsPendingReview(Novel.Status)
         ? "Truyện đang chờ duyệt, không thể chỉnh sửa thông tin truyện."
         : $"Không thể chỉnh sửa khi truyện đang {DisplayText.Status(Novel.Status).ToLowerInvariant()}.";
@@ -103,6 +104,24 @@ public class ManageModel : PublishPageModel
         var result = await Api.DeleteAsync<object>($"/api/novels/{id}", Token);
         SetApiResultMessage(result, "Đã xóa truyện.", "Chưa thể xóa truyện lúc này.");
         return RedirectToPage("/Publish/Index");
+    }
+
+    public async Task<IActionResult> OnPostRestoreAsync(int id)
+    {
+        var guard = RequireAuthor();
+        if (guard != null) return guard;
+
+        var novel = await LoadNovelForActionAsync(id);
+        if (novel == null) return RedirectToPage("/Publish/Index", new { status = "PendingDeletion" });
+        if (!IsPendingDeletion(novel.Status))
+        {
+            TempData["Error"] = "Chỉ có thể khôi phục truyện đang chờ xóa.";
+            return RedirectToPage(new { id });
+        }
+
+        var result = await Api.PostAsync<NovelSummaryDto>($"/api/novels/{id}/restore", null, Token);
+        SetApiResultMessage(result, "Đã khôi phục truyện.", "Chưa thể khôi phục truyện lúc này.");
+        return RedirectToPage(new { id });
     }
 
     public async Task<IActionResult> OnPostCancelReviewAsync(int id)
