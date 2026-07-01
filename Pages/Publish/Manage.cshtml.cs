@@ -7,6 +7,7 @@ public class ManageModel : PublishPageModel
 {
     public NovelDetailDto Novel { get; set; } = new();
     [BindProperty] public string LifecycleStatus { get; set; } = "";
+    [BindProperty] public VolumeUpsertRequest VolumeInput { get; set; } = new();
     public IReadOnlyList<string> LifecycleStatusOptions { get; } = ["Ongoing", "Ended", "Hiatus", "Dropped"];
     public bool HasPendingChapters => Novel.Volumes
         .SelectMany(volume => volume.Chapters)
@@ -17,6 +18,7 @@ public class ManageModel : PublishPageModel
     public bool CanCancelReview => IsPendingReview(Novel.Status);
     public bool CanDeleteNovel => !IsPendingReview(Novel.Status) && !IsPendingDeletion(Novel.Status) && !HasPendingChapters;
     public bool CanRestoreNovel => IsPendingDeletion(Novel.Status);
+    public bool CanCreateVolume => !IsPendingDeletion(Novel.Status) && !IsPendingReview(Novel.Status);
     public string EditUnavailableMessage => IsPendingReview(Novel.Status)
         ? "Truyện đang chờ duyệt, không thể chỉnh sửa thông tin truyện."
         : $"Không thể chỉnh sửa khi truyện đang {DisplayText.Status(Novel.Status).ToLowerInvariant()}.";
@@ -36,8 +38,16 @@ public class ManageModel : PublishPageModel
 
         Novel = result.Data;
         LifecycleStatus = Novel.Status;
+        PrepareVolumeInput();
         return Page();
     }
+
+    public bool CanSubmitChapter(string? status) => CanSubmitForReview(status);
+    public bool CanEditChapter(string? status) => CanEditChapterStatus(status);
+    public bool CanWithdrawChapter(string? status) => IsPendingReview(status);
+    public bool CanRestoreChapter(string? status) => IsPendingDeletion(status);
+    public bool CanDeleteChapter(string? status)
+        => string.Equals(status, "Draft", StringComparison.OrdinalIgnoreCase) || IsApprovedChapterStatus(status);
 
     public async Task<IActionResult> OnPostUpdateLifecycleStatusAsync(int id)
     {
@@ -106,6 +116,135 @@ public class ManageModel : PublishPageModel
         return RedirectToPage("/Publish/Index");
     }
 
+    public async Task<IActionResult> OnPostCreateVolumeAsync(int id)
+    {
+        var guard = RequireAuthor();
+        if (guard != null) return guard;
+
+        var novel = await LoadNovelForActionAsync(id);
+        if (novel == null) return RedirectToPage("/Publish/Index");
+        if (IsPendingDeletion(novel.Status) || IsPendingReview(novel.Status))
+        {
+            TempData["Error"] = "Không thể thêm tập khi truyện đang chờ duyệt hoặc chờ xóa.";
+            return RedirectToPage(new { id });
+        }
+
+        var result = await Api.PostAsync<VolumeDto>($"/api/novels/{id}/volumes", VolumeInput, Token);
+        SetApiResultMessage(result, "Tạo tập thành công.", "Không thể tạo tập.");
+        return RedirectToPage(new { id });
+    }
+
+    public async Task<IActionResult> OnPostEditVolumeAsync(int id, int volumeId, int volumeNumber, string title)
+    {
+        var guard = RequireAuthor();
+        if (guard != null) return guard;
+
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            TempData["Error"] = "Cần nhập tiêu đề tập.";
+            return RedirectToPage(new { id });
+        }
+
+        var input = new VolumeUpsertRequest
+        {
+            VolumeNumber = volumeNumber,
+            Title = title.Trim()
+        };
+        var result = await Api.PutAsync<VolumeDto>($"/api/volumes/{volumeId}", input, Token);
+        SetApiResultMessage(result, "Đã cập nhật tên tập.", "Không thể cập nhật tên tập.");
+        return RedirectToPage(new { id });
+    }
+
+    public async Task<IActionResult> OnPostDeleteVolumeAsync(int id, int volumeId)
+    {
+        var guard = RequireAuthor();
+        if (guard != null) return guard;
+
+        var result = await Api.DeleteAsync<object>($"/api/volumes/{volumeId}", Token);
+        SetApiResultMessage(result, "Đã xóa tập.", "Không thể xóa tập.");
+        return RedirectToPage(new { id });
+    }
+
+    public async Task<IActionResult> OnPostSubmitChapterAsync(int id, int chapterId)
+    {
+        var guard = RequireAuthor();
+        if (guard != null) return guard;
+
+        var chapterResult = await Api.GetAsync<ChapterDetailDto>($"/api/chapters/{chapterId}", Token);
+        if (IsApiSuccess(chapterResult) && chapterResult?.Data != null && !CanSubmitForReview(chapterResult.Data.Status))
+        {
+            TempData["Error"] = "Chương chỉ có thể gửi duyệt khi đang là bản nháp hoặc cần chỉnh sửa.";
+            return RedirectToPage(new { id });
+        }
+
+        var result = await Api.PostAsync<object>($"/api/chapters/{chapterId}/submit", null, Token);
+        SetApiResultMessage(result, "Chương đã được gửi duyệt.", "Chưa thể gửi duyệt chương lúc này.");
+        return RedirectToPage(new { id });
+    }
+
+    public async Task<IActionResult> OnPostWithdrawChapterAsync(int id, int chapterId)
+    {
+        var guard = RequireAuthor();
+        if (guard != null) return guard;
+
+        var chapterResult = await Api.GetAsync<ChapterDetailDto>($"/api/chapters/{chapterId}", Token);
+        if (IsApiSuccess(chapterResult) && chapterResult?.Data != null && !IsPendingReview(chapterResult.Data.Status))
+        {
+            TempData["Error"] = "Chỉ có thể hủy gửi duyệt khi chương đang chờ duyệt.";
+            return RedirectToPage(new { id });
+        }
+
+        var result = await Api.PostAsync<ChapterNavDto>($"/api/chapters/{chapterId}/withdraw", null, Token);
+        SetApiResultMessage(result, "Đã hủy gửi duyệt. Chương đã trở lại bản nháp.", "Chưa thể hủy gửi duyệt chương lúc này.");
+        return RedirectToPage(new { id });
+    }
+
+    public async Task<IActionResult> OnPostDeleteChapterAsync(int id, int chapterId)
+    {
+        var guard = RequireAuthor();
+        if (guard != null) return guard;
+
+        var chapterResult = await Api.GetAsync<ChapterDetailDto>($"/api/chapters/{chapterId}", Token);
+        if (!IsApiSuccess(chapterResult) || chapterResult?.Data == null)
+        {
+            TempData["Error"] = ApiFailureMessage(chapterResult, "Không thể tải thông tin chương.");
+            return RedirectToPage(new { id });
+        }
+
+        if (!CanDeleteChapter(chapterResult.Data.Status))
+        {
+            TempData["Error"] = "Chỉ có thể xóa chương đang là bản nháp hoặc đã được duyệt.";
+            return RedirectToPage(new { id });
+        }
+
+        var result = await Api.DeleteAsync<object>($"/api/chapters/{chapterId}", Token);
+        SetApiResultMessage(result, "Đã xóa chương.", "Chưa thể xóa chương lúc này.");
+        return RedirectToPage(new { id });
+    }
+
+    public async Task<IActionResult> OnPostRestoreChapterAsync(int id, int chapterId)
+    {
+        var guard = RequireAuthor();
+        if (guard != null) return guard;
+
+        var chapterResult = await Api.GetAsync<ChapterDetailDto>($"/api/chapters/{chapterId}", Token);
+        if (!IsApiSuccess(chapterResult) || chapterResult?.Data == null)
+        {
+            TempData["Error"] = ApiFailureMessage(chapterResult, "Không thể tải thông tin chương.");
+            return RedirectToPage(new { id });
+        }
+
+        if (!IsPendingDeletion(chapterResult.Data.Status))
+        {
+            TempData["Error"] = "Chỉ có thể khôi phục chương đang chờ xóa.";
+            return RedirectToPage(new { id });
+        }
+
+        var result = await Api.PostAsync<ChapterNavDto>($"/api/chapters/{chapterId}/restore", null, Token);
+        SetApiResultMessage(result, "Đã khôi phục chương.", "Chưa thể khôi phục chương lúc này.");
+        return RedirectToPage(new { id });
+    }
+
     public async Task<IActionResult> OnPostRestoreAsync(int id)
     {
         var guard = RequireAuthor();
@@ -162,5 +301,14 @@ public class ManageModel : PublishPageModel
 
         TempData["Error"] = ApiFailureMessage(result, "Không thể tải thông tin truyện.");
         return null;
+    }
+
+    private void PrepareVolumeInput()
+    {
+        var nextVolumeNumber = Novel.Volumes.Count == 0 ? 1 : Novel.Volumes.Max(v => v.VolumeNumber) + 1;
+        if (VolumeInput.VolumeNumber <= 0)
+        {
+            VolumeInput.VolumeNumber = nextVolumeNumber;
+        }
     }
 }

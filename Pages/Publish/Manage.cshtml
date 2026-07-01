@@ -74,10 +74,10 @@
     }
 
     <div class="publish-detail-grid">
-        <section class="card">
-            <div class="tabs">
+        <section class="card publish-manage-content">
+            <div class="tabs publish-manage-tabs">
                 <a href="#overview" class="tab active">Tổng quan</a>
-                <a asp-page="/Publish/Volumes" asp-route-novelId="@Model.Novel.Id" class="tab">Tập & chương</a>
+                <a href="#volumes" class="tab">Tập & chương</a>
             </div>
             <div id="overview" class="publish-richtext">@Html.Raw(Model.Novel.Description)</div>
             <div class="divider"></div>
@@ -87,6 +87,133 @@
                     <span class="badge badge-secondary">@tag.Name</span>
                 }
             </div>
+
+            <div class="divider"></div>
+
+            <section class="publish-manage-section" id="volumes">
+                <div class="publish-section-heading">
+                    <div>
+                        <h2 class="text-display-sm">Tập & chương</h2>
+                        <p class="text-body-sm text-mute">Quản lý cấu trúc truyện ngay tại màn hình này.</p>
+                    </div>
+                    <a asp-page="/Publish/Volumes" asp-route-novelId="@Model.Novel.Id" class="btn btn-secondary btn-sm">Mở màn riêng</a>
+                </div>
+
+                @if (Model.CanCreateVolume)
+                {
+                    <form method="post" asp-page-handler="CreateVolume" asp-route-id="@Model.Novel.Id" class="publish-inline-form publish-inline-form--compact">
+                        <div class="form-group">
+                            <label class="form-label" asp-for="VolumeInput.VolumeNumber">Số thứ tự</label>
+                            <input class="form-input publish-chapter-number" asp-for="VolumeInput.VolumeNumber" min="1" type="number" />
+                        </div>
+                        <div class="form-group publish-inline-grow">
+                            <label class="form-label" asp-for="VolumeInput.Title">Tiêu đề tập</label>
+                            <input class="form-input" asp-for="VolumeInput.Title" maxlength="200" placeholder="Tập mới" />
+                        </div>
+                        <button class="btn btn-primary" type="submit">Thêm tập</button>
+                    </form>
+                }
+
+                <div class="publish-manage-volume-list">
+                    @foreach (var volume in Model.Novel.Volumes.OrderBy(v => v.VolumeNumber))
+                    {
+                        var chapters = volume.Chapters.OrderBy(c => c.ChapterNumber).ToList();
+                        <details class="publish-manage-volume" open>
+                            <summary class="publish-manage-volume__summary">
+                                <div>
+                                    <div class="text-caption text-mute">Tập @volume.VolumeNumber</div>
+                                    <h3 class="publish-manage-volume__title">@volume.Title</h3>
+                                    <div class="publish-meta-row">
+                                        <span>@chapters.Count chương</span>
+                                        <span>Tạo ngày @DisplayDateTime.Format(volume.CreatedAt, "dd/MM/yyyy HH:mm")</span>
+                                    </div>
+                                </div>
+                                <span class="publish-manage-volume__chevron" aria-hidden="true">⌄</span>
+                            </summary>
+                            <div class="publish-manage-volume__body">
+                                <div class="publish-actions publish-manage-volume__actions">
+                                    <a asp-page="/Publish/ChapterCreate" asp-route-volumeId="@volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-primary btn-sm">Thêm chương</a>
+                                    <form method="post" asp-page-handler="EditVolume" asp-route-id="@Model.Novel.Id" asp-route-volumeId="@volume.Id" class="publish-volume-edit-form">
+                                        <input type="hidden" name="volumeNumber" value="@volume.VolumeNumber" />
+                                        <input type="hidden" name="title" value="@volume.Title" data-volume-title />
+                                        <button class="btn btn-secondary btn-sm" type="submit" data-volume-edit>Sửa tên</button>
+                                    </form>
+                                    <form method="post" asp-page-handler="DeleteVolume" asp-route-id="@Model.Novel.Id" asp-route-volumeId="@volume.Id" onsubmit="return confirmSubmit(this, 'Xóa tập này?');">
+                                        <button class="btn btn-danger btn-sm" type="submit">Xóa tập</button>
+                                    </form>
+                                </div>
+
+                                @if (chapters.Any())
+                                {
+                                    <div class="publish-manage-chapter-list">
+                                        @foreach (var chapter in chapters)
+                                        {
+                                            var chapterStatus = chapter.Status ?? "Draft";
+                                            <div class="publish-manage-chapter">
+                                                <div class="publish-manage-chapter__main">
+                                                    <span class="publish-manage-chapter__number">Ch.@chapter.ChapterNumber</span>
+                                                    <div>
+                                                        <div class="font-medium">@chapter.Title</div>
+                                                        <div class="text-caption text-mute">
+                                                            @(chapter.WordCount > 0 ? $"{chapter.WordCount:N0} từ" : "Chưa có số từ")
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <span class="status-badge status-@chapterStatus.ToLowerInvariant()">@DisplayText.Status(chapterStatus)</span>
+                                                <div class="publish-actions publish-manage-chapter__actions">
+                                                    <a asp-page="/Publish/ChapterPreview" asp-route-id="@chapter.Id" asp-route-volumeId="@volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-secondary btn-sm">Xem</a>
+                                                    @if (Model.CanEditChapter(chapterStatus))
+                                                    {
+                                                        <a asp-page="/Publish/ChapterEdit" asp-route-id="@chapter.Id" asp-route-volumeId="@volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-secondary btn-sm">Sửa</a>
+                                                    }
+                                                    @if (Model.CanSubmitChapter(chapterStatus))
+                                                    {
+                                                        <form method="post" asp-page-handler="SubmitChapter" asp-route-id="@Model.Novel.Id" asp-route-chapterId="@chapter.Id">
+                                                            <button class="btn btn-primary btn-sm" type="submit">Gửi duyệt</button>
+                                                        </form>
+                                                    }
+                                                    @if (Model.CanWithdrawChapter(chapterStatus))
+                                                    {
+                                                        <form method="post" asp-page-handler="WithdrawChapter" asp-route-id="@Model.Novel.Id" asp-route-chapterId="@chapter.Id" onsubmit="return confirmSubmit(this, 'Hủy gửi duyệt và đưa chương về bản nháp?');">
+                                                            <button class="btn btn-secondary btn-sm" type="submit">Hủy duyệt</button>
+                                                        </form>
+                                                    }
+                                                    @if (Model.CanRestoreChapter(chapterStatus))
+                                                    {
+                                                        <form method="post" asp-page-handler="RestoreChapter" asp-route-id="@Model.Novel.Id" asp-route-chapterId="@chapter.Id" onsubmit="return confirmSubmit(this, 'Khôi phục chương này?');">
+                                                            <button class="btn btn-primary btn-sm" type="submit">Khôi phục</button>
+                                                        </form>
+                                                    }
+                                                    @if (Model.CanDeleteChapter(chapterStatus))
+                                                    {
+                                                        <form method="post" asp-page-handler="DeleteChapter" asp-route-id="@Model.Novel.Id" asp-route-chapterId="@chapter.Id" onsubmit="return confirmSubmit(this, 'Xóa chương này?');">
+                                                            <button class="btn btn-danger btn-sm" type="submit">Xóa</button>
+                                                        </form>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="empty-state empty-state--compact">
+                                        <div class="empty-state__title">Chưa có chương</div>
+                                    </div>
+                                }
+                            </div>
+                        </details>
+                    }
+                </div>
+
+                @if (!Model.Novel.Volumes.Any())
+                {
+                    <div class="empty-state empty-state--compact">
+                        <div class="empty-state__title">Chưa có tập</div>
+                        <div class="empty-state__desc">Tạo tập đầu tiên để bắt đầu thêm chương.</div>
+                    </div>
+                }
+            </section>
         </section>
 
         <aside class="card publish-side-panel">
@@ -134,3 +261,31 @@
         </aside>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('[data-volume-edit]').forEach(button => {
+            button.addEventListener('click', event => {
+                const form = button.closest('form');
+                const input = form?.querySelector('[data-volume-title]');
+                if (!form || !input) return;
+
+                const currentTitle = input.value || '';
+                const nextTitle = window.prompt('Nhập tên tập mới', currentTitle);
+                if (nextTitle === null) {
+                    event.preventDefault();
+                    return;
+                }
+
+                const trimmedTitle = nextTitle.trim();
+                if (!trimmedTitle) {
+                    event.preventDefault();
+                    alert('Cần nhập tiêu đề tập.');
+                    return;
+                }
+
+                input.value = trimmedTitle;
+            });
+        });
+    </script>
+}
