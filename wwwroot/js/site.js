@@ -312,9 +312,7 @@ function initRealtimeFallbacks() {
         }
     }, 5000);
 
-    initRenderedSiteAnnouncementTicker();
-    loadSiteAnnouncementTicker();
-    setInterval(loadSiteAnnouncementTicker, ANNOUNCEMENT_POLL_MS);
+    // Announcement ticker is temporarily disabled while the API flow is being fixed.
 }
 
 function initRenderedSiteAnnouncementTicker() {
