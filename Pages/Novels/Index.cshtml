@@ -21,10 +21,10 @@
             </div>
             
             <div class="view-switcher" style="display: flex; gap: 4px; border: 1px solid var(--color-hairline); border-radius: var(--radius-sm); padding: 2px; background: var(--color-canvas-soft-2);">
-                <button type="button" class="view-switch-btn active" id="btnViewGrid" onclick="setCatalogView('grid')" title="Hiển thị dạng lưới">
+                <button type="button" class="view-switch-btn @(Model.ViewMode == "grid" ? "active" : "")" id="btnViewGrid" onclick="setCatalogView('grid')" title="Hiển thị dạng lưới">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                 </button>
-                <button type="button" class="view-switch-btn" id="btnViewList" onclick="setCatalogView('list')" title="Hiển thị danh sách">
+                <button type="button" class="view-switch-btn @(Model.ViewMode == "list" ? "active" : "")" id="btnViewList" onclick="setCatalogView('list')" title="Hiển thị danh sách">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
                 </button>
             </div>
@@ -35,6 +35,7 @@
         <aside class="filter-sidebar" style="display:block;">
             <form method="get" id="catalogFilterForm">
                 <input type="hidden" name="sort" value="@Model.Sort" />
+                <input type="hidden" name="view" value="@Model.ViewMode" />
 
                 <div class="filter-section">
                     <div class="search-bar">
@@ -94,7 +95,7 @@
                 <button type="submit" class="btn btn-primary" style="width:100%; border-radius:var(--radius-sm);">Áp dụng</button>
                 @if (HasFilters())
                 {
-                    <a href="/Novels" class="btn btn-secondary" style="width:100%; border-radius:var(--radius-sm); margin-top:var(--space-xs); display:block; text-align:center;">Xóa bộ lọc</a>
+                    <a href="/Novels?view=@Model.ViewMode" class="btn btn-secondary" style="width:100%; border-radius:var(--radius-sm); margin-top:var(--space-xs); display:block; text-align:center;">Xóa bộ lọc</a>
                 }
             </form>
         </aside>
@@ -110,7 +111,7 @@
             }
             else
             {
-                <div id="novelsCatalogList" class="catalog-list view-grid">
+                <div id="novelsCatalogList" class="catalog-list view-@Model.ViewMode">
                     @foreach (var novel in Model.Novels)
                     {
                         var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
@@ -135,7 +136,7 @@
                                     <a href="/Novels/@novelUrl" class="novel-card__title">@novel.Title</a>
                                     @if (novel.Category != null)
                                     {
-                                        <a href="/Novels?categoryId=@novel.Category.Id" class="novel-card__category">@novel.Category.Name</a>
+                                        <a href="/Novels?categoryId=@novel.Category.Id&view=@Model.ViewMode" class="novel-card__category">@novel.Category.Name</a>
                                     }
                                 </div>
                                 <div class="novel-card__author">Tác giả: <span>@novel.Author?.Username</span></div>
@@ -145,7 +146,7 @@
                                     <div class="novel-card__tags">
                                         @foreach (var tag in novel.Tags.Take(8))
                                         {
-                                            <a href="/Novels?tagId=@tag.Id" class="tag novel-card__tag">@tag.Name</a>
+                                            <a href="/Novels?tagId=@tag.Id&view=@Model.ViewMode" class="tag novel-card__tag">@tag.Name</a>
                                         }
                                     </div>
                                 }
@@ -177,18 +178,6 @@
                         </div>
                     }
                 </div>
-                
-                <script>
-                    (function() {
-                        const savedView = localStorage.getItem('catalog-view') || 'grid';
-                        if (savedView === 'list') {
-                            document.getElementById('novelsCatalogList').className = 'catalog-list view-list';
-                            document.getElementById('btnViewList').classList.add('active');
-                            document.getElementById('btnViewGrid').classList.remove('active');
-                        }
-                    })();
-                </script>
-
                 @if (Model.TotalPages > 1)
                 {
                     <div class="flex justify-center mt-xl">
@@ -197,14 +186,46 @@
                             {
                                 <a href="@PageUrl(Model.Page - 1)" class="pagination__btn">←</a>
                             }
-                            @for (var i = Math.Max(1, Model.Page - 2); i <= Math.Min(Model.TotalPages, Model.Page + 2); i++)
+                            @foreach (var item in PaginationItems())
                             {
-                                <a href="@PageUrl(i)" class="pagination__btn @(i == Model.Page ? "active" : "")">@i</a>
+                                if (item.HasValue)
+                                {
+                                    var pageNumber = item.Value;
+                                    <a href="@PageUrl(pageNumber)" class="pagination__btn @(pageNumber == Model.Page ? "active" : "")">@pageNumber</a>
+                                }
+                                else
+                                {
+                                    <span class="pagination__btn disabled">...</span>
+                                }
                             }
                             @if (Model.Page < Model.TotalPages)
                             {
                                 <a href="@PageUrl(Model.Page + 1)" class="pagination__btn">→</a>
                             }
+                                <input class="form-input form-input-sm" style="display:none; width:72px; height:36px;" type="number" name="page" value="@Model.Page" min="1" max="@Model.TotalPages" aria-label="Nhập trang" />
+                                <button type="submit" class="pagination__btn" style="display:none;">Đi</button>
+                            <button type="button" class="pagination__btn" onclick="openModal('catalogPageModal')" title="Chọn trang" aria-label="Chọn trang">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                    <line x1="4" y1="7" x2="20" y2="7"></line>
+                                    <line x1="4" y1="12" x2="20" y2="12"></line>
+                                    <line x1="4" y1="17" x2="20" y2="17"></line>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="modal-overlay" id="catalogPageModal">
+                        <div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="catalogPageModalTitle">
+                            <div class="modal__header">
+                                <div class="modal__title" id="catalogPageModalTitle">Chọn trang</div>
+                                <button type="button" class="modal__close" onclick="closeModal('catalogPageModal')" aria-label="Đóng">×</button>
+                            </div>
+                            <div class="catalog-page-modal">
+                                @for (var pageNumber = 1; pageNumber <= Model.TotalPages; pageNumber++)
+                                {
+                                    <a href="@PageUrl(pageNumber)" class="pagination__btn @(pageNumber == Model.Page ? "active" : "")">@pageNumber</a>
+                                }
+                            </div>
                         </div>
                     </div>
                 }
@@ -224,12 +245,57 @@
 
     private string PageUrl(int page)
     {
-        var parts = new List<string> { $"page={page}", $"sort={Uri.EscapeDataString(Model.Sort)}" };
+        var parts = new List<string> { $"page={page}", $"sort={Uri.EscapeDataString(Model.Sort)}", $"view={Model.ViewMode}" };
         if (!string.IsNullOrWhiteSpace(Model.Keyword)) parts.Add($"keyword={Uri.EscapeDataString(Model.Keyword)}");
         if (!string.IsNullOrWhiteSpace(Model.Status)) parts.Add($"status={Uri.EscapeDataString(Model.Status)}");
         if (Model.CategoryId > 0) parts.Add($"categoryId={Model.CategoryId}");
         parts.AddRange(Model.SelectedTagIds.Select(id => $"tagId={id}"));
         return "/Novels?" + string.Join("&", parts);
+    }
+
+    private List<int?> PaginationItems()
+    {
+        var total = Model.TotalPages;
+        var current = Math.Min(Math.Max(Model.Page, 1), total);
+        var visiblePages = new SortedSet<int>();
+
+        void AddPage(int page)
+        {
+            if (page >= 1 && page <= total) visiblePages.Add(page);
+        }
+
+        if (total <= 7)
+        {
+            for (var page = 1; page <= total; page++) AddPage(page);
+        }
+        else
+        {
+            AddPage(1);
+            AddPage(total);
+
+            for (var page = current - 1; page <= current + 1; page++) AddPage(page);
+
+            if (current <= 4)
+            {
+                for (var page = 2; page <= 5; page++) AddPage(page);
+            }
+
+            if (current >= total - 3)
+            {
+                for (var page = total - 4; page < total; page++) AddPage(page);
+            }
+        }
+
+        var items = new List<int?>();
+        int? previous = null;
+        foreach (var page in visiblePages)
+        {
+            if (previous.HasValue && page - previous.Value > 1) items.Add(null);
+            items.Add(page);
+            previous = page;
+        }
+
+        return items;
     }
 
     private static string StatusLabel(string? status) => status?.Trim().ToLowerInvariant() switch
@@ -244,32 +310,35 @@
 
 @section Scripts {
 <script>
+(function syncCatalogView() {
+    const currentView = '@Model.ViewMode';
+    const url = new URL(window.location.href);
+    const savedView = localStorage.getItem('catalog-view');
+
+    if (!url.searchParams.has('view') && (savedView === 'grid' || savedView === 'list') && savedView !== currentView) {
+        url.searchParams.set('view', savedView);
+        window.location.replace(url.toString());
+        return;
+    }
+
+    localStorage.setItem('catalog-view', currentView);
+})();
+
 function updateCatalogSort(sort) {
     const url = new URL(window.location.href);
     url.searchParams.set('sort', sort);
+    url.searchParams.set('view', '@Model.ViewMode');
     url.searchParams.delete('page');
     window.location.href = url.toString();
 }
 
 function setCatalogView(view) {
-    const container = document.getElementById('novelsCatalogList');
-    const btnGrid = document.getElementById('btnViewGrid');
-    const btnList = document.getElementById('btnViewList');
-    if (!container) return;
-    
-    if (view === 'list') {
-        container.classList.remove('view-grid');
-        container.classList.add('view-list');
-        btnGrid.classList.remove('active');
-        btnList.classList.add('active');
-        localStorage.setItem('catalog-view', 'list');
-    } else {
-        container.classList.remove('view-list');
-        container.classList.add('view-grid');
-        btnList.classList.remove('active');
-        btnGrid.classList.add('active');
-        localStorage.setItem('catalog-view', 'grid');
-    }
+    const nextView = view === 'list' ? 'list' : 'grid';
+    const url = new URL(window.location.href);
+    url.searchParams.set('view', nextView);
+    url.searchParams.delete('page');
+    localStorage.setItem('catalog-view', nextView);
+    window.location.href = url.toString();
 }
 
 function toggleFavorite(event, novelId) {

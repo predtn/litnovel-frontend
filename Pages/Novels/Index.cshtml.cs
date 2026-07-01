@@ -20,27 +20,31 @@ public class IndexModel : PageModel
     public int CategoryId { get; set; }
     public List<int> SelectedTagIds { get; set; } = [];
     public string Sort { get; set; } = "updatedAt";
+    public string ViewMode { get; set; } = "grid";
+    public int PageSize { get; set; } = 10;
     public HashSet<int> FavoriteIds { get; set; } = [];
 
     public IndexModel(IApiService api, IAuthService auth) { _api = api; _auth = auth; }
 
-    public async Task OnGetAsync(string? keyword, string? status, int categoryId = 0, [FromQuery] List<int>? tagId = null, int page = 1, string sort = "updatedAt")
+    public async Task OnGetAsync(string? keyword, string? status, int categoryId = 0, [FromQuery] List<int>? tagId = null, int page = 1, string sort = "updatedAt", string view = "grid")
     {
         Keyword = keyword;
         Status = status;
         CategoryId = categoryId;
         SelectedTagIds = tagId?.Where(id => id > 0).Distinct().ToList() ?? [];
-        Page = page;
+        Page = GetQueryInt("page", page);
         Sort = sort;
+        ViewMode = NormalizeViewMode(view);
+        PageSize = ViewMode == "list" ? 5 : 10;
 
         var token = _auth.GetToken(HttpContext);
-        var qs = $"/api/novels?page={page}&size=20&sort={sort}&order=desc"
+        string BuildNovelQuery() => $"/api/novels?page={Page}&size={PageSize}&sort={sort}&order=desc"
             + (string.IsNullOrEmpty(keyword) ? "" : $"&keyword={Uri.EscapeDataString(keyword)}")
             + (string.IsNullOrEmpty(status)  ? "" : $"&status={status}")
             + (categoryId > 0                ? $"&categoryId={categoryId}" : "")
             + string.Concat(SelectedTagIds.Select(id => $"&tagId={id}"));
 
-        var novelTask = _api.GetAsync<PagedData<NovelSummaryDto>>(qs, token);
+        var novelTask = _api.GetAsync<PagedData<NovelSummaryDto>>(BuildNovelQuery(), token);
         var catTask   = _api.GetAsync<List<CategoryDto>>("/api/categories");
         var tagTask   = _api.GetAsync<List<TagDto>>("/api/tags");
 
@@ -56,6 +60,12 @@ public class IndexModel : PageModel
             favTask ?? Task.FromResult<ApiResponse<PagedData<NovelSummaryDto>>?>(null));
 
         var data = novelTask.Result?.Data;
+        if (data is { TotalPages: > 0 } && Page > data.TotalPages)
+        {
+            Page = data.TotalPages;
+            data = (await _api.GetAsync<PagedData<NovelSummaryDto>>(BuildNovelQuery(), token))?.Data;
+        }
+
         Novels        = data?.Items ?? [];
         TotalPages    = data?.TotalPages ?? 1;
         TotalElements = data?.TotalElements ?? Novels.Count;
@@ -69,5 +79,19 @@ public class IndexModel : PageModel
                 .ToHashSet() ?? [];
         }
     }
-}
 
+    private static string NormalizeViewMode(string? view)
+        => string.Equals(view, "list", StringComparison.OrdinalIgnoreCase) ? "list" : "grid";
+
+    private int GetQueryInt(string key, int fallback)
+    {
+        if (Request.Query.TryGetValue(key, out var values)
+            && int.TryParse(values.FirstOrDefault(), out var value)
+            && value > 0)
+        {
+            return value;
+        }
+
+        return Math.Max(1, fallback);
+    }
+}
