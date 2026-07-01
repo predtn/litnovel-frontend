@@ -133,28 +133,44 @@
             <a href="/Novels?sort=viewCount&order=desc" class="btn btn-ghost">Xem tất cả →</a>
         </div>
         <div class="home-novel-grid">
-            @foreach (var novel in Model.TrendingNovels)
+            @foreach (var novel in Model?.TrendingNovels ?? new List<NovelSummaryDto>())
             {
                 var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
-                <a href="/Novels/@novelUrl" class="novel-card">
-                    @if (!string.IsNullOrEmpty(novel.CoverImage))
-                    {
-                        <img class="novel-card__cover" src="@novel.CoverImage" alt="@novel.Title" loading="lazy" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
-                        <div class="novel-card__cover-placeholder hidden"><span class="cover-placeholder-icon" aria-hidden="true"></span></div>
-                    }
-                    else
-                    {
-                        <div class="novel-card__cover-placeholder"><span class="cover-placeholder-icon" aria-hidden="true"></span></div>
-                    }
+                var latestChapterUrl = !string.IsNullOrWhiteSpace(novel.LatestChapterSlug) ? novel.LatestChapterSlug : null;
+                var hasLatestChapter = !string.IsNullOrWhiteSpace(latestChapterUrl);
+                var description = !string.IsNullOrWhiteSpace(novel.Description) ? novel.Description : "Truyện hiện chưa có mô tả.";
+                <article class="novel-card home-spotlight-card">
+                    <div class="home-spotlight-card__media">
+                        @if (!string.IsNullOrEmpty(novel.CoverImage))
+                        {
+                            <img class="novel-card__cover" src="@novel.CoverImage" alt="@novel.Title" loading="lazy" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
+                            <div class="novel-card__cover-placeholder hidden"><span class="cover-placeholder-icon" aria-hidden="true"></span></div>
+                        }
+                        else
+                        {
+                            <div class="novel-card__cover-placeholder"><span class="cover-placeholder-icon" aria-hidden="true"></span></div>
+                        }
+                    </div>
                     <div class="novel-card__body">
-                        <div class="novel-card__title">@novel.Title</div>
-                        <div class="novel-card__author">@novel.Author?.Username</div>
-                        <div class="novel-card__meta">
-                            <span class="novel-card__metric novel-card__metric--rated"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/></svg>@(novel.RatingAverage > 0 ? novel.RatingAverage.ToString("0.0") : "0.0")</span>
-                            <span class="novel-card__metric"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="3"/></svg>@FormatCount(novel.ViewCount)</span>
+                        <a href="/Novels/@novelUrl" class="novel-card__title home-spotlight-card__title">@novel.Title</a>
+                    </div>
+                    <div class="home-spotlight-card__overlay">
+                        <p class="home-spotlight-card__description">@description</p>
+                        <div class="home-spotlight-card__actions">
+                            @if (hasLatestChapter)
+                            {
+                                <a href="/Novels/@novelUrl/@latestChapterUrl/read" class="home-spotlight-card__read">Đọc ngay</a>
+                            }
+                            else
+                            {
+                                <span class="home-spotlight-card__read home-spotlight-card__read--disabled" aria-disabled="true">Đọc ngay</span>
+                            }
+                            <a href="/Novels/@novelUrl" class="home-spotlight-card__detail" aria-label="Xem chi tiết @novel.Title">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                            </a>
                         </div>
                     </div>
-                </a>
+                </article>
             }
         </div>
     </div>
@@ -176,7 +192,7 @@
             <a href="/Novels?sort=updatedAt&order=desc" class="btn btn-ghost">Xem tất cả →</a>
         </div>
         <div class="home-latest-grid">
-            @foreach (var novel in Model.NewNovels)
+            @foreach (var novel in Model?.NewNovels ?? new List<NovelSummaryDto>())
             {
                 var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
                 var chapterUrl = !string.IsNullOrWhiteSpace(novel.LatestChapterSlug) ? novel.LatestChapterSlug : null;
@@ -238,27 +254,48 @@
             <a href="/Novels?sort=ratingAverage&order=desc" class="btn btn-ghost">Xem tất cả →</a>
         </div>
         <div class="home-novel-grid">
-            @foreach (var novel in Model.TopRatedNovels)
+            @foreach (var novel in Model?.TopRatedNovels ?? new List<NovelSummaryDto>())
             {
                 var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
-                <a href="/Novels/@novelUrl" class="novel-card">
-                    @if (!string.IsNullOrEmpty(novel.CoverImage))
-                    {
-                        <img class="novel-card__cover" src="@novel.CoverImage" alt="@novel.Title" loading="lazy" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
-                        <div class="novel-card__cover-placeholder hidden"><span class="cover-placeholder-icon" aria-hidden="true"></span></div>
-                    }
-                    else
-                    {
-                        <div class="novel-card__cover-placeholder"><span class="cover-placeholder-icon" aria-hidden="true"></span></div>
-                    }
-                    <div class="novel-card__body">
-                        <div class="novel-card__title">@novel.Title</div>
-                        <div class="novel-card__meta">
-                            <span class="novel-card__metric novel-card__metric--rated"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/></svg>@(novel.RatingAverage > 0 ? novel.RatingAverage.ToString("0.0") : "0.0")</span>
-                            <span>(@novel.RatingCount)</span>
+                var latestChapterUrl = !string.IsNullOrWhiteSpace(novel.LatestChapterSlug) ? novel.LatestChapterSlug : null;
+                var hasLatestChapter = !string.IsNullOrWhiteSpace(latestChapterUrl);
+                var description = !string.IsNullOrWhiteSpace(novel.Description) ? novel.Description : "Truyện hiện chưa có mô tả.";
+                <article class="novel-card home-spotlight-card">
+                    <div class="home-spotlight-card__media">
+                        @if (!string.IsNullOrEmpty(novel.CoverImage))
+                        {
+                            <img class="novel-card__cover" src="@novel.CoverImage" alt="@novel.Title" loading="lazy" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
+                            <div class="novel-card__cover-placeholder hidden"><span class="cover-placeholder-icon" aria-hidden="true"></span></div>
+                        }
+                        else
+                        {
+                            <div class="novel-card__cover-placeholder"><span class="cover-placeholder-icon" aria-hidden="true"></span></div>
+                        }
+                        <div class="home-spotlight-card__rating-badge" aria-label="Đánh giá @(novel.RatingAverage > 0 ? novel.RatingAverage.ToString("0.0") : "0.0") sao">
+                            <span>@(novel.RatingAverage > 0 ? novel.RatingAverage.ToString("0.0") : "0.0")</span>
+                            <svg class="star-filled" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/></svg>
                         </div>
                     </div>
-                </a>
+                    <div class="novel-card__body">
+                        <a href="/Novels/@novelUrl" class="novel-card__title home-spotlight-card__title">@novel.Title</a>
+                    </div>
+                    <div class="home-spotlight-card__overlay">
+                        <p class="home-spotlight-card__description">@description</p>
+                        <div class="home-spotlight-card__actions">
+                            @if (hasLatestChapter)
+                            {
+                                <a href="/Novels/@novelUrl/@latestChapterUrl/read" class="home-spotlight-card__read">Đọc ngay</a>
+                            }
+                            else
+                            {
+                                <span class="home-spotlight-card__read home-spotlight-card__read--disabled" aria-disabled="true">Đọc ngay</span>
+                            }
+                            <a href="/Novels/@novelUrl" class="home-spotlight-card__detail" aria-label="Xem chi tiết @novel.Title">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                            </a>
+                        </div>
+                    </div>
+                </article>
             }
         </div>
     </div>
