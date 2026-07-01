@@ -52,6 +52,12 @@ public class DetailModel : PageModel
     {
         var token = _auth.GetToken(HttpContext);
         if (string.IsNullOrEmpty(token)) return RedirectToPage("/Auth/Login");
+        if (await IsInteractionLockedAsync(slug, token))
+        {
+            TempData["Error"] = "Truy\u1ec7n \u0111ang ch\u1edd x\u00f3a n\u00ean kh\u00f4ng th\u1ec3 \u0111\u00e1nh gi\u00e1.";
+            return RedirectToPage(new { slug });
+        }
+
         await _api.PostAsync<object>($"/api/novels/{id}/reviews", new { rating, review = reviewText }, token);
         return RedirectToPage(new { slug });
     }
@@ -60,6 +66,12 @@ public class DetailModel : PageModel
     {
         var token = _auth.GetToken(HttpContext);
         if (string.IsNullOrEmpty(token)) return RedirectToPage("/Auth/Login");
+        if (await IsInteractionLockedAsync(slug, token))
+        {
+            TempData["Error"] = "Truy\u1ec7n \u0111ang ch\u1edd x\u00f3a n\u00ean kh\u00f4ng th\u1ec3 c\u1eadp nh\u1eadt \u0111\u00e1nh gi\u00e1.";
+            return RedirectToPage(new { slug });
+        }
+
         await _api.PutAsync<object>($"/api/reviews/{reviewId}", new { rating, review = reviewText }, token);
         return RedirectToPage(new { slug });
     }
@@ -72,4 +84,12 @@ public class DetailModel : PageModel
         TempData["Success"] = "Báo cáo đã được gửi.";
         return RedirectToPage(new { slug });
     }
+    private async Task<bool> IsInteractionLockedAsync(string slug, string token)
+    {
+        var novelResult = await _api.GetAsync<NovelDetailDto>($"/api/novels/{slug}", token);
+        return IsPendingDeletion(novelResult?.Data?.Status);
+    }
+
+    private static bool IsPendingDeletion(string? status)
+        => string.Equals(status, "PendingDeletion", StringComparison.OrdinalIgnoreCase);
 }

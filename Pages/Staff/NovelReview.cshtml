@@ -43,7 +43,7 @@
             <div class="card">
                 <div class="card__header">
                     <h2 class="card__title">@n.Title</h2>
-                    <span class="status-badge status-@n.Status.ToLower()">@n.Status</span>
+                    <span class="status-badge status-@n.Status.ToLower()">@DisplayText.Status(n.Status)</span>
                 </div>
                 <div class="card__body">
                     @if (!string.IsNullOrEmpty(n.Description))
@@ -55,8 +55,8 @@
                         <div class="meta-item"><span class="meta-label">Thể loại</span><span class="meta-value">@(n.CategoryName ?? "—")</span></div>
                         <div class="meta-item"><span class="meta-label">Tổng chương</span><span class="meta-value">@n.TotalChapters</span></div>
                         <div class="meta-item"><span class="meta-label">Lượt xem</span><span class="meta-value">@n.ViewCount</span></div>
-                        <div class="meta-item"><span class="meta-label">Ngày tạo</span><span class="meta-value">@n.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</span></div>
-                        <div class="meta-item"><span class="meta-label">Cập nhật</span><span class="meta-value">@n.UpdatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span></div>
+                        <div class="meta-item"><span class="meta-label">Ngày tạo</span><span class="meta-value">@DisplayDateTime.Format(n.CreatedAt, "dd/MM/yyyy")</span></div>
+                        <div class="meta-item"><span class="meta-label">Cập nhật</span><span class="meta-value">@DisplayDateTime.Format(n.UpdatedAt, "dd/MM/yyyy HH:mm")</span></div>
                     </div>
                     @if (n.Tags.Any())
                     {
@@ -85,7 +85,7 @@
                             <div class="chapter-item">
                                 <span class="chapter-num">Chương @ch.ChapterNumber</span>
                                 <span class="chapter-title">@ch.Title</span>
-                                <span class="status-badge status-@ch.Status.ToLower() badge-sm">@ch.Status</span>
+                                <span class="status-badge status-@ch.Status.ToLower() badge-sm">@DisplayText.Status(ch.Status)</span>
                                 <a href="/Staff/ChapterReview?id=@ch.Id" class="btn btn-secondary btn-xs">Xem</a>
                             </div>
                         }

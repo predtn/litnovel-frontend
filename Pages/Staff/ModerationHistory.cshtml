@@ -106,7 +106,7 @@
                         </td>
                         <td class="text-body-sm">@h.StaffUsername</td>
                         <td class="text-body-sm text-mute">@(h.Notes?.Truncate(50) ?? "—")</td>
-                        <td class="text-caption text-mute">@h.PerformedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td class="text-caption text-mute">@DisplayDateTime.Format(h.PerformedAt, "dd/MM/yyyy HH:mm")</td>
                     </tr>
                 }
             </tbody>

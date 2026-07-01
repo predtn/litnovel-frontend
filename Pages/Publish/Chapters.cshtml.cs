@@ -9,6 +9,7 @@ public class ChaptersModel : PublishPageModel
     public NovelDetailDto Novel { get; set; } = new();
     public VolumeDto Volume { get; set; } = new();
     public List<ChapterNavDto> Chapters { get; set; } = [];
+    public string? Status { get; set; }
     public new int Page { get; set; } = 1;
     public int TotalPages { get; set; } = 1;
     public int TotalElements { get; set; }
@@ -21,21 +22,24 @@ public class ChaptersModel : PublishPageModel
     public bool CanWithdrawChapter(string? status) => IsPendingReview(status);
     public bool CanDeleteChapter(string? status)
         => string.Equals(status, "Draft", StringComparison.OrdinalIgnoreCase) || IsApprovedChapterStatus(status);
+    public bool CanRestoreChapter(string? status) => IsPendingDeletion(status);
 
-    public async Task<IActionResult> OnGetAsync(int volumeId, int novelId, int page = 1)
+    public async Task<IActionResult> OnGetAsync(int volumeId, int novelId, string? status, int page = 1)
     {
         var guard = RequireAuthor();
         if (guard != null) return guard;
+        Status = status;
         Page = Math.Max(1, page);
         var loaded = await LoadAsync(volumeId, novelId);
         if (!loaded) return RedirectToPage("/Publish/Manage", new { id = novelId });
         return Page();
     }
 
-    public async Task<IActionResult> OnPostSubmitAsync(int volumeId, int novelId, int id)
+    public async Task<IActionResult> OnPostSubmitAsync(int volumeId, int novelId, int id, string? status)
     {
         var guard = RequireAuthor();
         if (guard != null) return guard;
+        Status = status;
 
         var chapterResult = await Api.GetAsync<ChapterDetailDto>($"/api/chapters/{id}", Token);
         if (IsApiSuccess(chapterResult) && chapterResult?.Data != null && !CanSubmitForReview(chapterResult.Data.Status))
@@ -46,13 +50,14 @@ public class ChaptersModel : PublishPageModel
 
         var result = await Api.PostAsync<object>($"/api/chapters/{id}/submit", null, Token);
         SetApiResultMessage(result, "Chương đã được gửi duyệt.", "Chưa thể gửi duyệt chương lúc này.");
-        return RedirectToPage(new { volumeId, novelId });
+        return RedirectToPage(new { volumeId, novelId, status = Status });
     }
 
-    public async Task<IActionResult> OnPostDeleteAsync(int volumeId, int novelId, int id)
+    public async Task<IActionResult> OnPostDeleteAsync(int volumeId, int novelId, int id, string? status)
     {
         var guard = RequireAuthor();
         if (guard != null) return guard;
+        Status = status;
 
         var chapterResult = await Api.GetAsync<ChapterDetailDto>($"/api/chapters/{id}", Token);
         if (!IsApiSuccess(chapterResult) || chapterResult?.Data == null)
@@ -69,13 +74,38 @@ public class ChaptersModel : PublishPageModel
 
         var result = await Api.DeleteAsync<object>($"/api/chapters/{id}", Token);
         SetApiResultMessage(result, "Đã xóa chương.", "Chưa thể xóa chương lúc này.");
-        return RedirectToPage(new { volumeId, novelId });
+        return RedirectToPage(new { volumeId, novelId, status = Status });
     }
 
-    public async Task<IActionResult> OnPostWithdrawAsync(int volumeId, int novelId, int id)
+    public async Task<IActionResult> OnPostRestoreAsync(int volumeId, int novelId, int id, string? status)
     {
         var guard = RequireAuthor();
         if (guard != null) return guard;
+        Status = status;
+
+        var chapterResult = await Api.GetAsync<ChapterDetailDto>($"/api/chapters/{id}", Token);
+        if (!IsApiSuccess(chapterResult) || chapterResult?.Data == null)
+        {
+            TempData["Error"] = ApiFailureMessage(chapterResult, "Không thể tải thông tin chương.");
+            return RedirectToPage(new { volumeId, novelId, status = Status });
+        }
+
+        if (!CanRestoreChapter(chapterResult.Data.Status))
+        {
+            TempData["Error"] = "Chỉ có thể khôi phục chương đang chờ xóa.";
+            return RedirectToPage(new { volumeId, novelId, status = Status });
+        }
+
+        var result = await Api.PostAsync<ChapterNavDto>($"/api/chapters/{id}/restore", null, Token);
+        SetApiResultMessage(result, "Đã khôi phục chương.", "Chưa thể khôi phục chương lúc này.");
+        return RedirectToPage(new { volumeId, novelId, status = Status });
+    }
+
+    public async Task<IActionResult> OnPostWithdrawAsync(int volumeId, int novelId, int id, string? status)
+    {
+        var guard = RequireAuthor();
+        if (guard != null) return guard;
+        Status = status;
 
         var chapterResult = await Api.GetAsync<ChapterDetailDto>($"/api/chapters/{id}", Token);
         if (IsApiSuccess(chapterResult) && chapterResult?.Data != null && !IsPendingReview(chapterResult.Data.Status))
@@ -105,7 +135,11 @@ public class ChaptersModel : PublishPageModel
     private async Task<bool> LoadAsync(int volumeId, int novelId)
     {
         var novelTask = Api.GetAsync<NovelDetailDto>($"/api/novels/{novelId}", Token);
-        var chapterTask = Api.GetAsync<PagedData<ChapterNavDto>>($"/api/volumes/{volumeId}/chapters" + ODataQuery.Build(page: Page, size: PageSize, orderBy: "ChapterNumber asc"), Token);
+        var chapterTask = Api.GetAsync<PagedData<ChapterNavDto>>($"/api/volumes/{volumeId}/chapters" + ODataQuery.Build(
+            page: Page,
+            size: PageSize,
+            orderBy: "ChapterNumber asc",
+            filters: [ChapterStatusFilter(Status)]), Token);
         await Task.WhenAll(novelTask, chapterTask);
         if (!IsApiSuccess(novelTask.Result) || novelTask.Result?.Data == null)
         {
@@ -138,6 +172,7 @@ public class ChaptersModel : PublishPageModel
         else
         {
             var allChapters = (Novel.Volumes.FirstOrDefault(v => v.Id == volumeId)?.Chapters ?? [])
+                .Where(c => ShouldShowChapterInCurrentStatus(c.Status))
                 .OrderBy(c => c.ChapterNumber)
                 .ToList();
             TotalElements = allChapters.Count;
@@ -185,5 +220,19 @@ public class ChaptersModel : PublishPageModel
             .Replace("&nbsp;", " ")
             .Replace('\u00a0', ' ')
             .Trim();
+    }
+
+    private static string ChapterStatusFilter(string? status)
+    {
+        return string.IsNullOrWhiteSpace(status)
+            ? ODataQuery.Ne("Status", "PendingDeletion")
+            : ODataQuery.Eq("Status", status);
+    }
+
+    private bool ShouldShowChapterInCurrentStatus(string? status)
+    {
+        return string.IsNullOrWhiteSpace(Status)
+            ? !IsPendingDeletion(status)
+            : string.Equals(status, Status, StringComparison.OrdinalIgnoreCase);
     }
 }

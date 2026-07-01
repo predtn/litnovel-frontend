@@ -3,13 +3,14 @@
 @{
     ViewData["Title"] = "Xem trước chương";
     var ch = Model.Chapter;
+    var manageUrl = $"{Url.Page("/Publish/Manage", new { id = Model.NovelId })}#volumes";
 }
 
 <div class="publish-shell">
     <div class="breadcrumb">
         <a asp-page="/Publish/Index">Truyện của tôi</a><span class="breadcrumb__sep">/</span>
         <a asp-page="/Publish/Manage" asp-route-id="@Model.NovelId">@ch.Novel?.Title</a><span class="breadcrumb__sep">/</span>
-        <a asp-page="/Publish/Chapters" asp-route-volumeId="@Model.VolumeId" asp-route-novelId="@Model.NovelId">@ch.Volume?.Title</a><span class="breadcrumb__sep">/</span>
+        <a href="@manageUrl">@ch.Volume?.Title</a><span class="breadcrumb__sep">/</span>
         <span class="breadcrumb__current">Xem trước</span>
     </div>
 
@@ -20,22 +21,34 @@
                 <span>Chương @ch.ChapterNumber</span>
                 @if (ch.ReleaseDate.HasValue)
                 {
-                    <span>Phát hành @ch.ReleaseDate.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                    <span>Phát hành @DisplayDateTime.Format(ch.ReleaseDate.Value, "dd/MM/yyyy HH:mm")</span>
                 }
             </div>
             <h1 class="page-header__title">@ch.Title</h1>
             <p class="page-header__subtitle">@ch.Novel?.Title</p>
+            @if (Model.CanRestoreChapter)
+            {
+                <div class="alert alert-info mt-md">
+                    Chương đang nằm trong thùng rác và sẽ bị xóa vĩnh viễn@(ch.ScheduledHardDeleteAt.HasValue ? $" vào {ch.ScheduledHardDeleteAt.Value:dd/MM/yyyy HH:mm}" : "").
+                </div>
+            }
         </div>
         <div class="publish-actions">
+            @if (Model.CanRestoreChapter)
+            {
+                <form method="post" asp-page-handler="Restore" asp-route-id="@ch.Id" asp-route-volumeId="@Model.VolumeId" asp-route-novelId="@Model.NovelId" onsubmit="return confirmSubmit(this, 'Khôi phục chương này?');">
+                    <button class="btn btn-primary" type="submit">Khôi phục</button>
+                </form>
+            }
             @if (Model.CanEditChapter)
             {
                 <a asp-page="/Publish/ChapterEdit" asp-route-id="@ch.Id" asp-route-volumeId="@Model.VolumeId" asp-route-novelId="@Model.NovelId" class="btn btn-primary">Sửa</a>
             }
             else
             {
-                <button type="button" class="btn btn-primary" title="@Model.EditUnavailableMessage" onclick="alert('@Model.EditUnavailableMessage')">Sửa</button>
+                <button type="button" class="btn btn-primary" title="@Model.EditUnavailableMessage" data-blocked-modal data-message="@Model.EditUnavailableMessage">Sửa</button>
             }
-            <a asp-page="/Publish/Chapters" asp-route-volumeId="@Model.VolumeId" asp-route-novelId="@Model.NovelId" class="btn btn-secondary">Quay lại</a>
+            <a href="@manageUrl" class="btn btn-secondary">Quay lại</a>
         </div>
     </div>
 
@@ -43,3 +56,28 @@
         @Html.Raw(ch.Content)
     </article>
 </div>
+
+<div class="modal-overlay" id="publishBlockedModal" role="dialog" aria-modal="true" aria-labelledby="publishBlockedModalTitle">
+    <div class="modal">
+        <div class="modal__header">
+            <div class="modal__title" id="publishBlockedModalTitle">Không thể chỉnh sửa</div>
+            <button type="button" class="modal__close" onclick="closeModal('publishBlockedModal')" aria-label="Đóng">×</button>
+        </div>
+        <p class="text-body-sm text-body" id="publishBlockedModalMessage"></p>
+        <div class="modal__footer">
+            <button type="button" class="btn btn-primary" onclick="closeModal('publishBlockedModal')">Đã hiểu</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('[data-blocked-modal]').forEach(button => {
+            button.addEventListener('click', () => {
+                const target = document.getElementById('publishBlockedModalMessage');
+                if (target) target.textContent = button.dataset.message || button.getAttribute('title') || 'Nội dung đang bị khóa nên không thể chỉnh sửa.';
+                openModal('publishBlockedModal');
+            });
+        });
+    </script>
+}

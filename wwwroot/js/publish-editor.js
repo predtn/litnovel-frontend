@@ -129,13 +129,17 @@
         ? `Có bản nháp tự lưu lúc ${savedAt}. Khôi phục bản nháp này?`
         : 'Có bản nháp tự lưu. Khôi phục bản nháp này?';
 
-      if (!window.confirm(message)) return;
+      const restoreDraft = () => {
+        if (draft.content) surface.innerHTML = draft.content;
+        if (titleInput && draft.title) titleInput.value = draft.title;
+        if (chapterNumberInput && draft.chapterNumber) chapterNumberInput.value = draft.chapterNumber;
+        sync();
+        setAutosaveStatus('Đã khôi phục bản nháp');
+      };
 
-      if (draft.content) surface.innerHTML = draft.content;
-      if (titleInput && draft.title) titleInput.value = draft.title;
-      if (chapterNumberInput && draft.chapterNumber) chapterNumberInput.value = draft.chapterNumber;
-      sync();
-      setAutosaveStatus('Đã khôi phục bản nháp');
+      if (typeof window.confirmAction === 'function') {
+        window.confirmAction(message, restoreDraft);
+      }
     };
 
     const updateToolbarState = () => {

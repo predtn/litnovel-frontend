@@ -154,16 +154,5 @@
         return items;
     }
 
-    private static string StatusLabel(string status) => status?.Trim().ToLowerInvariant() switch
-    {
-        "draft" => "Bản nháp",
-        "pending" => "Chờ duyệt",
-        "ongoing" => "Đang ra",
-        "published" => "Đã xuất bản",
-        "ended" => "Hoàn thành",
-        "rejected" => "Bị từ chối",
-        "hiatus" => "Tạm dừng",
-        "locked" => "Đã khóa",
-        _ => string.IsNullOrWhiteSpace(status) ? "Không rõ" : status
-    };
+    private static string StatusLabel(string? status) => DisplayText.Status(status);
 }

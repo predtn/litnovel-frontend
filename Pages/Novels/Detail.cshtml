@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = Model.Novel?.Title ?? "Chi tiết truyện";
     var novel = Model.Novel;
+    var interactionsLocked = IsPendingDeletion(novel?.Status);
 }
 
 @if (novel == null)
@@ -96,6 +97,13 @@
 
             <h1 style="font-size:var(--text-display-md); font-weight:600; letter-spacing:var(--ls-display-md); color:var(--color-ink); margin-bottom:var(--space-xs);">@novel.Title</h1>
 
+            @if (interactionsLocked)
+            {
+                <div class="alert alert-info mb-md">
+                    Tác giả đã lên lịch xóa truyện này@(novel.ScheduledHardDeleteAt.HasValue ? $", nội dung sẽ được dọn vào {FormatDateTime(novel.ScheduledHardDeleteAt.Value)}" : "").
+                </div>
+            }
+
             <div class="novel-detail__meta">
                 <a href="/Profile/@novel.Author?.Id" class="novel-detail__author">
                     @if (!string.IsNullOrWhiteSpace(novel.Author?.Avatar))
@@ -164,7 +172,7 @@
                             <span class="truncate">@ch.Title</span>
                             @if (string.Equals(ch.Status, "Published", StringComparison.OrdinalIgnoreCase))
                             {
-                                <span class="novel-detail__chapter-date">@ch.CreatedAt.ToString("dd/MM")</span>
+                                <span class="novel-detail__chapter-date">@DisplayDateTime.Format(ch.CreatedAt, "dd/MM")</span>
                             }
                             else
                             {
@@ -196,7 +204,12 @@
         @if (User.Identity?.IsAuthenticated == true && Model.CurrentUserId != novel.Author?.Id)
         {
             <section class="novel-detail__review-form">
-                @if (novel.UserReviewId.HasValue)
+                @if (interactionsLocked)
+                {
+                    <h3 class="novel-detail__review-title">&#272;&#225;nh gi&#225; &#273;ang t&#7841;m kh&#243;a</h3>
+                    <p class="text-body-sm text-mute">Truy&#7879;n &#273;ang &#7903; tr&#7841;ng th&#225;i ch&#7901; x&#243;a n&#234;n kh&#244;ng th&#7875; g&#7917;i ho&#7863;c ch&#7881;nh s&#7917;a &#273;&#225;nh gi&#225;.</p>
+                }
+                else if (novel.UserReviewId.HasValue)
                 {
                     <h3 class="novel-detail__review-title">Chỉnh sửa đánh giá của bạn</h3>
                     <form method="post" asp-page-handler="UpdateReview" class="novel-detail__review-form-body">
@@ -252,7 +265,7 @@
                         }
                         <div>
                             <div class="text-body-sm font-medium">@review.User?.Username</div>
-                            <div class="text-caption text-mute">@review.CreatedAt.ToString("dd/MM/yyyy")</div>
+                            <div class="text-caption text-mute">@DisplayDateTime.Format(review.CreatedAt, "dd/MM/yyyy")</div>
                         </div>
                         <div class="flex gap-xxs ml-auto">
                             @for (var s = 1; s <= 5; s++)
@@ -319,19 +332,12 @@
 @functions {
     string FormatNum(int n) => n >= 1000000 ? $"{n / 1000000.0:0.#}M" : n >= 1000 ? $"{n / 1000.0:0.#}K" : n.ToString();
 
-    static string StatusLabel(string? status) => status?.Trim().ToLowerInvariant() switch
-    {
-        "draft" => "Bản nháp",
-        "pending" => "Chờ duyệt",
-        "ongoing" => "Đang ra",
-        "published" => "Đã xuất bản",
-        "ended" => "Hoàn thành",
-        "dropped" => "Đã bỏ",
-        "rejected" => "Bị từ chối",
-        "hiatus" => "Tạm dừng",
-        "locked" => "Đã khóa",
-        _ => string.IsNullOrWhiteSpace(status) ? "Không rõ" : status
-    };
+    static string StatusLabel(string? status) => DisplayText.Status(status);
+
+    static bool IsPendingDeletion(string? status)
+        => string.Equals(status, "PendingDeletion", StringComparison.OrdinalIgnoreCase);
+
+    static string FormatDateTime(DateTime value) => DisplayDateTime.Format(value, "dd/MM/yyyy HH:mm");
 }
 
 @section Scripts {

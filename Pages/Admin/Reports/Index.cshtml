@@ -62,7 +62,7 @@ else
                     <td><div class="font-medium">@report.TargetTitle</div><div class="text-caption text-mute">@report.TargetSubtitle</div></td>
                     <td><span class="badge badge-secondary">@DisplayText.ReportType(report.ReportType)</span></td>
                     <td>@(report.Reporter?.Username ?? report.ReporterName)</td>
-                    <td class="text-caption text-mute">@report.CreatedAt.ToString("dd/MM/yyyy")</td>
+                    <td class="text-caption text-mute">@DisplayDateTime.Format(report.CreatedAt, "dd/MM/yyyy")</td>
                     <td><span class="status-badge status-@report.Status.ToLower()">@DisplayText.Status(report.Status)</span></td>
                     <td>
                         <details class="admin-report-detail">
@@ -94,7 +94,7 @@ else
                                         }
                                         @if (report.UpdatedAt.HasValue)
                                         {
-                                            <div class="text-caption text-mute">Cập nhật @report.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                                            <div class="text-caption text-mute">Cập nhật @DisplayDateTime.Format(report.UpdatedAt.Value, "dd/MM/yyyy HH:mm")</div>
                                         }
                                     </div>
                                 }

@@ -35,9 +35,9 @@ else
                 <div class="admin-announcement-card__meta">
                     <span class="status-badge @(announcement.IsActive ? "status-resolved" : "status-offline")">@(announcement.IsActive ? "Đang bật" : "Đang tắt")</span>
                     <span class="text-caption text-mute">
-                        @announcement.StartDate.ToString("dd/MM/yyyy HH:mm")
+                        @DisplayDateTime.Format(announcement.StartDate, "dd/MM/yyyy HH:mm")
                         -
-                        @(announcement.EndDate?.ToString("dd/MM/yyyy HH:mm") ?? "Không giới hạn")
+                        @DisplayDateTime.Format(announcement.EndDate, "dd/MM/yyyy HH:mm", "Không giới hạn")
                     </span>
                 </div>
                 <h2 class="text-display-sm">@announcement.Title</h2>

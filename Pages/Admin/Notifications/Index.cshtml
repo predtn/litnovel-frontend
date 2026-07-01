@@ -65,7 +65,7 @@
                             <span class="text-caption text-mute">@item.Target</span>
                         </div>
                         <div class="notif-message">@item.Message</div>
-                        <div class="notif-time">@((item.SentAt ?? item.CreatedAt)?.ToString("dd/MM/yyyy HH:mm") ?? "No timestamp") - @item.ReadCount reads</div>
+                        <div class="notif-time">@DisplayDateTime.Format(item.SentAt ?? item.CreatedAt, "dd/MM/yyyy HH:mm", "No timestamp") - @item.ReadCount reads</div>
                     </div>
                 </div>
             }

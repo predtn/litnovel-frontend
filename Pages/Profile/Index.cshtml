@@ -96,7 +96,7 @@
                             <div class="profile-badge-card__name">@b.Name</div>
                             @if (b.EarnedAt != default)
                             {
-                                <div class="profile-badge-card__meta">Nhận @b.EarnedAt.ToString("dd/MM/yyyy")</div>
+                                <div class="profile-badge-card__meta">Nhận @DisplayDateTime.Format(b.EarnedAt, "dd/MM/yyyy")</div>
                             }
                         </div>
                     </div>
