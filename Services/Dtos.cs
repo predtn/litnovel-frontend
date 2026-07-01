@@ -108,6 +108,7 @@ public class NovelSummaryDto
     public int? LatestChapterNumber { get; set; }
     public string? LatestChapterTitle { get; set; }
     public string? LatestChapterSlug { get; set; }
+    public DateTime? LatestChapterUpdatedAt { get; set; }
     public double RatingAverage { get; set; }
     public int RatingCount { get; set; }
     public DateTime UpdatedAt { get; set; }

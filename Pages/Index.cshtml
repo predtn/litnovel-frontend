@@ -192,6 +192,7 @@
                 var chapterUrl = !string.IsNullOrWhiteSpace(novel.LatestChapterSlug) ? novel.LatestChapterSlug : null;
                 var latestChapterNumber = novel.LatestChapterNumber ?? novel.TotalChapters;
                 var latestChapterTitle = !string.IsNullOrWhiteSpace(novel.LatestChapterTitle) ? novel.LatestChapterTitle : "Chuong moi nhat";
+                var latestChapterTime = novel.LatestChapterUpdatedAt ?? novel.UpdatedAt;
                 <article class="novel-item-card home-latest-card" data-novel-id="@novel.Id">
                     <a href="/Novels/@novelUrl" class="novel-card__cover-wrapper home-latest-card__cover-link" aria-label="@novel.Title">
                         @if (!string.IsNullOrWhiteSpace(novel.CoverImage))
@@ -225,7 +226,7 @@
                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             <span>@(novel.Author?.Username ?? "Unknown")</span>
                         </div>
-                        <time class="home-latest-card__time" datetime="@novel.UpdatedAt.ToString("O")">@TimeAgo(novel.UpdatedAt)</time>
+                        <time class="home-latest-card__time" datetime="@latestChapterTime.ToString("O")">@TimeAgo(latestChapterTime)</time>
                     </div>
                 </article>
             }
