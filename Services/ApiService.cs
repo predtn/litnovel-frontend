@@ -8,6 +8,7 @@ public interface IApiService
 {
     Task<ApiResponse<T>?> GetAsync<T>(string endpoint, string? token = null);
     Task<ApiResponse<T>?> PostAsync<T>(string endpoint, object? body, string? token = null);
+    Task<ApiResponse<T>?> PatchAsync<T>(string endpoint, object? body, string? token = null);
     Task<ApiResponse<T>?> PutAsync<T>(string endpoint, object? body, string? token = null);
     Task<ApiResponse<T>?> DeleteAsync<T>(string endpoint, string? token = null);
 }
@@ -33,6 +34,9 @@ public class ApiService : IApiService
 
     public async Task<ApiResponse<T>?> PostAsync<T>(string endpoint, object? body, string? token = null)
         => await SendAsync<T>(HttpMethod.Post, endpoint, body, token);
+
+    public async Task<ApiResponse<T>?> PatchAsync<T>(string endpoint, object? body, string? token = null)
+        => await SendAsync<T>(HttpMethod.Patch, endpoint, body, token);
 
     public async Task<ApiResponse<T>?> PutAsync<T>(string endpoint, object? body, string? token = null)
         => await SendAsync<T>(HttpMethod.Put, endpoint, body, token);

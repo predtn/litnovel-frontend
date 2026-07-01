@@ -29,12 +29,25 @@ public class ChapterReviewModel : PageModel
         var result = await _api.GetAsync<ChapterReviewDetailDto>($"/api/staff/chapters/{id}", token);
         Chapter = result?.Data;
         if (Chapter == null) return NotFound();
+        if (!IsPending(Chapter.Status))
+        {
+            TempData["Error"] = "Chương này không còn trong hàng chờ duyệt.";
+            return RedirectToPage("/Staff/PendingChapters");
+        }
+
         return Page();
     }
 
     public async Task<IActionResult> OnPostAsync([FromForm] int id, [FromForm] string action, [FromForm] string? reason)
     {
         if (!ValidateAccess(out var token)) return RedirectToPage("/Auth/Login");
+        var current = await _api.GetAsync<ChapterReviewDetailDto>($"/api/staff/chapters/{id}", token);
+        if (current?.Data == null || !IsPending(current.Data.Status))
+        {
+            TempData["Error"] = "Chương này đã được rút khỏi hàng chờ duyệt.";
+            return RedirectToPage("/Staff/PendingChapters");
+        }
+
         var payload = new { action, reason };
         var result = await _api.PutAsync<object>($"/api/staff/chapters/{id}/moderate", payload, token);
         if (result?.Success == true)
@@ -45,7 +58,15 @@ public class ChapterReviewModel : PageModel
         // Reload
         var ch = await _api.GetAsync<ChapterReviewDetailDto>($"/api/staff/chapters/{id}", token);
         Chapter = ch?.Data;
+        if (Chapter == null || !IsPending(Chapter.Status))
+        {
+            TempData["Error"] = "Chương này không còn trong hàng chờ duyệt.";
+            return RedirectToPage("/Staff/PendingChapters");
+        }
         ActionMessage = result?.Message ?? "Có lỗi xảy ra.";
         return Page();
     }
+
+    private static bool IsPending(string? status)
+        => string.Equals(status, "Pending", StringComparison.OrdinalIgnoreCase);
 }

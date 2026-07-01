@@ -32,7 +32,7 @@
                         }
                         else
                         {
-                            <div class="novel-card__cover-placeholder">📖</div>
+                            <div class="novel-card__cover-placeholder">Sách</div>
                         }
                     </a>
                     <div class="novel-card__body">
@@ -47,25 +47,112 @@
                     <form method="post" style="position:absolute;top:var(--space-xs);right:var(--space-xs);">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="novelId" value="@n.Id" />
+                        <input type="hidden" name="page" value="@Model.PageNumber" />
                         <button type="submit" class="btn-icon" title="Bỏ yêu thích" style="color:var(--color-error);background:rgba(255,255,255,.9);">♡</button>
                     </form>
                 </div>
             }
         </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <div class="flex justify-center mt-xl">
+                <div class="pagination">
+                    @if (Model.PageNumber > 1)
+                    {
+                        <a href="@PageUrl(Model.PageNumber - 1)" class="pagination__btn">←</a>
+                    }
+                    @foreach (var item in PaginationItems())
+                    {
+                        if (item.HasValue)
+                        {
+                            var pageNumber = item.Value;
+                            <a href="@PageUrl(pageNumber)" class="pagination__btn @(pageNumber == Model.PageNumber ? "active" : "")">@pageNumber</a>
+                        }
+                        else
+                        {
+                            <span class="pagination__btn disabled">...</span>
+                        }
+                    }
+                    @if (Model.PageNumber < Model.TotalPages)
+                    {
+                        <a href="@PageUrl(Model.PageNumber + 1)" class="pagination__btn">→</a>
+                    }
+                    <button type="button" class="pagination__btn" onclick="openModal('favoritesPageModal')" title="Chọn trang" aria-label="Chọn trang">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                            <line x1="4" y1="7" x2="20" y2="7"></line>
+                            <line x1="4" y1="12" x2="20" y2="12"></line>
+                            <line x1="4" y1="17" x2="20" y2="17"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="modal-overlay" id="favoritesPageModal">
+                <div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="favoritesPageModalTitle">
+                    <div class="modal__header">
+                        <div class="modal__title" id="favoritesPageModalTitle">Chọn trang</div>
+                        <button type="button" class="modal__close" onclick="closeModal('favoritesPageModal')" aria-label="Đóng">×</button>
+                    </div>
+                    <div class="catalog-page-modal">
+                        @for (var pageNumber = 1; pageNumber <= Model.TotalPages; pageNumber++)
+                        {
+                            <a href="@PageUrl(pageNumber)" class="pagination__btn @(pageNumber == Model.PageNumber ? "active" : "")">@pageNumber</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
     }
 </div>
 
 @functions {
-    private static string StatusLabel(string status) => status?.Trim().ToLowerInvariant() switch
+    private string PageUrl(int page) => $"/Reading/Favorites?page={page}";
+
+    private List<int?> PaginationItems()
     {
-        "draft" => "Bản nháp",
-        "pending" => "Chờ duyệt",
-        "ongoing" => "Đang ra",
-        "published" => "Đã xuất bản",
-        "ended" => "Hoàn thành",
-        "rejected" => "Bị từ chối",
-        "hiatus" => "Tạm dừng",
-        "locked" => "Đã khóa",
-        _ => string.IsNullOrWhiteSpace(status) ? "Không rõ" : status
-    };
+        var total = Model.TotalPages;
+        var current = Math.Min(Math.Max(Model.PageNumber, 1), total);
+        var visiblePages = new SortedSet<int>();
+
+        void AddPage(int page)
+        {
+            if (page >= 1 && page <= total) visiblePages.Add(page);
+        }
+
+        if (total <= 7)
+        {
+            for (var page = 1; page <= total; page++) AddPage(page);
+        }
+        else
+        {
+            AddPage(1);
+            AddPage(total);
+
+            for (var page = current - 1; page <= current + 1; page++) AddPage(page);
+
+            if (current <= 4)
+            {
+                for (var page = 2; page <= 5; page++) AddPage(page);
+            }
+
+            if (current >= total - 3)
+            {
+                for (var page = total - 4; page < total; page++) AddPage(page);
+            }
+        }
+
+        var items = new List<int?>();
+        int? previous = null;
+        foreach (var page in visiblePages)
+        {
+            if (previous.HasValue && page - previous.Value > 1) items.Add(null);
+            items.Add(page);
+            previous = page;
+        }
+
+        return items;
+    }
+
+    private static string StatusLabel(string? status) => DisplayText.Status(status);
 }

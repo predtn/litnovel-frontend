@@ -42,7 +42,7 @@
                             <div class="text-body-sm font-medium text-ink mb-xs">@n.Title</div>
                             <div class="text-caption text-mute mb-xs">@n.Author?.Username · @n.TotalChapters chương</div>
                             <div class="flex gap-xs" style="flex-wrap:wrap;">
-                                <span class="status-badge status-@n.Status.ToLower()">@n.Status</span>
+                                <span class="status-badge status-@n.Status.ToLower()">@DisplayText.Status(n.Status)</span>
                                 @if (n.Category != null) { <span class="badge badge-secondary">@n.Category.Name</span> }
                                 @foreach (var t in n.Tags.Take(3)) { <span class="tag">@t.Name</span> }
                             </div>

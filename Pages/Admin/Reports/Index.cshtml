@@ -53,16 +53,58 @@ else
 {
     <div class="table-wrapper">
         <table class="table">
-            <thead><tr><th>Đối tượng</th><th>Loại</th><th>Người báo cáo</th><th>Ngày gửi</th><th>Trạng thái</th></tr></thead>
+            <thead><tr><th>Đối tượng</th><th>Loại</th><th>Người báo cáo</th><th>Ngày gửi</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
             <tbody>
             @foreach (var report in Model.Reports)
             {
+                var processedBy = report.ProcessedBy?.Username ?? report.ProcessedByName;
                 <tr>
                     <td><div class="font-medium">@report.TargetTitle</div><div class="text-caption text-mute">@report.TargetSubtitle</div></td>
                     <td><span class="badge badge-secondary">@DisplayText.ReportType(report.ReportType)</span></td>
-                    <td>@report.ReporterName</td>
-                    <td class="text-caption text-mute">@report.CreatedAt.ToString("dd/MM/yyyy")</td>
+                    <td>@(report.Reporter?.Username ?? report.ReporterName)</td>
+                    <td class="text-caption text-mute">@DisplayDateTime.Format(report.CreatedAt, "dd/MM/yyyy")</td>
                     <td><span class="status-badge status-@report.Status.ToLower()">@DisplayText.Status(report.Status)</span></td>
+                    <td>
+                        <details class="admin-report-detail">
+                            <summary class="btn btn-secondary btn-sm">Xem chi tiết</summary>
+                            <div class="admin-report-detail__panel">
+                                <div class="text-caption text-mute">Báo cáo #@report.Id</div>
+                                @if (!string.IsNullOrWhiteSpace(report.Description))
+                                {
+                                    <div class="mt-sm">
+                                        <div class="font-medium">Nội dung báo cáo</div>
+                                        <div class="text-body-sm">@report.Description</div>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(processedBy) || !string.IsNullOrWhiteSpace(report.ActionTaken) || !string.IsNullOrWhiteSpace(report.ResolutionNotes))
+                                {
+                                    <div class="mt-sm">
+                                        <div class="font-medium">Cách xử lý</div>
+                                        @if (!string.IsNullOrWhiteSpace(processedBy))
+                                        {
+                                            <div class="text-body-sm">Người xử lý: @processedBy</div>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(report.ActionTaken))
+                                        {
+                                            <div class="text-body-sm">Hành động: @report.ActionTaken</div>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(report.ResolutionNotes))
+                                        {
+                                            <div class="text-body-sm">Ghi chú: @report.ResolutionNotes</div>
+                                        }
+                                        @if (report.UpdatedAt.HasValue)
+                                        {
+                                            <div class="text-caption text-mute">Cập nhật @DisplayDateTime.Format(report.UpdatedAt.Value, "dd/MM/yyyy HH:mm")</div>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="text-body-sm mt-sm">Báo cáo chưa có thông tin xử lý.</div>
+                                }
+                            </div>
+                        </details>
+                    </td>
                 </tr>
             }
             </tbody>

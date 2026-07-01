@@ -14,7 +14,7 @@
     <div class="page-header">
         <div>
             <h1 class="page-header__title">Chỉnh sửa truyện</h1>
-            <p class="page-header__subtitle">Cập nhật thông tin, ảnh bìa, thể loại và tag.</p>
+            <p class="page-header__subtitle">Sau khi lưu, truyện sẽ chuyển về chờ duyệt để staff kiểm tra lại.</p>
         </div>
     </div>
 
@@ -83,8 +83,8 @@
         </div>
 
         <div class="publish-form-actions">
-            <a asp-page="/Publish/Manage" asp-route-id="@Model.Novel.Id" class="btn btn-secondary">Hủy</a>
-            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+            <a asp-page="/Publish/Index" class="btn btn-secondary">Hủy</a>
+            <button type="submit" class="btn btn-primary">@Model.SaveButtonText</button>
         </div>
     </form>
 </div>

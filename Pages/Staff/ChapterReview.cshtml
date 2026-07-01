@@ -53,14 +53,14 @@
                         </div>
                         <h2 class="card__title">@c.Title</h2>
                     </div>
-                    <span class="status-badge status-@c.Status.ToLower()">@c.Status</span>
+                    <span class="status-badge status-@c.Status.ToLower()">@DisplayText.Status(c.Status)</span>
                 </div>
                 <div class="card__body">
                     <div class="meta-grid">
                         <div class="meta-item"><span class="meta-label">Tác giả</span><span class="meta-value">@c.AuthorUsername</span></div>
                         <div class="meta-item"><span class="meta-label">Tập</span><span class="meta-value">@c.VolumeTitle</span></div>
-                        <div class="meta-item"><span class="meta-label">Ngày tạo</span><span class="meta-value">@c.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</span></div>
-                        <div class="meta-item"><span class="meta-label">Cập nhật</span><span class="meta-value">@c.UpdatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span></div>
+                        <div class="meta-item"><span class="meta-label">Ngày tạo</span><span class="meta-value">@DisplayDateTime.Format(c.CreatedAt, "dd/MM/yyyy")</span></div>
+                        <div class="meta-item"><span class="meta-label">Cập nhật</span><span class="meta-value">@DisplayDateTime.Format(c.UpdatedAt, "dd/MM/yyyy HH:mm")</span></div>
                     </div>
                 </div>
             </div>

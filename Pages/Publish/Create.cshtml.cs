@@ -34,8 +34,6 @@ public class CreateModel : PublishPageModel
         if (guard != null) return guard;
         Input.Status = "Draft";
         Input.TagIds = SelectedTagIds.Distinct().ToList();
-        await ApplyCoverImageAsync();
-
         if (string.IsNullOrWhiteSpace(Input.Title))
         {
             ModelState.AddModelError("Input.Title", "Cần nhập tiêu đề.");
@@ -47,9 +45,17 @@ public class CreateModel : PublishPageModel
             return Page();
         }
 
+        await ApplyCoverImageAsync();
+        if (!ModelState.IsValid)
+        {
+            await LoadLookupsAsync();
+            return Page();
+        }
+
         var created = await Api.PostAsync<NovelSummaryDto>("/api/novels", Input, Token);
         if (!IsApiSuccess(created))
         {
+            DeleteUploadedCoverIfAny();
             SetResponseError(ApiFailureMessage(created, "Không thể tạo truyện."));
             await LoadLookupsAsync();
             return Page();
@@ -214,7 +220,29 @@ public class CreateModel : PublishPageModel
             await CoverImageFile.CopyToAsync(stream);
         }
 
-        Input.CoverImage = $"{Request.Scheme}://{Request.Host}/{relativePath.Replace('\\', '/')}";
+        Input.CoverImage = $"/{relativePath.Replace('\\', '/')}";
+    }
+
+    private void DeleteUploadedCoverIfAny()
+    {
+        if (string.IsNullOrWhiteSpace(Input.CoverImage) ||
+            !Input.CoverImage.StartsWith("/uploads/covers/", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var relativePath = Input.CoverImage
+            .TrimStart('/')
+            .Replace('/', Path.DirectorySeparatorChar);
+        var fullPath = Path.GetFullPath(Path.Combine(_environment.WebRootPath, relativePath));
+        var coversRoot = Path.GetFullPath(Path.Combine(_environment.WebRootPath, "uploads", "covers"));
+
+        if (fullPath.StartsWith(coversRoot, StringComparison.OrdinalIgnoreCase) && System.IO.File.Exists(fullPath))
+        {
+            System.IO.File.Delete(fullPath);
+        }
+
+        Input.CoverImage = null;
     }
 
     private async Task LoadLookupsAsync()

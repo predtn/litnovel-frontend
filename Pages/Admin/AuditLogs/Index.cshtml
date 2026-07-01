@@ -15,10 +15,16 @@
 </div>
 
 <form class="admin-toolbar" method="get">
+    <input class="form-input" name="q" type="search" value="@Model.Query" placeholder="Tìm người, hành động, thực thể..." />
+    <select class="form-select" name="actorRole">
+        <option value="">Admin và Staff</option>
+        <option value="admin" selected="@(Model.ActorRole == "admin")">Admin</option>
+        <option value="staff" selected="@(Model.ActorRole == "staff")">Staff</option>
+    </select>
     <input class="form-input" name="fromDate" type="date" value="@Model.FromDate" />
     <input class="form-input" name="toDate" type="date" value="@Model.ToDate" />
     <button class="btn btn-secondary" type="submit">Lọc</button>
-    @if (!string.IsNullOrWhiteSpace(Model.FromDate) || !string.IsNullOrWhiteSpace(Model.ToDate))
+    @if (!string.IsNullOrWhiteSpace(Model.FromDate) || !string.IsNullOrWhiteSpace(Model.ToDate) || !string.IsNullOrWhiteSpace(Model.ActorRole) || !string.IsNullOrWhiteSpace(Model.Query))
     {
         <a class="btn btn-secondary" href="/Admin/AuditLogs">Xóa lọc</a>
     }
@@ -35,12 +41,14 @@
 
 <div class="table-wrapper">
     <table class="table">
-        <thead><tr><th>Thời gian</th><th>Người thực hiện</th><th>Hành động</th><th>Thực thể</th><th>IP</th></tr></thead>
+        <thead><tr><th>Thời gian</th><th>Phân loại</th><th>Người thực hiện</th><th>Hành động</th><th>Thực thể</th><th>IP</th></tr></thead>
         <tbody>
         @foreach (var log in Model.Logs)
         {
+            var isStaffAction = string.Equals(log.DisplayIp, "Staff action", StringComparison.OrdinalIgnoreCase);
             <tr>
-                <td class="text-caption text-mute">@(log.DisplayCreatedAt == default ? "-" : log.DisplayCreatedAt.ToString("dd/MM/yyyy HH:mm:ss"))</td>
+                <td class="text-caption text-mute">@DisplayDateTime.Format(log.DisplayCreatedAt, "dd/MM/yyyy HH:mm:ss")</td>
+                <td><span class="badge @(isStaffAction ? "badge-warning" : "badge-secondary")">@(isStaffAction ? "Staff" : "Admin")</span></td>
                 <td class="text-body-sm">@log.DisplayActor</td>
                 <td><span class="badge badge-secondary">@log.DisplayAction</span></td>
                 <td class="text-body-sm">@log.DisplayEntity</td>
@@ -56,14 +64,14 @@
     <div class="flex justify-center mt-xl">
         <div class="pagination">
             <a class="pagination__btn @(Model.Page <= 1 ? "disabled" : "")"
-               href="?page=@Math.Max(1, Model.Page - 1)&fromDate=@Model.FromDate&toDate=@Model.ToDate">‹</a>
+               href="@Url.Page("/Admin/AuditLogs/Index", new { page = Math.Max(1, Model.Page - 1), fromDate = Model.FromDate, toDate = Model.ToDate, actorRole = Model.ActorRole, q = Model.Query })">‹</a>
             @for (int i = 1; i <= Model.TotalPages; i++)
             {
                 <a class="pagination__btn @(i == Model.Page ? "active" : "")"
-                   href="?page=@i&fromDate=@Model.FromDate&toDate=@Model.ToDate">@i</a>
+                   href="@Url.Page("/Admin/AuditLogs/Index", new { page = i, fromDate = Model.FromDate, toDate = Model.ToDate, actorRole = Model.ActorRole, q = Model.Query })">@i</a>
             }
             <a class="pagination__btn @(Model.Page >= Model.TotalPages ? "disabled" : "")"
-               href="?page=@Math.Min(Model.TotalPages, Model.Page + 1)&fromDate=@Model.FromDate&toDate=@Model.ToDate">›</a>
+               href="@Url.Page("/Admin/AuditLogs/Index", new { page = Math.Min(Model.TotalPages, Model.Page + 1), fromDate = Model.FromDate, toDate = Model.ToDate, actorRole = Model.ActorRole, q = Model.Query })">›</a>
         </div>
     </div>
 }

@@ -3,13 +3,14 @@
 @{
     ViewData["Title"] = Model.Novel?.Title ?? "Chi tiết truyện";
     var novel = Model.Novel;
+    var interactionsLocked = IsPendingDeletion(novel?.Status);
 }
 
 @if (novel == null)
 {
     <div class="container" style="padding-top:80px;">
         <div class="empty-state">
-            <div class="empty-state__icon">⌕</div>
+            <div class="empty-state__icon">Không tìm thấy</div>
             <div class="empty-state__title">Không tìm thấy truyện</div>
             <a href="/Novels" class="btn btn-primary mt-md">Quay lại thư viện</a>
         </div>
@@ -32,18 +33,21 @@
             }
             else
             {
-                <div class="novel-detail__cover-empty">No cover</div>
+                <div class="novel-detail__cover-empty">Không có bìa</div>
             }
 
             <div class="novel-detail__actions">
                 @{
                     var firstChapter = novel.Volumes.SelectMany(v => v.Chapters).FirstOrDefault();
+                    var continueChapter = Model.CurrentReadingProgress?.LastChapter;
+                    var targetChapter = continueChapter ?? firstChapter;
                     var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
                 }
-                @if (firstChapter != null)
+                @if (targetChapter != null)
                 {
-                    var firstChapterUrl = !string.IsNullOrWhiteSpace(firstChapter.Slug) ? firstChapter.Slug : firstChapter.Id.ToString();
-                    <a href="/Novels/@novelUrl/@firstChapterUrl/read" class="btn btn-primary novel-detail__action">Đọc ngay</a>
+                    var targetChapterUrl = !string.IsNullOrWhiteSpace(targetChapter.Slug) ? targetChapter.Slug : targetChapter.Id.ToString();
+                    var readActionText = continueChapter != null ? "Đọc tiếp" : "Đọc ngay";
+                    <a href="/Novels/@novelUrl/@targetChapterUrl/read" class="btn btn-primary novel-detail__action">@readActionText</a>
                 }
                 else
                 {
@@ -85,13 +89,20 @@
                 {
                     <a href="/Novels?categoryId=@novel.Category.Id" class="badge badge-secondary">@novel.Category.Name</a>
                 }
-                @foreach (var tag in novel.Tags.Take(5))
+                @foreach (var tag in novel.Tags)
                 {
                     <a href="/Novels?tagId=@tag.Id" class="tag">@tag.Name</a>
                 }
             </div>
 
             <h1 style="font-size:var(--text-display-md); font-weight:600; letter-spacing:var(--ls-display-md); color:var(--color-ink); margin-bottom:var(--space-xs);">@novel.Title</h1>
+
+            @if (interactionsLocked)
+            {
+                <div class="alert alert-info mb-md">
+                    Tác giả đã lên lịch xóa truyện này@(novel.ScheduledHardDeleteAt.HasValue ? $", nội dung sẽ được dọn vào {FormatDateTime(novel.ScheduledHardDeleteAt.Value)}" : "").
+                </div>
+            }
 
             <div class="novel-detail__meta">
                 <a href="/Profile/@novel.Author?.Id" class="novel-detail__author">
@@ -111,7 +122,7 @@
 
             <div class="novel-detail__stats">
                 <div class="novel-detail__stat">
-                    <div class="novel-detail__stat-value">@FormatNum(novel.ViewCount)</div>
+                    <div id="novelViewCount" class="novel-detail__stat-value" data-count="@novel.ViewCount">@FormatNum(novel.ViewCount)</div>
                     <div class="text-caption text-mute">Lượt xem</div>
                 </div>
                 <div class="novel-detail__stat">
@@ -119,15 +130,24 @@
                     <div class="text-caption text-mute">Lượt thích</div>
                 </div>
                 <div class="novel-detail__stat">
-                    <div class="novel-detail__stat-value novel-detail__stat-value--rating">@novel.RatingAverage.ToString("0.0") ★</div>
-                    <div class="text-caption text-mute">@novel.RatingCount đánh giá</div>
+                    <div class="novel-detail__stat-value novel-detail__stat-value--rating">@(novel.RatingAverage > 0 ? novel.RatingAverage.ToString("0.0") : "0.0") ★</div>
+                    <div class="text-caption text-mute">@(novel.RatingCount > 0 ? $"{novel.RatingCount} đánh giá" : "0 đánh giá")</div>
                 </div>
             </div>
 
             @if (!string.IsNullOrWhiteSpace(novel.Description))
             {
-                <div class="novel-detail__description">
-                    @Html.Raw(novel.Description.Length > 400 ? novel.Description[..400] + "..." : novel.Description)
+                var shouldCollapseDescription = novel.Description.Length > 360;
+                <div class="novel-detail__description-wrap @(shouldCollapseDescription ? "is-collapsed" : "")" id="novelDescriptionWrap">
+                    <div class="novel-detail__description" id="novelDescription">
+                        @Html.Raw(novel.Description)
+                    </div>
+                    @if (shouldCollapseDescription)
+                    {
+                        <button type="button" class="novel-detail__description-toggle" onclick="toggleNovelDescription(this)">
+                            Xem thêm
+                        </button>
+                    }
                 </div>
             }
         </div>
@@ -147,12 +167,12 @@
                     @foreach (var ch in vol.Chapters)
                     {
                         var chapterUrl = !string.IsNullOrWhiteSpace(ch.Slug) ? ch.Slug : ch.Id.ToString();
-                        <a href="/Novels/@novelUrl/@chapterUrl/read" class="novel-detail__chapter">
+                        <a href="/Novels/@novelUrl/@chapterUrl/read" class="novel-detail__chapter @(ch.IsRead ? "novel-detail__chapter--read" : "")">
                             <span class="novel-detail__chapter-number">Ch.@ch.ChapterNumber</span>
                             <span class="truncate">@ch.Title</span>
                             @if (string.Equals(ch.Status, "Published", StringComparison.OrdinalIgnoreCase))
                             {
-                                <span class="novel-detail__chapter-date">@ch.CreatedAt.ToString("dd/MM")</span>
+                                <span class="novel-detail__chapter-date">@DisplayDateTime.Format(ch.CreatedAt, "dd/MM")</span>
                             }
                             else
                             {
@@ -166,7 +186,7 @@
         @if (!novel.Volumes.Any())
         {
             <div class="empty-state">
-                <div class="empty-state__icon">□</div>
+                <div class="empty-state__icon">Trống</div>
                 <div class="empty-state__title">Chưa có chương nào</div>
             </div>
         }
@@ -174,32 +194,59 @@
 
     <div id="tab-reviews" class="hidden novel-detail__reviews">
         <section class="novel-detail__rating-summary">
-            <div class="novel-detail__rating-score">@novel.RatingAverage.ToString("0.0")</div>
+            <div class="novel-detail__rating-score">@(novel.RatingAverage > 0 ? novel.RatingAverage.ToString("0.0") : "0.0")</div>
             <div>
-                <div class="novel-detail__stars" aria-label="@novel.RatingAverage.ToString("0.0") trên 5">★★★★★</div>
-                <div class="text-caption text-mute">@novel.RatingCount đánh giá</div>
+                <div class="novel-detail__stars" aria-label="@(novel.RatingAverage > 0 ? novel.RatingAverage.ToString("0.0") : "0.0") trên 5">★★★★★</div>
+                <div class="text-caption text-mute">@(novel.RatingCount > 0 ? $"{novel.RatingCount} đánh giá" : "Chưa có đánh giá")</div>
             </div>
         </section>
 
-        @if (User.Identity?.IsAuthenticated == true && novel.UserRating == null)
+        @if (User.Identity?.IsAuthenticated == true && Model.CurrentUserId != novel.Author?.Id)
         {
             <section class="novel-detail__review-form">
-                <h3 class="novel-detail__review-title">Viết đánh giá của bạn</h3>
-                <form method="post" asp-page-handler="Review" class="novel-detail__review-form-body">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="id" value="@novel.Id" />
-                    <div class="star-rating" id="starRating">
-                        @for (var s = 1; s <= 5; s++)
-                        {
-                            <span class="star" data-val="@s">★</span>
-                        }
-                    </div>
-                    <input type="hidden" id="ratingInput" name="rating" value="0" />
-                    <div class="form-group">
-                        <textarea class="form-textarea" name="reviewText" placeholder="Chia sẻ cảm nhận của bạn..." rows="3"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary novel-detail__review-submit">Gửi đánh giá</button>
-                </form>
+                @if (interactionsLocked)
+                {
+                    <h3 class="novel-detail__review-title">&#272;&#225;nh gi&#225; &#273;ang t&#7841;m kh&#243;a</h3>
+                    <p class="text-body-sm text-mute">Truy&#7879;n &#273;ang &#7903; tr&#7841;ng th&#225;i ch&#7901; x&#243;a n&#234;n kh&#244;ng th&#7875; g&#7917;i ho&#7863;c ch&#7881;nh s&#7917;a &#273;&#225;nh gi&#225;.</p>
+                }
+                else if (novel.UserReviewId.HasValue)
+                {
+                    <h3 class="novel-detail__review-title">Chỉnh sửa đánh giá của bạn</h3>
+                    <form method="post" asp-page-handler="UpdateReview" class="novel-detail__review-form-body">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="reviewId" value="@novel.UserReviewId" />
+                        <div class="star-rating js-star-rating" data-input="editRatingInput" data-value="@(novel.UserRating ?? 0)">
+                            @for (var s = 1; s <= 5; s++)
+                            {
+                                <span class="star" data-val="@s">★</span>
+                            }
+                        </div>
+                        <input type="hidden" id="editRatingInput" name="rating" value="@(novel.UserRating ?? 0)" />
+                        <div class="form-group">
+                            <textarea class="form-textarea" name="reviewText" placeholder="Chia sẻ cảm nhận của bạn..." rows="3">@novel.UserReview</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary novel-detail__review-submit">Lưu đánh giá</button>
+                    </form>
+                }
+                else
+                {
+                    <h3 class="novel-detail__review-title">Viết đánh giá của bạn</h3>
+                    <form method="post" asp-page-handler="Review" class="novel-detail__review-form-body">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@novel.Id" />
+                        <div class="star-rating js-star-rating" id="starRating" data-input="ratingInput" data-value="0">
+                            @for (var s = 1; s <= 5; s++)
+                            {
+                                <span class="star" data-val="@s">★</span>
+                            }
+                        </div>
+                        <input type="hidden" id="ratingInput" name="rating" value="0" />
+                        <div class="form-group">
+                            <textarea class="form-textarea" name="reviewText" placeholder="Chia sẻ cảm nhận của bạn..." rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary novel-detail__review-submit">Gửi đánh giá</button>
+                    </form>
+                }
             </section>
         }
 
@@ -208,10 +255,17 @@
             {
                 <div class="review-card">
                     <div class="review-card__header">
-                        <div class="avatar-placeholder avatar-sm">@(review.User?.Username?.Substring(0, 1).ToUpper() ?? "U")</div>
+                        @if (!string.IsNullOrWhiteSpace(review.User?.Avatar))
+                        {
+                            <img src="@review.User.Avatar" alt="@(review.User?.Username ?? "User")" class="avatar avatar-sm" />
+                        }
+                        else
+                        {
+                            <div class="avatar-placeholder avatar-sm">@(review.User?.Username?.Substring(0, 1).ToUpper() ?? "U")</div>
+                        }
                         <div>
                             <div class="text-body-sm font-medium">@review.User?.Username</div>
-                            <div class="text-caption text-mute">@review.CreatedAt.ToString("dd/MM/yyyy")</div>
+                            <div class="text-caption text-mute">@DisplayDateTime.Format(review.CreatedAt, "dd/MM/yyyy")</div>
                         </div>
                         <div class="flex gap-xxs ml-auto">
                             @for (var s = 1; s <= 5; s++)
@@ -258,7 +312,7 @@
                     <select class="form-select" name="targetChapterId">
                         @foreach (var ch in allChapters)
                         {
-                            <option value="@ch.Id">Ch.@ch.ChapterNumber — @ch.Title</option>
+                            <option value="@ch.Id">Ch.@ch.ChapterNumber - @ch.Title</option>
                         }
                     </select>
                 </div>
@@ -278,19 +332,12 @@
 @functions {
     string FormatNum(int n) => n >= 1000000 ? $"{n / 1000000.0:0.#}M" : n >= 1000 ? $"{n / 1000.0:0.#}K" : n.ToString();
 
-    static string StatusLabel(string? status) => status?.Trim().ToLowerInvariant() switch
-    {
-        "draft" => "Bản nháp",
-        "pending" => "Chờ duyệt",
-        "ongoing" => "Đang ra",
-        "published" => "Đã xuất bản",
-        "ended" => "Hoàn thành",
-        "dropped" => "Đã bỏ",
-        "rejected" => "Bị từ chối",
-        "hiatus" => "Tạm dừng",
-        "locked" => "Đã khóa",
-        _ => string.IsNullOrWhiteSpace(status) ? "Không rõ" : status
-    };
+    static string StatusLabel(string? status) => DisplayText.Status(status);
+
+    static bool IsPendingDeletion(string? status)
+        => string.Equals(status, "PendingDeletion", StringComparison.OrdinalIgnoreCase);
+
+    static string FormatDateTime(DateTime value) => DisplayDateTime.Format(value, "dd/MM/yyyy HH:mm");
 }
 
 @section Scripts {
@@ -302,18 +349,61 @@ function switchTab(tab) {
     document.getElementById(`tab-${tab}`)?.classList.remove('hidden');
 }
 
-const stars = document.querySelectorAll('.star');
-const input = document.getElementById('ratingInput');
-stars.forEach((star, i) => {
-    star.addEventListener('mouseover', () => stars.forEach((s, j) => s.style.color = j <= i ? '#d97706' : '#ebebeb'));
-    star.addEventListener('mouseleave', () => {
-        const val = parseInt(input?.value || 0);
-        stars.forEach((s, j) => s.style.color = j < val ? '#d97706' : '#ebebeb');
-    });
-    star.addEventListener('click', () => {
-        if (input) input.value = i + 1;
-        stars.forEach((s, j) => s.style.color = j <= i ? '#d97706' : '#ebebeb');
+function toggleNovelDescription(btn) {
+    const wrap = document.getElementById('novelDescriptionWrap');
+    if (!wrap) return;
+
+    const collapsed = wrap.classList.toggle('is-collapsed');
+    btn.textContent = collapsed ? 'Xem thêm' : 'Thu gọn';
+}
+
+document.querySelectorAll('.js-star-rating').forEach(container => {
+    const input = document.getElementById(container.dataset.input || '');
+    const stars = container.querySelectorAll('.star');
+    stars.forEach(s => s.textContent = '\u2605');
+
+    const paint = value => {
+        stars.forEach((s, j) => s.style.color = j < value ? '#d97706' : '#ebebeb');
+    };
+
+    if (input && !input.value) input.value = container.dataset.value || '0';
+    paint(parseInt(input?.value || container.dataset.value || '0', 10) || 0);
+
+    stars.forEach((star, i) => {
+        star.addEventListener('mouseover', () => paint(i + 1));
+        star.addEventListener('mouseleave', () => paint(parseInt(input?.value || '0', 10) || 0));
+        star.addEventListener('click', () => {
+            if (input) input.value = (i + 1).toString();
+            paint(i + 1);
+        });
     });
 });
+
+let novelViewRecorded = false;
+setTimeout(async () => {
+    if (novelViewRecorded) return;
+    novelViewRecorded = true;
+
+    try {
+        const res = await fetch('/api/novels/@novel.Id/views', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            keepalive: true
+        });
+        if (!res.ok) return;
+
+        const viewCount = document.getElementById('novelViewCount');
+        if (!viewCount) return;
+
+        const current = Number.parseInt(viewCount.dataset.count || viewCount.textContent || '0', 10) || 0;
+        const next = current + 1;
+        viewCount.dataset.count = next.toString();
+        viewCount.textContent = typeof formatCompactNumber === 'function'
+            ? formatCompactNumber(next)
+            : next.toString();
+    } catch (e) {
+        // View tracking should not interrupt reading.
+    }
+}, 2000);
 </script>
 }

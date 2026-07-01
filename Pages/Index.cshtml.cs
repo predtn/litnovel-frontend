@@ -14,6 +14,7 @@ public class IndexModel : PageModel
     public List<NovelSummaryDto> TopRatedNovels { get; set; } = [];
     public List<AnnouncementDto> Announcements { get; set; } = [];
     public List<ReadingProgressDto> ContinueReading { get; set; } = [];
+    public HashSet<int> FavoriteIds { get; set; } = [];
 
     public IndexModel(IApiService api, IAuthService auth)
     {
@@ -27,9 +28,9 @@ public class IndexModel : PageModel
 
         // Load homepage content in parallel.
         var catTask          = _api.GetAsync<List<CategoryDto>>("/api/categories");
-        var trendingTask     = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=viewCount&order=desc&status=Ongoing&page=1&size=8");
-        var newTask          = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=updatedAt&order=desc&status=Ongoing&page=1&size=8");
-        var topTask          = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=ratingAverage&order=desc&page=1&size=8");
+        var trendingTask     = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=viewCount&order=desc&page=1&size=24");
+        var newTask          = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=latestChapterUpdatedAt&order=desc&page=1&size=8");
+        var topTask          = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=ratingAverage&order=desc&page=1&size=24");
         var announcementTask = LoadAnnouncementsAsync(token);
         var readingTask      = !string.IsNullOrWhiteSpace(token)
             ? LoadContinueReadingAsync(token)
@@ -37,16 +38,30 @@ public class IndexModel : PageModel
         var unreadTask       = !string.IsNullOrWhiteSpace(token)
             ? LoadUnreadCountAsync(token)
             : Task.FromResult(0);
+        var favTask          = !string.IsNullOrWhiteSpace(token)
+            ? _api.GetAsync<PagedData<NovelSummaryDto>>("/api/users/me/favorites?page=1&size=200", token)
+            : Task.FromResult<ApiResponse<PagedData<NovelSummaryDto>>?>(null);
 
-        await Task.WhenAll(catTask, trendingTask, newTask, topTask, announcementTask, readingTask, unreadTask);
+        await Task.WhenAll(catTask, trendingTask, newTask, topTask, announcementTask, readingTask, unreadTask, favTask);
 
         Categories      = catTask.Result?.Data ?? [];
-        TrendingNovels  = trendingTask.Result?.Data?.Items ?? [];
+        TrendingNovels  = (trendingTask.Result?.Data?.Items ?? [])
+            .Where(novel => novel.ViewCount > 0)
+            .Take(6)
+            .ToList();
         NewNovels       = newTask.Result?.Data?.Items ?? [];
-        TopRatedNovels  = topTask.Result?.Data?.Items ?? [];
+        TopRatedNovels  = (topTask.Result?.Data?.Items ?? [])
+            .Where(novel => novel.RatingAverage > 0)
+            .Take(6)
+            .ToList();
         Announcements   = announcementTask.Result;
         ContinueReading = readingTask.Result;
         ViewData["UnreadCount"] = unreadTask.Result;
+
+        if (favTask != null && favTask.Result?.Data?.Items != null)
+        {
+            FavoriteIds = favTask.Result.Data.Items.Select(f => f.Id).ToHashSet();
+        }
 
         // Set user info for layout
         var user = _auth.GetCurrentUser(HttpContext);
@@ -107,5 +122,4 @@ public class IndexModel : PageModel
             .Take(3)
             .ToList();
     }
-
 }

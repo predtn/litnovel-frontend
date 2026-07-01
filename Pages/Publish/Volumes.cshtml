@@ -1,18 +1,19 @@
 @page "{novelId:int}/Volumes"
 @model litnovel_frontend.Pages.Publish.VolumesModel
 @{
-    ViewData["Title"] = "Quản lý tập";
+    ViewData["Title"] = "Tập & chương";
 }
 
 <div class="publish-shell">
     <div class="breadcrumb">
         <a asp-page="/Publish/Index">Truyện của tôi</a><span class="breadcrumb__sep">/</span>
         <a asp-page="/Publish/Manage" asp-route-id="@Model.Novel.Id">@Model.Novel.Title</a><span class="breadcrumb__sep">/</span>
-        <span class="breadcrumb__current">Tập</span>
+        <span class="breadcrumb__current">Tập & chương</span>
     </div>
-<div class="page-header">
+
+    <div class="page-header">
         <div>
-            <h1 class="page-header__title">Quản lý tập</h1>
+            <h1 class="page-header__title">Tập & chương</h1>
             <p class="page-header__subtitle">@Model.Novel.Title</p>
         </div>
     </div>
@@ -32,22 +33,82 @@
     <div class="publish-volume-list">
         @foreach (var volume in Model.Volumes.OrderBy(v => v.VolumeNumber))
         {
-            <article class="card publish-volume-card">
+            <article class="card publish-volume-card publish-volume-card--link" data-href="@Url.Page("/Publish/Chapters", new { volumeId = volume.Id, novelId = Model.Novel.Id })">
                 <div>
                     <div class="text-caption text-mute">Tập @volume.VolumeNumber</div>
                     <h2 class="text-display-sm">@volume.Title</h2>
                     <div class="publish-meta-row">
                         <span>@volume.ChapterCount chương</span>
-                        <span>Tạo ngày @volume.CreatedAt.ToString("dd/MM/yyyy")</span>
+                        <span>Tạo ngày @(volume.CreatedAt == default ? "Vừa tạo" : DisplayDateTime.Format(volume.CreatedAt, "dd/MM/yyyy HH:mm"))</span>
                     </div>
                 </div>
                 <div class="publish-actions">
-                    <a asp-page="/Publish/Chapters" asp-route-volumeId="@volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-primary btn-sm">Quản lý chương</a>
-                    <form method="post" asp-page-handler="Delete" asp-route-novelId="@Model.Novel.Id" asp-route-id="@volume.Id" onsubmit="return confirm('Xóa tập này và toàn bộ chương?');">
+                    <form method="post" asp-page-handler="Edit" asp-route-novelId="@Model.Novel.Id" asp-route-id="@volume.Id" class="publish-volume-edit-form">
+                        <input type="hidden" name="volumeNumber" value="@volume.VolumeNumber" />
+                        <input type="hidden" name="title" value="@volume.Title" data-volume-title />
+                        <button class="btn btn-secondary btn-sm" type="submit" data-volume-edit>Sửa tên</button>
+                    </form>
+                    <form method="post" asp-page-handler="Delete" asp-route-novelId="@Model.Novel.Id" asp-route-id="@volume.Id" onsubmit="return confirmSubmit(this, 'Xóa tập này và toàn bộ chương?');">
                         <button class="btn btn-danger btn-sm" type="submit">Xóa</button>
                     </form>
                 </div>
             </article>
         }
     </div>
+    @if (Model.TotalPages > 1)
+    {
+        <div class="pagination mt-md">
+            <a class="pagination__btn @(Model.Page <= 1 ? "disabled" : "")"
+               asp-page="/Publish/Volumes"
+               asp-route-novelId="@Model.Novel.Id"
+               asp-route-page="@Math.Max(1, Model.Page - 1)">‹</a>
+            @for (int i = Math.Max(1, Model.Page - 2); i <= Math.Min(Model.TotalPages, Model.Page + 2); i++)
+            {
+                <a class="pagination__btn @(i == Model.Page ? "active" : "")"
+                   asp-page="/Publish/Volumes"
+                   asp-route-novelId="@Model.Novel.Id"
+                   asp-route-page="@i">@i</a>
+            }
+            <a class="pagination__btn @(Model.Page >= Model.TotalPages ? "disabled" : "")"
+               asp-page="/Publish/Volumes"
+               asp-route-novelId="@Model.Novel.Id"
+               asp-route-page="@Math.Min(Model.TotalPages, Model.Page + 1)">›</a>
+        </div>
+    }
 </div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.publish-volume-card--link').forEach(card => {
+            card.addEventListener('click', event => {
+                if (event.target.closest('a, button, input, select, textarea, form')) return;
+                const href = card.dataset.href;
+                if (href) window.location.href = href;
+            });
+        });
+
+        document.querySelectorAll('[data-volume-edit]').forEach(button => {
+            button.addEventListener('click', event => {
+                const form = button.closest('form');
+                const input = form?.querySelector('[data-volume-title]');
+                if (!form || !input) return;
+
+                const currentTitle = input.value || '';
+                const nextTitle = window.prompt('Nhập tên tập mới', currentTitle);
+                if (nextTitle === null) {
+                    event.preventDefault();
+                    return;
+                }
+
+                const trimmedTitle = nextTitle.trim();
+                if (!trimmedTitle) {
+                    event.preventDefault();
+                    alert('Cần nhập tiêu đề tập.');
+                    return;
+                }
+
+                input.value = trimmedTitle;
+            });
+        });
+    </script>
+}

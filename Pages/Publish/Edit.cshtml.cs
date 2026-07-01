@@ -13,7 +13,9 @@ public class EditModel : PublishPageModel
     public NovelDetailDto Novel { get; set; } = new();
     public List<CategoryDto> Categories { get; set; } = [];
     public List<TagDto> Tags { get; set; } = [];
-    public bool CanEditNovel => CanEditSubmittedContent(Novel.Status);
+    public bool CanEditNovel => CanEditNovelStatus(Novel.Status);
+    public bool WillSubmitForReviewAfterSave => true;
+    public string SaveButtonText => "Lưu và gửi duyệt lại";
 
     public EditModel(IApiService api, IAuthService auth, IWebHostEnvironment environment) : base(api, auth)
     {
@@ -28,7 +30,7 @@ public class EditModel : PublishPageModel
         if (!loaded) return RedirectToPage("/Publish/Index");
         if (!CanEditNovel)
         {
-            TempData["Error"] = "Truyện đã được duyệt hoặc đang chờ duyệt nên không thể chỉnh sửa trực tiếp.";
+            TempData["Error"] = EditBlockedMessage("truyện");
             return RedirectToPage("/Publish/Manage", new { id });
         }
 
@@ -53,11 +55,12 @@ public class EditModel : PublishPageModel
         if (!loaded) return RedirectToPage("/Publish/Index");
         if (!CanEditNovel)
         {
-            TempData["Error"] = "Truyện đã được duyệt hoặc đang chờ duyệt nên không thể chỉnh sửa trực tiếp.";
+            TempData["Error"] = EditBlockedMessage("truyện");
             return RedirectToPage("/Publish/Manage", new { id });
         }
 
         Input.TagIds = SelectedTagIds.Distinct().ToList();
+        Input.Status = "Pending";
         await ApplyCoverImageAsync();
 
         if (string.IsNullOrWhiteSpace(Input.Title))
@@ -77,9 +80,24 @@ public class EditModel : PublishPageModel
             return Page();
         }
 
-        TempData["Success"] = "Đã cập nhật truyện.";
+        var submitResult = await Api.PostAsync<object>($"/api/novels/{id}/submit", null, Token);
+        if (!IsApiSuccess(submitResult))
+        {
+            var verifyResult = await Api.GetAsync<NovelDetailDto>($"/api/novels/{id}", Token);
+            if (!IsPendingReview(verifyResult?.Data?.Status))
+            {
+                ModelState.AddModelError("", ApiFailureMessage(submitResult, "Đã lưu thay đổi nhưng chưa thể gửi duyệt truyện."));
+                return Page();
+            }
+        }
+        TempData["Success"] = "Đã lưu thay đổi và gửi truyện vào hàng chờ duyệt.";
         return RedirectToPage("/Publish/Manage", new { id });
     }
+
+    private string EditBlockedMessage(string contentName)
+        => IsPendingReview(Novel.Status)
+            ? $"{char.ToUpperInvariant(contentName[0])}{contentName[1..]} đang chờ duyệt, không thể chỉnh sửa."
+            : $"{char.ToUpperInvariant(contentName[0])}{contentName[1..]} đang bị khóa nên không thể chỉnh sửa.";
 
     private async Task ApplyCoverImageAsync()
     {
@@ -110,7 +128,7 @@ public class EditModel : PublishPageModel
             await CoverImageFile.CopyToAsync(stream);
         }
 
-        Input.CoverImage = $"{Request.Scheme}://{Request.Host}/{relativePath.Replace('\\', '/')}";
+        Input.CoverImage = $"/{relativePath.Replace('\\', '/')}";
     }
 
     private async Task<bool> LoadAsync(int id)

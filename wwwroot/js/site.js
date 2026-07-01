@@ -86,30 +86,6 @@ function highlightStars(stars, upTo) {
     stars.forEach((s, i) => s.classList.toggle('star-filled', i <= upTo));
 }
 
-// ─── Reading Progress (auto-save) ───
-let progressTimer = null;
-function initReadingProgress(chapterId) {
-    const content = document.getElementById('chapterContent');
-    if (!content) return;
-    window.addEventListener('scroll', () => {
-        clearTimeout(progressTimer);
-        progressTimer = setTimeout(() => {
-            const scrolled = window.scrollY + window.innerHeight;
-            const total = document.documentElement.scrollHeight;
-            const pct = Math.min(100, Math.round((scrolled / total) * 100));
-            saveProgress(chapterId, pct);
-        }, 1000);
-    });
-}
-async function saveProgress(chapterId, pct) {
-    try {
-        await fetch(`/api/chapters/${chapterId}/progress`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ progressPercentage: pct })
-        });
-    } catch (e) { /* silent */ }
-}
 // ─── Favorite toggle ───
 async function toggleFavorite(novelId, btn) {
     const isFav = btn.dataset.favorited === 'true';
@@ -165,6 +141,8 @@ async function markNotifRead(id) {
 
 // ─── Lightweight realtime fallback ───
 let lastUnreadCount = null;
+let notificationFallbackTimer = null;
+const notificationFallbackIntervalMs = 60000;
 
 async function loadUnreadNotificationSnapshot() {
     const bell = document.getElementById('notifBell');
@@ -172,6 +150,10 @@ async function loadUnreadNotificationSnapshot() {
 
     try {
         const res = await fetch('/api/notifications?isRead=false&page=1&size=1', { headers: getHeaders() });
+        if (res.status === 401 || res.status === 403) {
+            stopNotificationFallbackPolling();
+            return;
+        }
         if (!res.ok) return;
         const payload = await res.json();
         const data = payload?.data ?? payload;
@@ -189,6 +171,20 @@ async function loadUnreadNotificationSnapshot() {
     }
 }
 
+function startNotificationFallbackPolling() {
+    const bell = document.getElementById('notifBell');
+    if (!bell || bell.dataset.authenticated !== 'true') return;
+    if (notificationFallbackTimer || window.litNovelNotificationSignalRConnected) return;
+
+    notificationFallbackTimer = setInterval(loadUnreadNotificationSnapshot, notificationFallbackIntervalMs);
+}
+
+function stopNotificationFallbackPolling() {
+    if (!notificationFallbackTimer) return;
+    clearInterval(notificationFallbackTimer);
+    notificationFallbackTimer = null;
+}
+
 function updateNotificationBadge(count) {
     const badge = document.getElementById('notifBellCount');
     if (!badge) return;
@@ -202,10 +198,21 @@ function updateNotificationBadge(count) {
     }
 }
 
-async function loadHomepageAnnouncements() {
-    const root = document.getElementById('homeAnnouncements');
-    const list = document.getElementById('homeAnnouncementsList');
-    if (!root || !list) return;
+const ANNOUNCEMENT_VISIBLE_MS = 30000;
+const ANNOUNCEMENT_POLL_MS = 5000;
+const ANNOUNCEMENT_REPEAT_GAP_MS = 15 * 60 * 1000;
+const ANNOUNCEMENT_MAX_SHOWS = 3;
+const ANNOUNCEMENT_STATE_KEY = 'litnovel_announcement_show_state';
+let activeTickerAnnouncementIds = '';
+const announcementShowCounts = new Map();
+const announcementShowTimes = new Map();
+
+loadAnnouncementShowState();
+
+async function loadSiteAnnouncementTicker() {
+    const root = document.getElementById('siteAnnouncementTicker');
+    const track = document.getElementById('siteAnnouncementTickerTrack');
+    if (!root || !track) return;
 
     try {
         const res = await fetch('/api/announcements', { headers: getHeaders() });
@@ -215,59 +222,154 @@ async function loadHomepageAnnouncements() {
             .filter(item => item?.isActive)
             .filter(item => {
                 const now = Date.now();
-                const start = item.startDate ? Date.parse(item.startDate) : 0;
                 const end = item.endDate ? Date.parse(item.endDate) : Number.POSITIVE_INFINITY;
-                return start <= now && end >= now;
+                return end >= now;
             })
             .sort((a, b) => Date.parse(b.startDate || 0) - Date.parse(a.startDate || 0))
             .slice(0, 3);
 
-        renderHomepageAnnouncements(root, list, announcements);
+        renderSiteAnnouncementTicker(root, track, announcements);
     } catch (e) {
         // Ignore transient polling failures.
     }
 }
 
-function renderHomepageAnnouncements(root, list, announcements) {
-    if (!announcements.length) {
-        list.replaceChildren();
+function renderSiteAnnouncementTicker(root, track, announcements) {
+    const now = Date.now();
+    const eligibleAnnouncements = announcements.filter(item => {
+        const id = String(item.id);
+        return canShowAnnouncement(id, now);
+    });
+
+    if (!eligibleAnnouncements.length) {
+        track.replaceChildren();
         root.classList.add('hidden');
+        activeTickerAnnouncementIds = '';
         return;
     }
 
-    const currentIds = Array.from(list.querySelectorAll('[data-announcement-id]')).map(item => item.dataset.announcementId).join(',');
-    const nextIds = announcements.map(item => String(item.id)).join(',');
-    if (currentIds === nextIds) return;
+    const nextIds = eligibleAnnouncements.map(item => String(item.id)).join(',');
+    if (activeTickerAnnouncementIds === nextIds && !root.classList.contains('hidden')) return;
 
     const fragment = document.createDocumentFragment();
-    announcements.forEach(item => {
-        const article = document.createElement('article');
-        article.className = 'home-announcement';
-        article.dataset.announcementId = item.id;
-        article.innerHTML = `
-            <div class="home-announcement__icon" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v2a2 2 0 0 0 2 2h2l4 4V5L7 9H5a2 2 0 0 0-2 2Z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19 6a9 9 0 0 1 0 12"/></svg>
-            </div>
-            <div class="home-announcement__body">
-                <h2 class="home-announcement__title"></h2>
-                <div class="home-announcement__content"></div>
-            </div>`;
-        article.querySelector('.home-announcement__title').textContent = item.title || '';
-        article.querySelector('.home-announcement__content').innerHTML = item.content || '';
-        fragment.appendChild(article);
+    eligibleAnnouncements.forEach(item => {
+        const id = String(item.id);
+        const message = document.createElement('span');
+        message.className = 'site-announcement-ticker__item';
+        message.dataset.announcementId = id;
+        message.textContent = [item.title, stripHtml(item.content || '')]
+            .filter(Boolean)
+            .join(' - ');
+        fragment.appendChild(message);
+        markAnnouncementShown(id, now);
     });
 
-    list.replaceChildren(fragment);
+    track.replaceChildren(fragment);
+    activeTickerAnnouncementIds = nextIds;
     root.classList.remove('hidden');
+
+    window.clearTimeout(root._tickerHideTimer);
+    root._tickerHideTimer = window.setTimeout(() => {
+        root.classList.add('hidden');
+    }, ANNOUNCEMENT_VISIBLE_MS);
+}
+
+function stripHtml(value) {
+    const element = document.createElement('div');
+    element.innerHTML = value;
+    return (element.textContent || element.innerText || '').trim();
 }
 
 function initRealtimeFallbacks() {
     loadUnreadNotificationSnapshot();
-    setInterval(loadUnreadNotificationSnapshot, 15000);
+    setTimeout(() => {
+        if (!window.litNovelNotificationSignalRConnected) {
+            startNotificationFallbackPolling();
+        }
+    }, 5000);
 
-    loadHomepageAnnouncements();
-    setInterval(loadHomepageAnnouncements, 30000);
+    // Announcement ticker is temporarily disabled while the API flow is being fixed.
 }
+
+function initRenderedSiteAnnouncementTicker() {
+    const root = document.getElementById('siteAnnouncementTicker');
+    const track = document.getElementById('siteAnnouncementTickerTrack');
+    if (!root || !track || root.classList.contains('hidden')) return;
+
+    const ids = Array.from(track.querySelectorAll('[data-announcement-id]'))
+        .map(item => item.dataset.announcementId)
+        .filter(Boolean);
+    if (!ids.length) return;
+
+    const now = Date.now();
+    const eligibleIds = ids.filter(id => canShowAnnouncement(id, now));
+    if (!eligibleIds.length) {
+        track.replaceChildren();
+        root.classList.add('hidden');
+        activeTickerAnnouncementIds = '';
+        return;
+    }
+
+    Array.from(track.querySelectorAll('[data-announcement-id]')).forEach(item => {
+        if (!eligibleIds.includes(item.dataset.announcementId)) item.remove();
+    });
+
+    activeTickerAnnouncementIds = eligibleIds.join(',');
+    eligibleIds.forEach(id => markAnnouncementShown(id, now));
+
+    window.clearTimeout(root._tickerHideTimer);
+    root._tickerHideTimer = window.setTimeout(() => {
+        root.classList.add('hidden');
+    }, ANNOUNCEMENT_VISIBLE_MS);
+}
+
+function canShowAnnouncement(id, now = Date.now()) {
+    const shownCount = announcementShowCounts.get(id) || 0;
+    if (shownCount >= ANNOUNCEMENT_MAX_SHOWS) return false;
+
+    const lastShownAt = announcementShowTimes.get(id) || 0;
+    return lastShownAt === 0 || now - lastShownAt >= ANNOUNCEMENT_REPEAT_GAP_MS;
+}
+
+function markAnnouncementShown(id, shownAt = Date.now()) {
+    announcementShowCounts.set(id, (announcementShowCounts.get(id) || 0) + 1);
+    announcementShowTimes.set(id, shownAt);
+    saveAnnouncementShowState();
+}
+
+function loadAnnouncementShowState() {
+    try {
+        const stored = JSON.parse(localStorage.getItem(ANNOUNCEMENT_STATE_KEY) || '{}');
+        Object.entries(stored).forEach(([id, state]) => {
+            const count = Number(state?.count || 0);
+            const lastShownAt = Number(state?.lastShownAt || 0);
+            if (count > 0) announcementShowCounts.set(id, count);
+            if (lastShownAt > 0) announcementShowTimes.set(id, lastShownAt);
+        });
+    } catch (e) {
+        // Ignore malformed local state.
+    }
+}
+
+function saveAnnouncementShowState() {
+    try {
+        const state = {};
+        announcementShowCounts.forEach((count, id) => {
+            state[id] = {
+                count,
+                lastShownAt: announcementShowTimes.get(id) || 0
+            };
+        });
+        localStorage.setItem(ANNOUNCEMENT_STATE_KEY, JSON.stringify(state));
+    } catch (e) {
+        // Ignore storage quota/privacy failures.
+    }
+}
+
+window.loadUnreadNotificationSnapshot = loadUnreadNotificationSnapshot;
+window.updateNotificationBadge = updateNotificationBadge;
+window.startNotificationFallbackPolling = startNotificationFallbackPolling;
+window.stopNotificationFallbackPolling = stopNotificationFallbackPolling;
 
 // ─── Helpers ───
 function getHeaders() {
@@ -282,11 +384,36 @@ function getCookie(name) {
 // ─── Confirm dialog ───
 function confirmAction(message, onConfirm) {
     const modal = document.getElementById('confirmModal');
-    if (!modal) { if (confirm(message)) onConfirm(); return; }
-    document.getElementById('confirmMessage').textContent = message;
-    document.getElementById('confirmBtn').onclick = () => { closeModal('confirmModal'); onConfirm(); };
+    if (!modal) return;
+    const messageEl = document.getElementById('confirmMessage');
+    const confirmBtn = document.getElementById('confirmBtn');
+    if (!messageEl || !confirmBtn) return;
+    messageEl.textContent = message;
+    confirmBtn.onclick = () => { closeModal('confirmModal'); onConfirm(); };
     openModal('confirmModal');
 }
+
+function confirmSubmit(form, message) {
+    if (!form) return false;
+    if (form.dataset.confirmed === 'true') {
+        delete form.dataset.confirmed;
+        return true;
+    }
+
+    confirmAction(message, () => {
+        form.dataset.confirmed = 'true';
+        if (typeof form.requestSubmit === 'function') {
+            form.requestSubmit();
+        } else {
+            form.submit();
+        }
+    });
+
+    return false;
+}
+
+window.confirmAction = confirmAction;
+window.confirmSubmit = confirmSubmit;
 
 // ─── Search debounce ───
 function debounce(fn, delay) {

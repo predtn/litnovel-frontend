@@ -2,6 +2,7 @@
 @model litnovel_frontend.Pages.Publish.ChapterCreateModel
 @{
     ViewData["Title"] = "Tạo chương";
+    var manageUrl = $"{Url.Page("/Publish/Manage", new { id = Model.Novel.Id })}#volumes";
 }
 
 <div class="publish-editor-shell">
@@ -10,7 +11,7 @@
             <div class="breadcrumb">
                 <a asp-page="/Publish/Index">Truyện của tôi</a><span class="breadcrumb__sep">/</span>
                 <a asp-page="/Publish/Manage" asp-route-id="@Model.Novel.Id">@Model.Novel.Title</a><span class="breadcrumb__sep">/</span>
-                <a asp-page="/Publish/Chapters" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id">@Model.Volume.Title</a>
+                <a href="@manageUrl">@Model.Volume.Title</a>
             </div>
             <div class="publish-editor-fields">
                 <input class="form-input publish-chapter-number" asp-for="Input.ChapterNumber" type="number" min="1" />
@@ -44,12 +45,10 @@
 
         <div class="publish-editor-bottom">
             <div class="publish-editor-meta">
-                <span><span data-rich-word-count>@Model.WordCount</span> từ</span>
-                <label class="form-label">Ngày phát hành</label>
-                <input class="form-input" asp-for="Input.ReleaseDate" type="datetime-local" />
+                <span class="publish-word-count"><span data-rich-word-count>0</span> từ</span>
             </div>
             <div class="publish-actions">
-                <a asp-page="/Publish/Chapters" asp-route-volumeId="@Model.Volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-secondary">Hủy</a>
+                <a href="@manageUrl" class="btn btn-secondary">Hủy</a>
                 <button class="btn btn-secondary" type="submit">Lưu bản nháp</button>
                 <button class="btn btn-primary" type="submit" name="submit" value="true">Gửi duyệt</button>
             </div>

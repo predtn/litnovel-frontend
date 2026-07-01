@@ -9,6 +9,7 @@ public static class ApiProxyEndpoints
         endpoints.MapNovelProxyEndpoints();
         endpoints.MapCommentProxyEndpoints();
         endpoints.MapNotificationProxyEndpoints();
+        endpoints.MapAnnouncementProxyEndpoints();
         return endpoints;
     }
 
@@ -76,6 +77,29 @@ public static class ApiProxyEndpoints
 
             var result = await api.DeleteAsync<object>($"/api/novels/{id}/likes", token);
             return ToProxyResult(result);
+        });
+
+        endpoints.MapPost("/api/novels/{id:int}/views", async (
+            int id,
+            IApiService api) =>
+        {
+            var result = await api.PostAsync<object>($"/api/novels/{id}/views", null);
+            return ToProxyResult(result);
+        });
+
+        endpoints.MapGet("/api/users/me/favorites", async (
+            HttpContext context,
+            IApiService api,
+            IAuthService auth) =>
+        {
+            var token = auth.GetToken(context);
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return Results.Unauthorized();
+            }
+
+            var result = await api.GetAsync<System.Text.Json.JsonElement>("/api/users/me/favorites?page=1&size=100", token);
+            return Results.Json(result);
         });
 
         return endpoints;
@@ -182,6 +206,30 @@ public static class ApiProxyEndpoints
 
             var result = await api.PutAsync<object>("/api/notifications/read-all", null, token);
             ClearNotificationCountCache(context, result?.Success == true);
+            return ToProxyResult(result);
+        });
+
+        return endpoints;
+    }
+
+    private static IEndpointRouteBuilder MapAnnouncementProxyEndpoints(this IEndpointRouteBuilder endpoints)
+    {
+        endpoints.MapGet("/api/announcements", async (
+            HttpContext context,
+            IApiService api,
+            IAuthService auth) =>
+        {
+            if (context.User.IsInRole("Admin"))
+            {
+                return Results.Json(new ApiResponse<List<AnnouncementDto>>
+                {
+                    Success = true,
+                    Data = []
+                });
+            }
+
+            var token = auth.GetToken(context);
+            var result = await api.GetAsync<List<AnnouncementDto>>("/api/announcements", token);
             return ToProxyResult(result);
         });
 
