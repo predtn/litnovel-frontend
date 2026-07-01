@@ -1,5 +1,6 @@
 @using Microsoft.AspNetCore.Http
 @using System.Security.Claims
+@inject IAuthService AuthService
 @{
     var sessionNotice = Context.Session.GetString("SessionNotice");
     var sessionNoticeType = Context.Session.GetString("SessionNoticeType") ?? "info";
@@ -18,6 +19,8 @@
         Context.Session.Remove("SessionNotice");
         Context.Session.Remove("SessionNoticeType");
     }
+    var signalRToken = AuthService.GetToken(Context) ?? "";
+    var layoutAnnouncements = new List<AnnouncementDto>();
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -27,6 +30,10 @@
     <meta name="description" content="@(ViewData["Description"] ?? "LitNovel — Nền tảng đọc và xuất bản truyện chữ trực tuyến")" />
     <title>@(ViewData["Title"] != null ? ViewData["Title"] + " — LitNovel" : "LitNovel")</title>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @if (!string.IsNullOrEmpty(signalRToken))
+    {
+        <meta name="signalr-token" content="@signalRToken" />
+    }
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="site-body">
@@ -103,7 +110,7 @@
                             </a>
                             <a href="/Publish" class="dropdown__item">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7-7 7 7"/></svg>
-                                Tiểu thuyết của tôi
+                                Tiểu thuyết
                             </a>
                             <a href="/Reading/History" class="dropdown__item">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
@@ -141,6 +148,21 @@
             </div>
         </div>
     </nav>
+
+    <section class="site-announcement-ticker @(layoutAnnouncements.Count == 0 ? "hidden" : "")" id="siteAnnouncementTicker" aria-live="polite" aria-label="Thông báo hệ thống">
+        <div class="site-announcement-ticker__inner">
+            <span class="site-announcement-ticker__label">Tin mới</span>
+            <div class="site-announcement-ticker__viewport">
+                <div class="site-announcement-ticker__track" id="siteAnnouncementTickerTrack">
+                    @foreach (var announcement in layoutAnnouncements)
+                    {
+                        var textContent = System.Text.RegularExpressions.Regex.Replace(announcement.Content ?? "", "<.*?>", " ").Trim();
+                        <span class="site-announcement-ticker__item" data-announcement-id="@announcement.Id">@announcement.Title@(string.IsNullOrWhiteSpace(textContent) ? "" : $" - {textContent}")</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Mobile Menu -->
     <div class="mobile-menu" id="mobileMenu">
@@ -209,6 +231,11 @@
 
     <!-- JS -->
     <script src="~/js/site.js" asp-append-version="true"></script>
+    @if (!string.IsNullOrEmpty(signalRToken))
+    {
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+        <script src="~/js/notifications.js" asp-append-version="true"></script>
+    }
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

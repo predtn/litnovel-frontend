@@ -13,6 +13,9 @@ public class EditModel : PublishPageModel
     public NovelDetailDto Novel { get; set; } = new();
     public List<CategoryDto> Categories { get; set; } = [];
     public List<TagDto> Tags { get; set; } = [];
+    public bool CanEditNovel => CanEditNovelStatus(Novel.Status);
+    public bool WillSubmitForReviewAfterSave => true;
+    public string SaveButtonText => "Lưu và gửi duyệt lại";
 
     public EditModel(IApiService api, IAuthService auth, IWebHostEnvironment environment) : base(api, auth)
     {
@@ -25,6 +28,12 @@ public class EditModel : PublishPageModel
         if (guard != null) return guard;
         var loaded = await LoadAsync(id);
         if (!loaded) return RedirectToPage("/Publish/Index");
+        if (!CanEditNovel)
+        {
+            TempData["Error"] = EditBlockedMessage("truyện");
+            return RedirectToPage("/Publish/Manage", new { id });
+        }
+
         Input = new()
         {
             Title = Novel.Title,
@@ -42,31 +51,43 @@ public class EditModel : PublishPageModel
     {
         var guard = RequireAuthor();
         if (guard != null) return guard;
-        Input.TagIds = SelectedTagIds.Take(10).ToList();
+        var loaded = await LoadAsync(id);
+        if (!loaded) return RedirectToPage("/Publish/Index");
+        if (!CanEditNovel)
+        {
+            TempData["Error"] = EditBlockedMessage("truyện");
+            return RedirectToPage("/Publish/Manage", new { id });
+        }
+
+        Input.TagIds = SelectedTagIds.Distinct().ToList();
+        Input.Status = "Pending";
         await ApplyCoverImageAsync();
 
         if (string.IsNullOrWhiteSpace(Input.Title))
         {
-            ModelState.AddModelError("Input.Title", "Title is required.");
+            ModelState.AddModelError("Input.Title", "Cần nhập tiêu đề.");
         }
 
         if (!ModelState.IsValid)
         {
-            await LoadAsync(id);
             return Page();
         }
 
         var result = await Api.PutAsync<NovelSummaryDto>($"/api/novels/{id}", Input, Token);
         if (!IsApiSuccess(result))
         {
-            ModelState.AddModelError("", ApiFailureMessage(result, "Unable to update novel."));
-            await LoadAsync(id);
+            ModelState.AddModelError("", ApiFailureMessage(result, "Không thể cập nhật truyện."));
             return Page();
         }
 
-        TempData["Success"] = "Novel updated.";
+        TempData["Success"] = "Đã lưu thay đổi và gửi truyện vào hàng chờ duyệt.";
         return RedirectToPage("/Publish/Manage", new { id });
     }
+
+    private string EditBlockedMessage(string contentName)
+        => IsPendingReview(Novel.Status)
+            ? $"{char.ToUpperInvariant(contentName[0])}{contentName[1..]} đang chờ duyệt, không thể chỉnh sửa."
+            : $"{char.ToUpperInvariant(contentName[0])}{contentName[1..]} đang bị khóa nên không thể chỉnh sửa.";
 
     private async Task ApplyCoverImageAsync()
     {
@@ -74,14 +95,14 @@ public class EditModel : PublishPageModel
 
         if (CoverImageFile.Length > 2 * 1024 * 1024)
         {
-            ModelState.AddModelError("CoverImageFile", "Cover image must be 2MB or smaller.");
+            ModelState.AddModelError("CoverImageFile", "Ảnh bìa phải có dung lượng từ 2MB trở xuống.");
             return;
         }
 
         var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp" };
         if (!allowedTypes.Contains(CoverImageFile.ContentType))
         {
-            ModelState.AddModelError("CoverImageFile", "Cover image must be JPG, PNG, or WEBP.");
+            ModelState.AddModelError("CoverImageFile", "Ảnh bìa phải là tệp JPG, PNG hoặc WEBP.");
             return;
         }
 
@@ -97,7 +118,7 @@ public class EditModel : PublishPageModel
             await CoverImageFile.CopyToAsync(stream);
         }
 
-        Input.CoverImage = $"{Request.Scheme}://{Request.Host}/{relativePath.Replace('\\', '/')}";
+        Input.CoverImage = $"/{relativePath.Replace('\\', '/')}";
     }
 
     private async Task<bool> LoadAsync(int id)
@@ -108,7 +129,7 @@ public class EditModel : PublishPageModel
         await Task.WhenAll(novelTask, catTask, tagTask);
         if (!IsApiSuccess(novelTask.Result) || novelTask.Result?.Data == null)
         {
-            TempData["Error"] = ApiFailureMessage(novelTask.Result, "Unable to load novel.");
+            TempData["Error"] = ApiFailureMessage(novelTask.Result, "Không thể tải truyện.");
             return false;
         }
 

@@ -4,35 +4,21 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace litnovel_frontend.Pages.Admin.Notifications;
 
-public class IndexModel(IApiService api, IAuthService auth) : PageModel
+public class IndexModel(IAuthService auth) : PageModel
 {
     public List<SentNotificationDto> Notifications { get; set; } = [];
+    public List<UserDetailDto> RecipientUsers { get; set; } = [];
     public string? LoadError { get; set; }
 
-    public async Task<IActionResult> OnGetAsync()
+    public IActionResult OnGet()
     {
         if (!auth.IsInRole(HttpContext, "Admin")) return RedirectToPage("/Index");
-        SetShell();
-        var result = await api.GetAsync<PagedData<SentNotificationDto>>("/api/admin/notifications/sent?page=1&size=20", auth.GetToken(HttpContext));
-        if (result?.Success == true && result.Data != null) Notifications = result.Data.Items;
-        else LoadError = result?.Message ?? "Khong the tai lich su thong bao.";
-        return Page();
+        return RedirectToPage("/Admin/Dashboard");
     }
 
-    public async Task<IActionResult> OnPostSendAsync(string notificationType, string message, bool targetAll, int? targetUserId)
+    public IActionResult OnPostSend()
     {
-        var result = await api.PostAsync<object>("/api/admin/notifications", new { notificationType, message, targetAll, targetUserId }, auth.GetToken(HttpContext));
-        if (result?.Success == true) TempData["Success"] = result.Message ?? "Notification sent.";
-        else TempData["Error"] = result?.Message ?? "Could not send notification.";
-        return RedirectToPage();
-    }
-
-    private void SetShell()
-    {
-        ViewData["AdminSection"] = "notifications";
-        var user = auth.GetCurrentUser(HttpContext);
-        if (user == null) return;
-        ViewData["UserName"] = user.Username;
-        ViewData["UserEmail"] = user.Email;
+        if (!auth.IsInRole(HttpContext, "Admin")) return RedirectToPage("/Index");
+        return RedirectToPage("/Admin/Dashboard");
     }
 }

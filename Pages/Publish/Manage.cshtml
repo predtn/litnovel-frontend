@@ -1,14 +1,15 @@
 @page "{id:int}/Manage"
 @model litnovel_frontend.Pages.Publish.ManageModel
 @{
-    ViewData["Title"] = "Manage Novel";
+    ViewData["Title"] = "Quản lý truyện";
 }
 
 <div class="publish-shell">
     <div class="breadcrumb">
-        <a asp-page="/Publish/Index">My Novels</a><span class="breadcrumb__sep">/</span><span class="breadcrumb__current">@Model.Novel.Title</span>
+        <a asp-page="/Publish/Index">Truyện của tôi</a><span class="breadcrumb__sep">/</span><span class="breadcrumb__current">@Model.Novel.Title</span>
     </div>
-<section class="publish-hero-card">
+
+    <section class="publish-hero-card publish-hero-card--manage">
         @if (!string.IsNullOrEmpty(Model.Novel.CoverImage))
         {
             <img src="@Model.Novel.CoverImage" alt="@Model.Novel.Title" class="publish-cover-lg" />
@@ -18,21 +19,49 @@
             <div class="publish-cover-lg publish-cover-empty">B</div>
         }
         <div class="publish-hero-main">
-            <div class="flex gap-sm items-center mb-sm">
-                <span class="status-badge status-@Model.Novel.Status.ToLowerInvariant()">@Model.Novel.Status</span>
-                <span class="text-caption text-mute">Updated @Model.Novel.UpdatedAt.ToString("dd/MM/yyyy")</span>
+            <div class="publish-manage-title-row">
+                <div>
+                    <h1 class="page-header__title">@Model.Novel.Title</h1>
+                    <div class="publish-manage-status">
+                        <span class="status-badge status-@Model.Novel.Status.ToLowerInvariant()">@DisplayText.Status(Model.Novel.Status)</span>
+                        <span class="text-caption text-mute">Cập nhật @Model.Novel.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                </div>
+                @if (Model.CanEditNovel)
+                {
+                    <a asp-page="/Publish/Edit" asp-route-id="@Model.Novel.Id" class="btn btn-secondary">Chỉnh sửa thông tin truyện</a>
+                }
+                else
+                {
+                    <button class="btn btn-secondary" type="button" title="@Model.EditUnavailableMessage" onclick="alert('@Model.EditUnavailableMessage')">Chỉnh sửa thông tin truyện</button>
+                }
             </div>
-            <h1 class="page-header__title">@Model.Novel.Title</h1>
-            <div class="publish-meta-row">
-                <span>@Model.Novel.TotalVolumes volumes</span>
-                <span>@Model.Novel.TotalChapters chapters</span>
-                <span>@Model.Novel.ViewCount.ToString("N0") views</span>
-                <span>@Model.Novel.RatingAverage.ToString("0.0") rating</span>
-            </div>
-            <div class="publish-hero-actions">
-                <a asp-page="/Publish/Edit" asp-route-id="@Model.Novel.Id" class="btn btn-secondary">Edit Novel Info</a>
-                <a asp-page="/Publish/Volumes" asp-route-novelId="@Model.Novel.Id" class="btn btn-primary">Manage Volumes</a>
-                <a asp-page="/Publish/Statistics" asp-route-id="@Model.Novel.Id" class="btn btn-secondary">Statistics</a>
+
+            <div class="publish-meta-grid">
+                <div class="publish-meta-item">
+                    <span class="publish-meta-item__value">@Model.Novel.TotalVolumes.ToString("N0")</span>
+                    <span class="publish-meta-item__label">Tập</span>
+                </div>
+                <div class="publish-meta-item">
+                    <span class="publish-meta-item__value">@Model.Novel.TotalChapters.ToString("N0")</span>
+                    <span class="publish-meta-item__label">Chương</span>
+                </div>
+                <div class="publish-meta-item">
+                    <span class="publish-meta-item__value">@Model.Novel.ViewCount.ToString("N0")</span>
+                    <span class="publish-meta-item__label">Lượt xem</span>
+                </div>
+                <div class="publish-meta-item publish-meta-item--rating">
+                    @if (Model.Novel.RatingAverage > 0)
+                    {
+                        <span class="publish-meta-item__value">@Model.Novel.RatingAverage.ToString("0.0")</span>
+                        <span class="publish-meta-item__label">@Model.Novel.RatingCount đánh giá</span>
+                    }
+                    else
+                    {
+                        <span class="publish-meta-item__value publish-meta-item__value--empty">Chưa có</span>
+                        <span class="publish-meta-item__label">Đánh giá</span>
+                    }
+                </div>
             </div>
         </div>
     </section>
@@ -40,10 +69,8 @@
     <div class="publish-detail-grid">
         <section class="card">
             <div class="tabs">
-                <a href="#overview" class="tab active">Overview</a>
-                <a asp-page="/Publish/Volumes" asp-route-novelId="@Model.Novel.Id" class="tab">Volumes & Chapters</a>
-                <a asp-page="/Publish/Statistics" asp-route-id="@Model.Novel.Id" class="tab">Statistics</a>
-                <a href="#settings" class="tab">Settings</a>
+                <a href="#overview" class="tab active">Tổng quan</a>
+                <a asp-page="/Publish/Volumes" asp-route-novelId="@Model.Novel.Id" class="tab">Tập & chương</a>
             </div>
             <div id="overview" class="publish-richtext">@Html.Raw(Model.Novel.Description)</div>
             <div class="divider"></div>
@@ -55,15 +82,42 @@
             </div>
         </section>
 
-        <aside class="card publish-side-panel" id="settings">
-            <h2 class="text-display-sm mb-md">Publishing Controls</h2>
-            <form method="post" asp-page-handler="Submit" asp-route-id="@Model.Novel.Id" class="mb-sm">
-                <button class="btn btn-primary w-full" type="submit">Submit for Review</button>
-            </form>
-            <a asp-page="/Publish/Moderation" class="btn btn-secondary w-full mb-sm">Moderation Status</a>
-            <form method="post" asp-page-handler="Delete" asp-route-id="@Model.Novel.Id" onsubmit="return confirm('Delete this novel and all chapters?');">
-                <button class="btn btn-danger w-full" type="submit">Delete Novel</button>
-            </form>
+        <aside class="card publish-side-panel">
+            <h2 class="text-display-sm publish-side-panel__title">Hành động</h2>
+            @if (Model.CanChangeLifecycleStatus)
+            {
+                <form method="post" asp-page-handler="UpdateLifecycleStatus" asp-route-id="@Model.Novel.Id" class="publish-lifecycle-form">
+                    <div class="form-group">
+                        <label class="form-label" asp-for="LifecycleStatus">Trạng thái truyện</label>
+                        <select class="form-select" asp-for="LifecycleStatus">
+                            @foreach (var status in Model.LifecycleStatusOptions)
+                            {
+                                <option value="@status">@DisplayText.Status(status)</option>
+                            }
+                        </select>
+                    </div>
+                    <button class="btn btn-primary w-full" type="submit">Cập nhật trạng thái</button>
+                </form>
+            }
+            @if (Model.CanSubmitNovel)
+            {
+                <form method="post" asp-page-handler="Submit" asp-route-id="@Model.Novel.Id" class="mb-sm">
+                    <button class="btn btn-primary w-full" type="submit">Gửi duyệt</button>
+                </form>
+            }
+            else if (Model.CanCancelReview)
+            {
+                <div class="card-soft mb-sm text-body-sm">Truyện đang chờ xét duyệt. Bạn cần hủy gửi duyệt trước khi chỉnh sửa thông tin truyện.</div>
+                <form method="post" asp-page-handler="CancelReview" asp-route-id="@Model.Novel.Id" class="mb-sm" onsubmit="return confirm('Hủy gửi duyệt và đưa truyện về bản nháp?');">
+                    <button class="btn btn-secondary w-full" type="submit">Hủy gửi duyệt</button>
+                </form>
+            }
+            @if (Model.CanDeleteNovel)
+            {
+                <form method="post" asp-page-handler="Delete" asp-route-id="@Model.Novel.Id" onsubmit="return confirm('Xóa truyện này và toàn bộ chương? Hành động này không thể hoàn tác.');">
+                    <button class="btn btn-danger w-full" type="submit">Xóa truyện</button>
+                </form>
+            }
         </aside>
     </div>
 </div>

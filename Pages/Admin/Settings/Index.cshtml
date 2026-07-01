@@ -2,15 +2,15 @@
 @model litnovel_frontend.Pages.Admin.Settings.IndexModel
 @{
     Layout = "_LayoutDashboard";
-    ViewData["Title"] = "System Settings";
+    ViewData["Title"] = "Cài đặt hệ thống";
 }
 
 @section Sidebar { <partial name="~/Pages/Admin/_AdminSidebar.cshtml" /> }
 
 <div class="page-header">
     <div>
-        <h1 class="page-header__title">System Settings</h1>
-        <p class="page-header__subtitle">Configure general, content, and moderation settings.</p>
+        <h1 class="page-header__title">Cài đặt hệ thống</h1>
+        <p class="page-header__subtitle">Điều chỉnh thông tin chung, nội dung và quy trình kiểm duyệt.</p>
     </div>
 </div>
 @if (!string.IsNullOrWhiteSpace(Model.LoadError))
@@ -34,7 +34,6 @@
         <div class="publish-form-grid">
             <label class="form-group"><span class="form-label">Max novel description length</span><input name="maxNovelDescriptionLength" type="number" min="1" class="form-input" value="@Model.Settings.Content.MaxNovelDescriptionLength" /></label>
             <label class="form-group"><span class="form-label">Max chapter length</span><input name="maxChapterLength" type="number" min="1" class="form-input" value="@Model.Settings.Content.MaxChapterLength" /></label>
-            <label class="form-group"><span class="form-label">Max tags per novel</span><input name="maxTagsPerNovel" type="number" min="1" class="form-input" value="@Model.Settings.Content.MaxTagsPerNovel" /></label>
         </div>
     </section>
 
@@ -47,6 +46,6 @@
     </section>
 
     <div class="publish-form-actions">
-        <button type="submit" class="btn btn-primary">Save settings</button>
+        <button type="submit" class="btn btn-primary">Lưu cài đặt</button>
     </div>
 </form>

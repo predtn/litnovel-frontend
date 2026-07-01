@@ -112,7 +112,7 @@
                     <div class="card mb-md">
                         <div class="card__header"><h3 class="card__title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Cảnh báo tác giả</h3></div>
                         <div class="card__body">
-                            <a href="/Staff/UserWarning?novelId=@r.TargetNovel.Id" class="btn btn-warning w-full"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Gửi cảnh báo</a>
+                            <a href="/Staff/UserWarning?userId=@Model.NovelAuthorId&username=@Uri.EscapeDataString(Model.NovelAuthorUsername ?? "")" class="btn btn-warning w-full"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Gửi cảnh báo</a>
                         </div>
                     </div>
                 }
@@ -145,6 +145,21 @@
                             <label class="form-label">Ghi chú giải quyết</label>
                             <textarea name="resolutionNotes" class="form-control" rows="3" placeholder="Nhập ghi chú..."></textarea>
                         </div>
+                        @if ((r.Kind == "User" && r.TargetComment != null) || (r.Kind == "Novel" && r.TargetChapter != null))
+                        {
+                            <div class="form-group mt-sm">
+                                <label class="d-flex align-items-center gap-xs" style="cursor:pointer">
+                                    <input type="checkbox" name="takeDownContent" value="true" id="chkTakeDown" />
+                                    <span>
+                                        @if (r.Kind == "User")
+                                        { <strong>Xóa bình luận vi phạm (#@r.TargetComment!.Id)</strong> }
+                                        else
+                                        { <strong>Gỡ chương vi phạm về Draft: "@r.TargetChapter!.Title"</strong> }
+                                    </span>
+                                </label>
+                                <small class="text-muted">Hành động này sẽ được ghi vào lịch sử kiểm duyệt.</small>
+                            </div>
+                        }
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" onclick="document.getElementById('resolveModal').close()">Hủy</button>

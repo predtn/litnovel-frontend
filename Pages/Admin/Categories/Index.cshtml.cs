@@ -53,7 +53,7 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
     {
         var result = await api.PostAsync<object>("/api/admin/categories", new { name, slug = ToSlug(name) }, auth.GetToken(HttpContext));
         if (result?.Success == true) TempData["Success"] = "Category created.";
-        else TempData["Error"] = result?.Message ?? "Create category failed.";
+        else TempData["Error"] = result?.Message ?? "Chưa thể tạo thể loại lúc này.";
         return RedirectToPage();
     }
 
@@ -61,15 +61,15 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
     {
         var result = await api.PutAsync<object>($"/api/admin/categories/{id}", new { name, slug = ToSlug(name) }, auth.GetToken(HttpContext));
         if (result?.Success == true) TempData["Success"] = "Category updated.";
-        else TempData["Error"] = result?.Message ?? "Update category failed.";
+        else TempData["Error"] = result?.Message ?? "Chưa thể cập nhật thể loại lúc này.";
         return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(int id)
     {
         var result = await api.DeleteAsync<object>($"/api/admin/categories/{id}", auth.GetToken(HttpContext));
-        if (result?.Success == true) TempData["Success"] = "Category deleted.";
-        else TempData["Error"] = result?.Message ?? "Delete category failed.";
+        if (result?.Success == true) TempData["Success"] = "Đã xóa thể loại.";
+        else TempData["Error"] = result?.Message ?? "Chưa thể xóa thể loại lúc này.";
         return RedirectToPage();
     }
 

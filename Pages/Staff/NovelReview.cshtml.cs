@@ -33,6 +33,12 @@ public class NovelReviewModel : PageModel
         var result = await _api.GetAsync<NovelReviewDetailDto>($"/api/staff/novels/{id}", token);
         Novel = result?.Data;
         if (Novel == null) return NotFound();
+        if (!IsPending(Novel.Status))
+        {
+            TempData["Error"] = "Tiểu thuyết này không còn trong hàng chờ duyệt.";
+            return RedirectToPage("/Staff/PendingNovels");
+        }
+
         return Page();
     }
 
@@ -40,6 +46,13 @@ public class NovelReviewModel : PageModel
     {
         if (!await ValidateAccess()) return RedirectToPage("/Auth/Login");
         var token = _auth.GetToken(HttpContext)!;
+
+        var current = await _api.GetAsync<NovelReviewDetailDto>($"/api/staff/novels/{id}", token);
+        if (current?.Data == null || !IsPending(current.Data.Status))
+        {
+            TempData["Error"] = "Tiểu thuyết này đã được rút khỏi hàng chờ duyệt.";
+            return RedirectToPage("/Staff/PendingNovels");
+        }
 
         var payload = new { action, reason };
         var result = await _api.PutAsync<object>($"/api/staff/novels/{id}/moderate", payload, token);
@@ -52,7 +65,15 @@ public class NovelReviewModel : PageModel
         // Reload and show error
         var novel = await _api.GetAsync<NovelReviewDetailDto>($"/api/staff/novels/{id}", token);
         Novel = novel?.Data;
+        if (Novel == null || !IsPending(Novel.Status))
+        {
+            TempData["Error"] = "Tiểu thuyết này không còn trong hàng chờ duyệt.";
+            return RedirectToPage("/Staff/PendingNovels");
+        }
         ActionMessage = result?.Message ?? "Có lỗi xảy ra.";
         return Page();
     }
+
+    private static bool IsPending(string? status)
+        => string.Equals(status, "Pending", StringComparison.OrdinalIgnoreCase);
 }

@@ -53,7 +53,7 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
     {
         var result = await api.PostAsync<object>("/api/admin/tags", new { name, slug = ToSlug(name) }, auth.GetToken(HttpContext));
         if (result?.Success == true) TempData["Success"] = "Tag created.";
-        else TempData["Error"] = result?.Message ?? "Create tag failed.";
+        else TempData["Error"] = result?.Message ?? "Chưa thể tạo tag lúc này.";
         return RedirectToPage();
     }
 
@@ -61,15 +61,15 @@ public class IndexModel(IApiService api, IAuthService auth) : PageModel
     {
         var result = await api.PutAsync<object>($"/api/admin/tags/{id}", new { name, slug = ToSlug(name) }, auth.GetToken(HttpContext));
         if (result?.Success == true) TempData["Success"] = "Tag updated.";
-        else TempData["Error"] = result?.Message ?? "Update tag failed.";
+        else TempData["Error"] = result?.Message ?? "Chưa thể cập nhật tag lúc này.";
         return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(int id)
     {
         var result = await api.DeleteAsync<object>($"/api/admin/tags/{id}", auth.GetToken(HttpContext));
-        if (result?.Success == true) TempData["Success"] = "Tag deleted.";
-        else TempData["Error"] = result?.Message ?? "Delete tag failed.";
+        if (result?.Success == true) TempData["Success"] = "Đã xóa tag.";
+        else TempData["Error"] = result?.Message ?? "Chưa thể xóa tag lúc này.";
         return RedirectToPage();
     }
 

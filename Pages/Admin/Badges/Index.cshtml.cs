@@ -6,10 +6,15 @@ namespace litnovel_frontend.Pages.Admin.Badges;
 
 public class IndexModel(IApiService api, IAuthService auth, IWebHostEnvironment environment) : PageModel
 {
+    public List<BadgeDto> AllBadges { get; set; } = [];
     public List<BadgeDto> Badges { get; set; } = [];
     public List<UserDetailDto> AwardUsers { get; set; } = [];
     public Dictionary<string, List<UserDetailDto>> BadgeOwners { get; set; } = [];
+    public new int Page { get; set; } = 1;
+    public int TotalPages { get; set; } = 1;
+    public int TotalElements { get; set; }
     public string? LoadError { get; set; }
+    private const int PageSize = 9;
 
     [BindProperty]
     public IFormFile? CreateIconFile { get; set; }
@@ -23,10 +28,11 @@ public class IndexModel(IApiService api, IAuthService auth, IWebHostEnvironment 
     [BindProperty]
     public string? EditIconValue { get; set; }
 
-    public async Task<IActionResult> OnGetAsync()
+    public async Task<IActionResult> OnGetAsync([FromQuery(Name = "page")] int pageNumber = 1)
     {
         var token = auth.GetToken(HttpContext);
         if (!auth.IsInRole(HttpContext, "Admin")) return RedirectToPage("/Index");
+        Page = Math.Max(1, pageNumber);
 
         ViewData["AdminSection"] = "badges";
         var currentUser = auth.GetCurrentUser(HttpContext);
@@ -40,7 +46,14 @@ public class IndexModel(IApiService api, IAuthService auth, IWebHostEnvironment 
         var usersResult = await api.GetAsync<PagedData<UserDetailDto>>("/api/admin/users?page=1&size=1000", token);
         if (result?.Success == true && result.Data != null)
         {
-            Badges = result.Data;
+            AllBadges = result.Data;
+            TotalElements = AllBadges.Count;
+            TotalPages = Math.Max(1, (int)Math.Ceiling(TotalElements / (double)PageSize));
+            Page = Math.Min(Page, TotalPages);
+            Badges = AllBadges
+                .Skip((Page - 1) * PageSize)
+                .Take(PageSize)
+                .ToList();
         }
         else
         {
@@ -68,7 +81,7 @@ public class IndexModel(IApiService api, IAuthService auth, IWebHostEnvironment 
 
         var result = await api.PostAsync<object>("/api/admin/badges", new { key = ToKey(name), name, description, icon, color }, auth.GetToken(HttpContext));
         if (result?.Success == true) TempData["Success"] = "Badge created.";
-        else TempData["Error"] = result?.Message ?? "Create badge failed.";
+        else TempData["Error"] = result?.Message ?? "Chưa thể tạo huy hiệu lúc này.";
         return RedirectToPage();
     }
 
@@ -80,15 +93,15 @@ public class IndexModel(IApiService api, IAuthService auth, IWebHostEnvironment 
         var iconValue = uploadedIcon ?? NormalizeIconValue(EditIconValue) ?? icon;
         var result = await api.PutAsync<object>($"/api/admin/badges/{id}", new { name, description, icon = iconValue, color }, auth.GetToken(HttpContext));
         if (result?.Success == true) TempData["Success"] = "Badge updated.";
-        else TempData["Error"] = result?.Message ?? "Update badge failed.";
+        else TempData["Error"] = result?.Message ?? "Chưa thể cập nhật huy hiệu lúc này.";
         return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(int id)
     {
         var result = await api.DeleteAsync<object>($"/api/admin/badges/{id}", auth.GetToken(HttpContext));
-        if (result?.Success == true) TempData["Success"] = "Badge deleted.";
-        else TempData["Error"] = result?.Message ?? "Delete badge failed.";
+        if (result?.Success == true) TempData["Success"] = "Đã xóa huy hiệu.";
+        else TempData["Error"] = result?.Message ?? "Chưa thể xóa huy hiệu lúc này.";
         return RedirectToPage();
     }
 
@@ -116,7 +129,7 @@ public class IndexModel(IApiService api, IAuthService auth, IWebHostEnvironment 
 
         var result = await api.PostAsync<object>($"/api/admin/badges/{id}/award/{userId}", null, token);
         if (result?.Success == true) TempData["Success"] = "Badge awarded.";
-        else TempData["Error"] = result?.Message ?? "Award badge failed.";
+        else TempData["Error"] = result?.Message ?? "Chưa thể trao huy hiệu lúc này.";
         return RedirectToPage();
     }
 
@@ -139,7 +152,7 @@ public class IndexModel(IApiService api, IAuthService auth, IWebHostEnvironment 
 
     private async Task LoadBadgeOwnersAsync(string? token)
     {
-        BadgeOwners = Badges.ToDictionary(GetBadgeIdentity, _ => new List<UserDetailDto>());
+        BadgeOwners = AllBadges.ToDictionary(GetBadgeIdentity, _ => new List<UserDetailDto>());
 
         var detailTasks = AwardUsers.Select(user => api.GetAsync<UserDetailDto>($"/api/admin/users/{user.Id}", token)).ToList();
         while (detailTasks.Count > 0)
@@ -209,6 +222,6 @@ public class IndexModel(IApiService api, IAuthService auth, IWebHostEnvironment 
         await using var stream = System.IO.File.Create(filePath);
         await file.CopyToAsync(stream);
 
-        return $"{Request.Scheme}://{Request.Host}/uploads/badges/{fileName}";
+        return $"/uploads/badges/{fileName}";
     }
 }

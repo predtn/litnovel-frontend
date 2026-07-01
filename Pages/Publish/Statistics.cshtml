@@ -1,41 +1,41 @@
 @page "{id:int}/Statistics"
 @model litnovel_frontend.Pages.Publish.StatisticsModel
 @{
-    ViewData["Title"] = "Novel Statistics";
+    ViewData["Title"] = "Thống kê truyện";
     var maxRating = Math.Max(1, Model.Analytics.RatingDistribution.Values.DefaultIfEmpty(0).Max());
     var maxComments = Math.Max(1, Model.Analytics.TopChapters.Select(c => c.CommentCount).DefaultIfEmpty(0).Max());
 }
 
 <div class="publish-shell">
     <div class="breadcrumb">
-        <a asp-page="/Publish/Index">My Novels</a><span class="breadcrumb__sep">/</span>
+        <a asp-page="/Publish/Index">Truyện của tôi</a><span class="breadcrumb__sep">/</span>
         <a asp-page="/Publish/Manage" asp-route-id="@Model.Novel.Id">@Model.Novel.Title</a><span class="breadcrumb__sep">/</span>
-        <span class="breadcrumb__current">Statistics</span>
+        <span class="breadcrumb__current">Thống kê</span>
     </div>
 
     <div class="page-header">
         <div>
-            <h1 class="page-header__title">Novel Statistics</h1>
+            <h1 class="page-header__title">Thống kê truyện</h1>
             <p class="page-header__subtitle">@Model.Novel.Title</p>
         </div>
     </div>
 
     <div class="publish-stats">
-        <div class="stat-card"><div class="stat-card__label">Views</div><div class="stat-card__value">@Model.Analytics.ViewCount.ToString("N0")</div></div>
-        <div class="stat-card"><div class="stat-card__label">Likes</div><div class="stat-card__value">@Model.Analytics.LikeCount.ToString("N0")</div></div>
-        <div class="stat-card"><div class="stat-card__label">Favorites</div><div class="stat-card__value">@Model.Analytics.FavoritesCount.ToString("N0")</div></div>
-        <div class="stat-card"><div class="stat-card__label">Comments</div><div class="stat-card__value">@Model.Analytics.CommentCount.ToString("N0")</div></div>
+        <div class="stat-card"><div class="stat-card__label">Lượt xem</div><div class="stat-card__value">@Model.Analytics.ViewCount.ToString("N0")</div></div>
+        <div class="stat-card"><div class="stat-card__label">Lượt thích</div><div class="stat-card__value">@Model.Analytics.LikeCount.ToString("N0")</div></div>
+        <div class="stat-card"><div class="stat-card__label">Theo dõi</div><div class="stat-card__value">@Model.Analytics.FavoritesCount.ToString("N0")</div></div>
+        <div class="stat-card"><div class="stat-card__label">Bình luận</div><div class="stat-card__value">@Model.Analytics.CommentCount.ToString("N0")</div></div>
     </div>
 
     <div class="publish-analytics-grid">
         <section class="card">
-            <h2 class="text-display-sm mb-lg">Ratings Distribution</h2>
+            <h2 class="text-display-sm mb-lg">Phân bố đánh giá</h2>
             <div class="publish-bars">
                 @for (var i = 5; i >= 1; i--)
                 {
                     var value = Model.Analytics.RatingDistribution.TryGetValue(i.ToString(), out var count) ? count : 0;
                     <div class="publish-bar-row">
-                        <span>@i star</span>
+                        <span>@i sao</span>
                         <div class="publish-bar-track"><div class="publish-bar-fill" style="width:@(value * 100 / maxRating)%"></div></div>
                         <strong>@value</strong>
                     </div>
@@ -44,7 +44,7 @@
         </section>
 
         <section class="card">
-            <h2 class="text-display-sm mb-lg">Comment Activity</h2>
+            <h2 class="text-display-sm mb-lg">Hoạt động bình luận</h2>
             <div class="publish-bars">
                 @foreach (var chapter in Model.Analytics.TopChapters)
                 {

@@ -2,7 +2,7 @@
 @model litnovel_frontend.Pages.Admin.Reports.IndexModel
 @{
     Layout = "_LayoutDashboard";
-    ViewData["Title"] = "Reports Overview";
+    ViewData["Title"] = "Tổng quan báo cáo";
     ViewData["ActiveNav"] = "admin";
     var open = Model.Reports.Count(x => x.Status == "Pending");
     var resolved = Model.Reports.Count(x => x.Status == "Resolved");
@@ -13,47 +13,98 @@
 
 <div class="page-header">
     <div>
-        <h1 class="page-header__title">Reports Overview</h1>
-        <p class="page-header__subtitle">Read-only overview of novel and user reports across the platform.</p>
+        <h1 class="page-header__title">Tổng quan báo cáo</h1>
+        <p class="page-header__subtitle">Tổng quan chỉ đọc về báo cáo truyện và người dùng trên toàn nền tảng.</p>
     </div>
 </div>
 
 <div class="grid-3 mb-xl">
-    <div class="stat-card"><div class="stat-card__label">Open</div><div class="stat-card__value">@open</div></div>
-    <div class="stat-card"><div class="stat-card__label">Resolved</div><div class="stat-card__value">@resolved</div></div>
-    <div class="stat-card"><div class="stat-card__label">Rejected</div><div class="stat-card__value">@rejected</div></div>
+    <div class="stat-card"><div class="stat-card__label">Đang mở</div><div class="stat-card__value">@open</div></div>
+    <div class="stat-card"><div class="stat-card__label">Đã xử lý</div><div class="stat-card__value">@resolved</div></div>
+    <div class="stat-card"><div class="stat-card__label">Bị từ chối</div><div class="stat-card__value">@rejected</div></div>
 </div>
 
 <form class="admin-toolbar" method="get" id="reportQuickFilter">
-    <select class="form-select" name="type" data-quick-filter-select><option value="">All types</option><option value="novel" selected="@(Model.Type == "novel")">Novel reports</option><option value="user" selected="@(Model.Type == "user")">User reports</option></select>
-    <select class="form-select" name="status" data-quick-filter-select><option value="">All statuses</option><option selected="@(Model.Status == "Pending")">Pending</option><option selected="@(Model.Status == "Resolved")">Resolved</option><option selected="@(Model.Status == "Rejected")">Rejected</option></select>
+    <select class="form-select" name="type" data-quick-filter-select>
+        <option value="">Tất cả loại</option>
+        <option value="novel" selected="@(Model.Type == "novel")">Báo cáo truyện</option>
+        <option value="user" selected="@(Model.Type == "user")">Báo cáo người dùng</option>
+    </select>
+    <select class="form-select" name="status" data-quick-filter-select>
+        <option value="">Tất cả trạng thái</option>
+        <option value="Pending" selected="@(Model.Status == "Pending")">Chờ xử lý</option>
+        <option value="Resolved" selected="@(Model.Status == "Resolved")">Đã xử lý</option>
+        <option value="Rejected" selected="@(Model.Status == "Rejected")">Bị từ chối</option>
+    </select>
     @if (!string.IsNullOrWhiteSpace(Model.Type) || !string.IsNullOrWhiteSpace(Model.Status))
     {
-        <a class="btn btn-secondary" href="/Admin/Reports">Clear</a>
+        <a class="btn btn-secondary" href="/Admin/Reports">Xóa lọc</a>
     }
 </form>
 
 @if (Model.Reports.Count == 0)
 {
     <div class="empty-state">
-        <div class="empty-state__title">Không có report nào</div>
-        <p class="empty-state__text">Không có report nào hoặc không có report nào khớp với bộ lọc hiện tại.</p>
+        <div class="empty-state__title">Không có báo cáo nào</div>
+        <p class="empty-state__text">Không có báo cáo nào hoặc không có báo cáo nào khớp với bộ lọc hiện tại.</p>
     </div>
 }
 else
 {
     <div class="table-wrapper">
         <table class="table">
-            <thead><tr><th>Target</th><th>Type</th><th>Reporter</th><th>Submitted</th><th>Status</th></tr></thead>
+            <thead><tr><th>Đối tượng</th><th>Loại</th><th>Người báo cáo</th><th>Ngày gửi</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
             <tbody>
             @foreach (var report in Model.Reports)
             {
+                var processedBy = report.ProcessedBy?.Username ?? report.ProcessedByName;
                 <tr>
                     <td><div class="font-medium">@report.TargetTitle</div><div class="text-caption text-mute">@report.TargetSubtitle</div></td>
-                    <td><span class="badge badge-secondary">@report.ReportType</span></td>
-                    <td>@report.ReporterName</td>
+                    <td><span class="badge badge-secondary">@DisplayText.ReportType(report.ReportType)</span></td>
+                    <td>@(report.Reporter?.Username ?? report.ReporterName)</td>
                     <td class="text-caption text-mute">@report.CreatedAt.ToString("dd/MM/yyyy")</td>
-                    <td><span class="status-badge status-@report.Status.ToLower()">@report.Status</span></td>
+                    <td><span class="status-badge status-@report.Status.ToLower()">@DisplayText.Status(report.Status)</span></td>
+                    <td>
+                        <details class="admin-report-detail">
+                            <summary class="btn btn-secondary btn-sm">Xem chi tiết</summary>
+                            <div class="admin-report-detail__panel">
+                                <div class="text-caption text-mute">Báo cáo #@report.Id</div>
+                                @if (!string.IsNullOrWhiteSpace(report.Description))
+                                {
+                                    <div class="mt-sm">
+                                        <div class="font-medium">Nội dung báo cáo</div>
+                                        <div class="text-body-sm">@report.Description</div>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(processedBy) || !string.IsNullOrWhiteSpace(report.ActionTaken) || !string.IsNullOrWhiteSpace(report.ResolutionNotes))
+                                {
+                                    <div class="mt-sm">
+                                        <div class="font-medium">Cách xử lý</div>
+                                        @if (!string.IsNullOrWhiteSpace(processedBy))
+                                        {
+                                            <div class="text-body-sm">Người xử lý: @processedBy</div>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(report.ActionTaken))
+                                        {
+                                            <div class="text-body-sm">Hành động: @report.ActionTaken</div>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(report.ResolutionNotes))
+                                        {
+                                            <div class="text-body-sm">Ghi chú: @report.ResolutionNotes</div>
+                                        }
+                                        @if (report.UpdatedAt.HasValue)
+                                        {
+                                            <div class="text-caption text-mute">Cập nhật @report.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="text-body-sm mt-sm">Báo cáo chưa có thông tin xử lý.</div>
+                                }
+                            </div>
+                        </details>
+                    </td>
                 </tr>
             }
             </tbody>

@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model litnovel_frontend.Pages.Staff.UserWarningModel
 @{ Layout = "_LayoutDashboard"; ViewData["Title"] = "Cảnh báo người dùng"; }
 @section Sidebar {
@@ -31,32 +31,27 @@
     </div>
 </div>
 
-@if (Model.Success)
-{
-    <div class="alert alert-success">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Cảnh báo đã được gửi thành công đến người dùng!
-        <a href="/Staff/Reports" class="btn btn-sm btn-secondary ml-sm">Về danh sách báo cáo</a>
-    </div>
-}
 
 @if (!string.IsNullOrEmpty(Model.ErrorMessage))
 {
     <div class="alert alert-danger">@Model.ErrorMessage</div>
 }
 
-@if (!Model.Success)
-{
-    <div class="form-card">
+
+<div class="form-card">
         <div class="form-card__header">
             <h2 class="form-card__title">Thông tin cảnh báo</h2>
             <p class="form-card__subtitle">Cảnh báo sẽ được gửi dưới dạng thông báo hệ thống đến người dùng.</p>
         </div>
         <form method="post" class="form-card__body">
+            <input type="hidden" name="userId" value="@Model.TargetUserId" />
             <div class="form-group">
-                <label class="form-label" for="userId">ID Người dùng *</label>
-                <input type="number" id="userId" name="userId" class="form-control"
-                       value="@Model.TargetUserId" placeholder="Nhập User ID..." required min="1" />
-                <span class="form-hint">Bạn có thể tìm ID người dùng trong trang quản lý users.</span>
+                <label class="form-label">Người dùng bị cảnh báo</label>
+                <div class="form-control" style="background: var(--color-surface); cursor: default; display:flex; align-items:center; gap: 8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span>@(Model.TargetUsername ?? $"User #{Model.TargetUserId}")</span>
+                    <span class="badge badge-secondary ml-auto">ID: @Model.TargetUserId</span>
+                </div>
             </div>
             <div class="form-group">
                 <label class="form-label" for="message">Nội dung cảnh báo *</label>
@@ -64,6 +59,13 @@
                           placeholder="Nhập nội dung cảnh báo...&#10;VD: Tài khoản của bạn đã vi phạm quy định cộng đồng về nội dung không phù hợp...">
                 </textarea>
                 <span class="form-hint">Nội dung này sẽ xuất hiện trong mục thông báo của người dùng.</span>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="severity">Mức độ vi phạm *</label>
+                <select id="severity" name="severity" class="form-control" required>
+                    <option value="Minor">Nhẹ (Minor)</option>
+                    <option value="Major">Nặng (Major)</option>
+                </select>
             </div>
 
             <div class="warning-preview">
@@ -86,4 +88,3 @@
             </div>
         </form>
     </div>
-}

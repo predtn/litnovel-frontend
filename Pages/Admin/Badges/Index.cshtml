@@ -120,6 +120,17 @@ else
             </article>
         }
     </div>
+    @if (Model.TotalPages > 1)
+    {
+        <div class="pagination mt-md">
+            <a class="pagination__btn @(Model.Page <= 1 ? "disabled" : "")" href="?page=@Math.Max(1, Model.Page - 1)">‹</a>
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <a class="pagination__btn @(i == Model.Page ? "active" : "")" href="?page=@i">@i</a>
+            }
+            <a class="pagination__btn @(Model.Page >= Model.TotalPages ? "disabled" : "")" href="?page=@Math.Min(Model.TotalPages, Model.Page + 1)">›</a>
+        </div>
+    }
 }
 
 <div class="modal-overlay" id="addModal">

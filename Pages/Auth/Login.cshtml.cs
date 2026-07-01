@@ -17,6 +17,11 @@ public class LoginModel : PageModel
     {
         if (_auth.IsAuthenticated(HttpContext))
         {
+            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+
             return Redirect(GetRoleHome(_auth.GetCurrentUser(HttpContext)?.Role));
         }
         ReturnUrl = returnUrl;

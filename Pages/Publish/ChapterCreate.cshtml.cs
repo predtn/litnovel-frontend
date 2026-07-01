@@ -30,7 +30,7 @@ public class ChapterCreateModel : PublishPageModel
         Input.Status = "Draft";
         if (string.IsNullOrWhiteSpace(Input.Title) || !HasText(Input.Content))
         {
-            ModelState.AddModelError("", "Chapter title and content are required.");
+            ModelState.AddModelError("", "Cần nhập tiêu đề và nội dung chương.");
             await LoadAsync(volumeId, novelId);
             return Page();
         }
@@ -38,7 +38,7 @@ public class ChapterCreateModel : PublishPageModel
         var result = await Api.PostAsync<ChapterNavDto>($"/api/volumes/{volumeId}/chapters", Input, Token);
         if (!IsApiSuccess(result))
         {
-            ModelState.AddModelError("", ApiFailureMessage(result, "Unable to create chapter."));
+            ModelState.AddModelError("", ApiFailureMessage(result, "Không thể tạo chương."));
             await LoadAsync(volumeId, novelId);
             return Page();
         }
@@ -48,7 +48,7 @@ public class ChapterCreateModel : PublishPageModel
             var draftResult = await Api.PutAsync<ChapterNavDto>($"/api/chapters/{draftId}", Input, Token);
             if (!IsApiSuccess(draftResult))
             {
-                ModelState.AddModelError("", ApiFailureMessage(draftResult, "Chapter was created, but could not be kept as a draft."));
+                ModelState.AddModelError("", ApiFailureMessage(draftResult, "Chương đã được tạo nhưng không thể giữ ở bản nháp."));
                 await LoadAsync(volumeId, novelId);
                 return Page();
             }
@@ -59,13 +59,13 @@ public class ChapterCreateModel : PublishPageModel
             var submitResult = await Api.PostAsync<object>($"/api/chapters/{id}/submit", null, Token);
             if (!IsApiSuccess(submitResult))
             {
-                ModelState.AddModelError("", ApiFailureMessage(submitResult, "Chapter was saved as a draft, but could not be submitted."));
+                ModelState.AddModelError("", ApiFailureMessage(submitResult, "Chương đã được lưu bản nháp nhưng không thể gửi duyệt."));
                 await LoadAsync(volumeId, novelId);
                 return Page();
             }
         }
 
-        TempData["Success"] = submit ? "Chapter saved and submitted." : "Chapter draft saved.";
+        TempData["Success"] = submit ? "Chương đã được lưu và gửi duyệt." : "Đã lưu bản nháp chương.";
         return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
     }
 
@@ -77,7 +77,7 @@ public class ChapterCreateModel : PublishPageModel
         var result = await Api.GetAsync<NovelDetailDto>($"/api/novels/{novelId}", Token);
         if (!IsApiSuccess(result) || result?.Data == null)
         {
-            TempData["Error"] = ApiFailureMessage(result, "Unable to load novel.");
+            TempData["Error"] = ApiFailureMessage(result, "Không thể tải truyện.");
             return false;
         }
 
@@ -85,7 +85,7 @@ public class ChapterCreateModel : PublishPageModel
         var volume = Novel.Volumes.FirstOrDefault(v => v.Id == volumeId);
         if (volume == null)
         {
-            TempData["Error"] = "Unable to load volume.";
+            TempData["Error"] = "Không thể tải tập.";
             return false;
         }
 
@@ -97,8 +97,8 @@ public class ChapterCreateModel : PublishPageModel
     {
         var text = ToPlainText(value);
         return string.IsNullOrWhiteSpace(text)
-        ? 0
-        : text.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+            ? 0
+            : Regex.Matches(text, @"[\p{L}\p{N}]+(?:['’.-][\p{L}\p{N}]+)*").Count;
     }
 
     private static bool HasText(string? value) => !string.IsNullOrWhiteSpace(ToPlainText(value));
@@ -106,6 +106,9 @@ public class ChapterCreateModel : PublishPageModel
     private static string ToPlainText(string? value)
     {
         if (string.IsNullOrWhiteSpace(value)) return "";
-        return Regex.Replace(value, "<.*?>", " ").Replace("&nbsp;", " ").Trim();
+        return Regex.Replace(value, "<.*?>", " ")
+            .Replace("&nbsp;", " ")
+            .Replace('\u00a0', ' ')
+            .Trim();
     }
 }

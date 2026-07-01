@@ -24,7 +24,8 @@ public class UserSummaryDto
     public string Username { get; set; } = "";
     public string? Avatar { get; set; }
     public string Role { get; set; } = "User";
-    public string Status { get; set; } = "Online";
+    public string Status { get; set; } = "Offline";
+    public List<BadgeDto> Badges { get; set; } = [];
 }
 
 public class UserDetailDto : UserSummaryDto
@@ -32,7 +33,6 @@ public class UserDetailDto : UserSummaryDto
     public string Email { get; set; } = "";
     public string? Bio { get; set; }
     public int Reputation { get; set; }
-    public List<BadgeDto> Badges { get; set; } = [];
     public UserStatsDto Stats { get; set; } = new();
     public List<UserWarningDto> Warnings { get; set; } = [];
     public DateTime CreatedAt { get; set; }
@@ -95,14 +95,20 @@ public class NovelSummaryDto
     public string Title { get; set; } = "";
     public string Slug { get; set; } = "";
     public string? CoverImage { get; set; }
+    public string? Description { get; set; }
     public UserSummaryDto? Author { get; set; }
     public CategoryDto? Category { get; set; }
     public List<TagDto> Tags { get; set; } = [];
     public string Status { get; set; } = "Draft";
     public int ViewCount { get; set; }
     public int LikeCount { get; set; }
+    public int FavoritesCount { get; set; }
     public int TotalChapters { get; set; }
     public int TotalVolumes { get; set; }
+    public int? LatestChapterNumber { get; set; }
+    public string? LatestChapterTitle { get; set; }
+    public string? LatestChapterSlug { get; set; }
+    public DateTime? LatestChapterUpdatedAt { get; set; }
     public double RatingAverage { get; set; }
     public int RatingCount { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -113,10 +119,13 @@ public class NovelSummaryDto
 
 public class NovelDetailDto : NovelSummaryDto
 {
-    public string? Description { get; set; }
     public bool? IsFavorited { get; set; }
     public bool? IsLiked { get; set; }
+    public int? UserReviewId { get; set; }
     public byte? UserRating { get; set; }
+    public string? UserReview { get; set; }
+    public int ReadChapterCount { get; set; }
+    public int ReadingProgressPercentage { get; set; }
     public List<VolumeWithChaptersDto> Volumes { get; set; } = [];
 }
 
@@ -145,6 +154,7 @@ public class ChapterNavDto
     public string Status { get; set; } = "Draft";
     public int WordCount { get; set; }
     public DateTime? ReleaseDate { get; set; }
+    public bool IsRead { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }
@@ -171,6 +181,7 @@ public class CommentDto
     public UserSummaryDto? User { get; set; }
     public string Content { get; set; } = "";
     public int LikeCount { get; set; }
+    public bool IsLiked { get; set; }
     public int DislikeCount { get; set; }
     public int? ParentCommentId { get; set; }
     public List<CommentDto> Replies { get; set; } = [];
@@ -317,6 +328,11 @@ public class NovelUpsertRequest
     public int? CategoryId { get; set; }
     public List<int> TagIds { get; set; } = [];
     public string? Status { get; set; }
+}
+
+public class NovelLifecycleStatusRequest
+{
+    public string Status { get; set; } = "";
 }
 
 public class VolumeUpsertRequest
@@ -470,6 +486,7 @@ public class StaffReportDto
     public ReportTargetNovelInfoDto? TargetNovel { get; set; }
     public ReportActorInfoDto? TargetUser { get; set; }
     public ReportTargetChapterInfoDto? TargetChapter { get; set; }
+    public ReportCommentInfoDto? TargetComment { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 }
@@ -486,6 +503,7 @@ public class ReportTargetNovelInfoDto
     public int Id { get; set; }
     public string Title { get; set; } = "";
     public string Slug { get; set; } = "";
+    public ReportActorInfoDto? Author { get; set; }
 }
 
 public class ReportTargetChapterInfoDto
@@ -493,6 +511,14 @@ public class ReportTargetChapterInfoDto
     public int Id { get; set; }
     public string Title { get; set; } = "";
     public int ChapterNumber { get; set; }
+}
+
+public class ReportCommentInfoDto
+{
+    public int Id { get; set; }
+    public string Content { get; set; } = "";
+    public int UserId { get; set; }
+    public string Username { get; set; } = "";
 }
 
 public class ModerationHistoryDto
@@ -511,14 +537,21 @@ public class ModerationHistoryDto
 public class AdminReportDto
 {
     public int Id { get; set; }
+    public string? Kind { get; set; }
     public string Type { get; set; } = "novel";
     public string ReportType { get; set; } = "Spam";
     public string Status { get; set; } = "Pending";
     public string ReporterName { get; set; } = "";
+    public UserSummaryDto? Reporter { get; set; }
+    public UserSummaryDto? ProcessedBy { get; set; }
+    public string? ProcessedByName { get; set; }
     public string TargetTitle { get; set; } = "";
     public string? TargetSubtitle { get; set; }
     public string? Description { get; set; }
+    public string? ActionTaken { get; set; }
+    public string? ResolutionNotes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAt { get; set; }
 }
 
 public class AuditLogDto
@@ -629,7 +662,6 @@ public class ContentSettingsDto
 {
     public int MaxNovelDescriptionLength { get; set; } = 5000;
     public int MaxChapterLength { get; set; } = 50000;
-    public int MaxTagsPerNovel { get; set; } = 10;
 }
 
 public class ModerationSettingsDto

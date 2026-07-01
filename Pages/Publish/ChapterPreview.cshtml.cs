@@ -8,6 +8,10 @@ public class ChapterPreviewModel : PublishPageModel
     public ChapterDetailDto Chapter { get; set; } = new();
     public int VolumeId { get; set; }
     public int NovelId { get; set; }
+    public bool CanEditChapter => CanEditChapterStatus(Chapter.Status);
+    public string EditUnavailableMessage => IsPendingReview(Chapter.Status)
+        ? "Chương đang chờ duyệt, không thể chỉnh sửa."
+        : "Chương đang bị khóa nên không thể chỉnh sửa.";
 
     public ChapterPreviewModel(IApiService api, IAuthService auth) : base(api, auth) { }
 
@@ -22,7 +26,7 @@ public class ChapterPreviewModel : PublishPageModel
         var result = await Api.GetAsync<ChapterDetailDto>($"/api/chapters/{id}", Token);
         if (!IsApiSuccess(result))
         {
-            TempData["Error"] = ApiFailureMessage(result, "Unable to load chapter preview.");
+            TempData["Error"] = ApiFailureMessage(result, "Không thể tải bản xem trước chương.");
             return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
         }
 

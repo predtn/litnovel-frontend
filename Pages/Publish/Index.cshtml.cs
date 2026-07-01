@@ -38,14 +38,4 @@ public class IndexModel : PublishPageModel
         TotalElements = data?.TotalElements ?? Novels.Count;
         return Page();
     }
-
-    public async Task<IActionResult> OnPostDeleteAsync(int id)
-    {
-        var guard = RequireAuthor();
-        if (guard != null) return guard;
-
-        var result = await Api.DeleteAsync<object>($"/api/novels/{id}", Token);
-        SetApiResultMessage(result, "Novel deleted.", "Unable to delete novel.");
-        return RedirectToPage();
-    }
 }

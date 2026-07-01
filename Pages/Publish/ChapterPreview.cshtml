@@ -1,34 +1,41 @@
 @page "Chapters/{id:int}/Preview"
 @model litnovel_frontend.Pages.Publish.ChapterPreviewModel
 @{
-    ViewData["Title"] = "Chapter Preview";
+    ViewData["Title"] = "Xem trước chương";
     var ch = Model.Chapter;
 }
 
 <div class="publish-shell">
     <div class="breadcrumb">
-        <a asp-page="/Publish/Index">My Novels</a><span class="breadcrumb__sep">/</span>
+        <a asp-page="/Publish/Index">Truyện của tôi</a><span class="breadcrumb__sep">/</span>
         <a asp-page="/Publish/Manage" asp-route-id="@Model.NovelId">@ch.Novel?.Title</a><span class="breadcrumb__sep">/</span>
         <a asp-page="/Publish/Chapters" asp-route-volumeId="@Model.VolumeId" asp-route-novelId="@Model.NovelId">@ch.Volume?.Title</a><span class="breadcrumb__sep">/</span>
-        <span class="breadcrumb__current">Preview</span>
+        <span class="breadcrumb__current">Xem trước</span>
     </div>
 
     <div class="page-header">
         <div>
             <div class="publish-meta-row mb-sm">
-                <span class="status-badge status-@ch.Status.ToLowerInvariant()">@ch.Status</span>
-                <span>Chapter @ch.ChapterNumber</span>
+                <span class="status-badge status-@ch.Status.ToLowerInvariant()">@DisplayText.Status(ch.Status)</span>
+                <span>Chương @ch.ChapterNumber</span>
                 @if (ch.ReleaseDate.HasValue)
                 {
-                    <span>Release @ch.ReleaseDate.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                    <span>Phát hành @ch.ReleaseDate.Value.ToString("dd/MM/yyyy HH:mm")</span>
                 }
             </div>
             <h1 class="page-header__title">@ch.Title</h1>
             <p class="page-header__subtitle">@ch.Novel?.Title</p>
         </div>
         <div class="publish-actions">
-            <a asp-page="/Publish/ChapterEdit" asp-route-id="@ch.Id" asp-route-volumeId="@Model.VolumeId" asp-route-novelId="@Model.NovelId" class="btn btn-primary">Edit</a>
-            <a asp-page="/Publish/Chapters" asp-route-volumeId="@Model.VolumeId" asp-route-novelId="@Model.NovelId" class="btn btn-secondary">Back</a>
+            @if (Model.CanEditChapter)
+            {
+                <a asp-page="/Publish/ChapterEdit" asp-route-id="@ch.Id" asp-route-volumeId="@Model.VolumeId" asp-route-novelId="@Model.NovelId" class="btn btn-primary">Sửa</a>
+            }
+            else
+            {
+                <button type="button" class="btn btn-primary" title="@Model.EditUnavailableMessage" onclick="alert('@Model.EditUnavailableMessage')">Sửa</button>
+            }
+            <a asp-page="/Publish/Chapters" asp-route-volumeId="@Model.VolumeId" asp-route-novelId="@Model.NovelId" class="btn btn-secondary">Quay lại</a>
         </div>
     </div>
 

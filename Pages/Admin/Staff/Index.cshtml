@@ -2,7 +2,7 @@
 @model litnovel_frontend.Pages.Admin.Staff.IndexModel
 @{
     Layout = "_LayoutDashboard";
-    ViewData["Title"] = "Staff Management";
+    ViewData["Title"] = "Quản lý nhân viên";
     ViewData["ActiveNav"] = "admin";
 }
 
@@ -10,36 +10,36 @@
 
 <div class="page-header">
     <div>
-        <h1 class="page-header__title">Staff Management</h1>
-        <p class="page-header__subtitle">Assign and revoke Staff accounts.</p>
+        <h1 class="page-header__title">Quản lý nhân viên</h1>
+        <p class="page-header__subtitle">Gán và thu hồi tài khoản Staff.</p>
     </div>
 </div>
 
 @if (!string.IsNullOrWhiteSpace(Model.LoadError))
 {
     <div class="card-soft mb-xl" style="border-color:var(--color-warning);">
-        <div class="font-semibold mb-sm">Khong tai duoc danh sach Staff</div>
+        <div class="font-semibold mb-sm">Không tải được danh sách Staff</div>
         <p class="text-body-sm text-body">@Model.LoadError</p>
     </div>
 }
 <div class="admin-stack">
     <section class="card admin-card">
         <div class="flex justify-between items-center gap-md mb-md">
-            <h2 class="text-display-sm">Current staff</h2>
-            <span class="badge badge-secondary">@Model.StaffTotalElements accounts</span>
+            <h2 class="text-display-sm">Nhân viên hiện tại</h2>
+            <span class="badge badge-secondary">@Model.StaffTotalElements tài khoản</span>
         </div>
         @if (Model.StaffUsers.Count == 0)
         {
             <div class="empty-state">
-                <div class="empty-state__title">No staff accounts</div>
-                <p class="empty-state__text">The API returned an empty staff list.</p>
+                <div class="empty-state__title">No staff tài khoản</div>
+                <p class="empty-state__text">API trả về danh sách nhân viên rỗng.</p>
             </div>
         }
         else
         {
             <div class="table-wrapper">
                 <table class="table table--compact">
-                    <thead><tr><th>User</th><th>Status</th><th>Moderation</th><th class="col-actions">Action</th></tr></thead>
+                    <thead><tr><th>Người dùng</th><th>Trạng thái</th><th>Kiểm duyệt</th><th class="col-actions">Hành động</th></tr></thead>
                     <tbody>
                     @foreach (var user in Model.StaffUsers)
                     {
@@ -48,13 +48,13 @@
                                 <div class="font-medium">@user.Username</div>
                                 <div class="text-caption text-mute truncate">@user.Email</div>
                             </td>
-                            <td><span class="status-badge status-@user.Status.ToLower()">@user.Status</span></td>
+                            <td><span class="status-badge status-@user.Status.ToLower()">@DisplayText.Status(user.Status)</span></td>
                             <td>@Model.StaffModerationCounts.GetValueOrDefault(user.Id)</td>
                             <td class="col-actions">
                                 <form method="post" asp-page-handler="Revoke">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="userId" value="@user.Id" />
-                                    <button class="btn btn-danger btn-sm" type="submit">Revoke</button>
+                                    <button class="btn btn-danger btn-sm" type="submit">Thu hồi</button>
                                 </form>
                             </td>
                         </tr>
@@ -81,14 +81,14 @@
 
     <section class="card admin-card">
         <div class="flex justify-between items-center gap-md mb-md">
-            <h2 class="text-display-sm">Promote user</h2>
-            <span class="badge badge-secondary">@Model.CandidateTotalElements candidates</span>
+            <h2 class="text-display-sm">Nâng quyền người dùng</h2>
+            <span class="badge badge-secondary">@Model.CandidateTotalElements ứng viên</span>
         </div>
         @if (Model.CandidateUsers.Count == 0)
         {
             <div class="empty-state">
-                <div class="empty-state__title">No eligible users</div>
-                <p class="empty-state__text">The API returned no User-role accounts to promote.</p>
+                <div class="empty-state__title">Không có người dùng phù hợp</div>
+                <p class="empty-state__text">Hiện chưa có tài khoản phù hợp để cấp quyền nhân viên.</p>
             </div>
         }
         else
@@ -104,7 +104,7 @@
                             <div class="font-medium truncate">@user.Username</div>
                             <div class="text-caption text-mute truncate">@user.Email</div>
                         </div>
-                        <button class="btn btn-primary btn-sm" type="submit">Assign</button>
+                        <button class="btn btn-primary btn-sm" type="submit">Gán quyền</button>
                     </form>
                 }
             </div>
