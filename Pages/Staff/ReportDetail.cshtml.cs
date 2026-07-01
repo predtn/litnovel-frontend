@@ -42,17 +42,44 @@ public class ReportDetailModel : PageModel
 
     public async Task<IActionResult> OnPostAsync(
         [FromForm] int id, [FromForm] string kind,
-        [FromForm] string action, [FromForm] string? actionTaken, [FromForm] string? resolutionNotes,
-        [FromForm] bool takeDownContent = false)
+        [FromForm] string action, [FromForm] string? resolutionNotes,
+        [FromForm] bool takeDownContent = false,
+        [FromForm] int? targetUserId = null,
+        [FromForm] bool warnUser = false,
+        [FromForm] bool banUser = false)
     {
         if (!ValidateAccess(out var token)) return RedirectToPage("/Auth/Login");
         Kind = kind;
 
-        var payload = new { action, actionTaken, resolutionNotes, takeDownContent };
+        if (action == "Reject")
+        {
+            takeDownContent = false;
+            warnUser = false;
+            banUser = false;
+        }
+
+        var actionTakenStr = action == "Resolve" ? "Chấp nhận báo cáo." : "Bác bỏ báo cáo.";
+        if (takeDownContent) actionTakenStr += " Đã xử lý nội dung vi phạm.";
+        if (warnUser) actionTakenStr += " Đã gửi cảnh báo.";
+        if (banUser) actionTakenStr += " Đã khóa tài khoản.";
+
+        var payload = new 
+        { 
+            action, 
+            actionTaken = actionTakenStr, 
+            resolutionNotes, 
+            takeDownContent,
+            warnUser,
+            banUser,
+            targetUserId
+        };
+        
+        // 1. Giải quyết Report toàn diện (bao gồm Warn, Ban, Delete trong 1 transaction)
         var result = await _api.PutAsync<object>($"/api/staff/reports/{id}/resolve?kind={kind}", payload, token);
+        
         if (result?.Success == true)
         {
-            TempData["SuccessMessage"] = "Báo cáo đã được xử lý thành công!";
+            TempData["SuccessMessage"] = "Báo cáo đã được xử lý toàn diện thành công!";
             return RedirectToPage("/Staff/Reports");
         }
         // Reload

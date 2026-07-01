@@ -1,0 +1,192 @@
+@page
+@model litnovel_frontend.Pages.Staff.UsersModel
+@{
+    Layout = "_LayoutDashboard";
+    ViewData["Title"] = "Quản lý User";
+}
+
+@section Sidebar { <partial name="_StaffSidebar" /> }
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Quản lý người dùng</h1>
+        <p class="page-header__subtitle">Danh sách người dùng và xử lý trạng thái tài khoản</p>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ActionMessage))
+{
+    <div class="alert @(Model.ActionSuccess ? "alert-success" : "alert-danger") mb-lg">
+        @Model.ActionMessage
+    </div>
+}
+
+<div class="card mb-lg">
+    <div class="card__header">
+        <h2 class="card__title">Bộ lọc tìm kiếm</h2>
+    </div>
+    <div class="card__body">
+        <form method="get" class="flex gap-sm align-center">
+            <input type="text" asp-for="Keyword" class="form-input" placeholder="Nhập username, email..." style="max-width: 300px;" />
+            <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+            @if (!string.IsNullOrEmpty(Model.Keyword))
+            {
+                <a href="/Staff/Users" class="btn btn-secondary">Xóa bộ lọc</a>
+            }
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card__header">
+        <h2 class="card__title">Kết quả (@Model.TotalElements)</h2>
+    </div>
+    
+    @if (Model.Users.Any())
+    {
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên hiển thị</th>
+                        <th>Email</th>
+                        <th>Ngày tạo</th>
+                        <th>Cảnh báo</th>
+                        <th>Trạng thái</th>
+                        <th class="text-right">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model.Users)
+                    {
+                        <tr>
+                            <td>#@user.Id</td>
+                            <td class="font-medium">@user.Username</td>
+                            <td>@user.Email</td>
+                            <td>@user.CreatedAt.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                @if (user.WarningCount > 0)
+                                {
+                                    <span class="badge badge-warning">@user.WarningCount</span>
+                                }
+                                else
+                                {
+                                    <span class="text-mute">-</span>
+                                }
+                            </td>
+                            <td>
+                                @if (user.Status == "Banned")
+                                {
+                                    <span class="badge badge-danger">Banned</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-success">@user.Status</span>
+                                }
+                            </td>
+                            <td class="text-right">
+                                @if (user.Status == "Banned")
+                                {
+                                    <button class="btn btn-sm btn-outline" onclick="openUnbanModal(@user.Id, '@user.Username')">
+                                        Mở khóa
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-sm btn-danger" onclick="openBanModal(@user.Id, '@user.Username')">
+                                        Khóa tài khoản
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <div class="pagination mt-lg">
+                @if (Model.CurrentPage > 1)
+                {
+                    <a href="?p=@(Model.CurrentPage - 1)&Keyword=@Model.Keyword" class="btn btn-sm btn-secondary">Trang trước</a>
+                }
+                <span style="padding: 0.5rem 1rem;">Trang @Model.CurrentPage / @Model.TotalPages</span>
+                @if (Model.CurrentPage < Model.TotalPages)
+                {
+                    <a href="?p=@(Model.CurrentPage + 1)&Keyword=@Model.Keyword" class="btn btn-sm btn-secondary">Trang sau</a>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <div class="empty-state">
+            <p class="text-mute">Không tìm thấy người dùng nào.</p>
+        </div>
+    }
+</div>
+
+<!-- Modal Ban -->
+<div id="banModal" class="modal" style="display:none;">
+    <div class="modal__content" style="max-width: 500px;">
+        <h2 class="modal__title mb-md" style="color:var(--color-danger);">Khóa tài khoản</h2>
+        <form method="post" asp-page-handler="BanUser">
+            <input type="hidden" name="userId" id="banUserId" />
+            <input type="hidden" name="p" value="@Model.CurrentPage" />
+            <div class="form-group mb-md">
+                <p>Bạn sắp khóa tài khoản: <strong id="banUsername"></strong></p>
+                <p class="text-mute text-sm mt-xs">Tài khoản này sẽ bị đăng xuất khỏi tất cả các thiết bị và không thể đăng nhập lại cho đến khi được mở khóa.</p>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Lý do khóa (Bắt buộc, User sẽ thấy)</label>
+                <textarea name="reason" class="form-input" rows="3" required></textarea>
+            </div>
+            <div class="flex gap-sm mt-lg justify-end">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('banModal')">Hủy</button>
+                <button type="submit" class="btn btn-danger">Khóa tài khoản</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Unban -->
+<div id="unbanModal" class="modal" style="display:none;">
+    <div class="modal__content" style="max-width: 500px;">
+        <h2 class="modal__title mb-md">Mở khóa tài khoản</h2>
+        <form method="post" asp-page-handler="UnbanUser">
+            <input type="hidden" name="userId" id="unbanUserId" />
+            <input type="hidden" name="p" value="@Model.CurrentPage" />
+            <div class="form-group mb-md">
+                <p>Bạn sắp khôi phục tài khoản: <strong id="unbanUsername"></strong></p>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Lý do mở khóa (Ghi chú nội bộ)</label>
+                <textarea name="reason" class="form-input" rows="2" required></textarea>
+            </div>
+            <div class="flex gap-sm mt-lg justify-end">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('unbanModal')">Hủy</button>
+                <button type="submit" class="btn btn-primary">Xác nhận mở khóa</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openBanModal(id, username) {
+        document.getElementById('banUserId').value = id;
+        document.getElementById('banUsername').innerText = username;
+        document.getElementById('banModal').style.display = 'flex';
+    }
+    
+    function openUnbanModal(id, username) {
+        document.getElementById('unbanUserId').value = id;
+        document.getElementById('unbanUsername').innerText = username;
+        document.getElementById('unbanModal').style.display = 'flex';
+    }
+    
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+    }
+</script>
