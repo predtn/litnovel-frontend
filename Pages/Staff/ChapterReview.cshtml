@@ -78,13 +78,15 @@
     </div>
 
     <dialog id="rejectModal" class="modal-dialog">
-        <form method="post" class="modal-content">
+        <form method="post" class="modal-content" onsubmit="return validateRejectForm()">
             <div class="modal-header"><h3>Từ chối chương</h3></div>
             <div class="modal-body">
                 <input type="hidden" name="id" value="@c.Id" />
                 <input type="hidden" name="action" value="Reject" />
-                <label class="form-label">Lý do *</label>
-                <textarea name="reason" class="form-control" rows="3" placeholder="Nhập lý do từ chối..."></textarea>
+                <label class="form-label">Lý do <span style="color:var(--color-danger)">*</span></label>
+                <textarea name="reason" id="rejectReasonChapter" class="form-control" rows="3"
+                          placeholder="Nhập lý do từ chối..." required minlength="1"></textarea>
+                <div id="rejectReasonChapterError" style="color:var(--color-danger);font-size:0.85em;display:none;margin-top:4px;">Vui lòng nhập lý do từ chối.</div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="document.getElementById('rejectModal').close()">Hủy</button>
@@ -96,3 +98,26 @@
 
 }
 
+<script>
+    function validateRejectForm() {
+        var reason = document.getElementById('rejectReasonChapter');
+        var errDiv = document.getElementById('rejectReasonChapterError');
+        if (!reason.value.trim()) {
+            errDiv.style.display = 'block';
+            reason.style.borderColor = 'var(--color-danger)';
+            reason.focus();
+            return false;
+        }
+        errDiv.style.display = 'none';
+        reason.style.borderColor = '';
+        return true;
+    }
+
+    document.querySelector('[onclick*="rejectModal"].btn-danger, [onclick*=\'rejectModal\']')
+        ?.addEventListener('click', function () {
+            var reason = document.getElementById('rejectReasonChapter');
+            var errDiv = document.getElementById('rejectReasonChapterError');
+            if (reason) { reason.value = ''; reason.style.borderColor = ''; }
+            if (errDiv) errDiv.style.display = 'none';
+        });
+</script>
