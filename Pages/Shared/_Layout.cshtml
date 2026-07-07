@@ -149,6 +149,8 @@
         </div>
     </nav>
 
+    @await Html.PartialAsync("_PageTransition")
+
     <section class="site-announcement-ticker @(layoutAnnouncements.Count == 0 ? "hidden" : "")" id="siteAnnouncementTicker" aria-live="polite" aria-label="Thông báo hệ thống">
         <div class="site-announcement-ticker__inner">
             <span class="site-announcement-ticker__label">Tin mới</span>
