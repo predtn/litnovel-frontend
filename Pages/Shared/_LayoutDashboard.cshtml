@@ -1,5 +1,6 @@
 @using Microsoft.AspNetCore.Http
 @inject IAuthService AuthService
+@inject IConfiguration Configuration
 @{
     var sessionNotice = Context.Session.GetString("SessionNotice");
     var sessionNoticeType = Context.Session.GetString("SessionNoticeType") ?? "info";
@@ -20,6 +21,8 @@
         Context.Session.Remove("SessionNoticeType");
     }
     var signalRToken = AuthService.GetToken(Context) ?? "";
+    var publicApiBaseUrl = (Configuration["PublicApiBaseUrl"] ?? Configuration["ApiBaseUrl"] ?? "http://localhost:5181").TrimEnd('/');
+    var signalRHubUrl = $"{publicApiBaseUrl}/hubs/notifications";
     var layoutAnnouncements = new List<AnnouncementDto>();
 }
 <!DOCTYPE html>
@@ -32,6 +35,7 @@
     @if (!string.IsNullOrEmpty(signalRToken))
     {
         <meta name="signalr-token" content="@signalRToken" />
+        <meta name="signalr-hub-url" content="@signalRHubUrl" />
     }
     @await RenderSectionAsync("Styles", required: false)
 </head>
