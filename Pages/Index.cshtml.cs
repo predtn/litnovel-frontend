@@ -1,4 +1,5 @@
 using litnovel_frontend.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace litnovel_frontend.Pages;
@@ -12,6 +13,7 @@ public class IndexModel : PageModel
     public List<NovelSummaryDto> TrendingNovels { get; set; } = [];
     public List<NovelSummaryDto> NewNovels { get; set; } = [];
     public List<NovelSummaryDto> TopRatedNovels { get; set; } = [];
+    public List<NovelSummaryDto> RecommendedNovels { get; set; } = [];
     public List<AnnouncementDto> Announcements { get; set; } = [];
     public List<ReadingProgressDto> ContinueReading { get; set; } = [];
     public HashSet<int> FavoriteIds { get; set; } = [];
@@ -41,7 +43,6 @@ public class IndexModel : PageModel
         var favTask          = !string.IsNullOrWhiteSpace(token)
             ? _api.GetAsync<PagedData<NovelSummaryDto>>("/api/users/me/favorites?page=1&size=200", token)
             : Task.FromResult<ApiResponse<PagedData<NovelSummaryDto>>?>(null);
-
         await Task.WhenAll(catTask, trendingTask, newTask, topTask, announcementTask, readingTask, unreadTask, favTask);
 
         Categories      = catTask.Result?.Data ?? [];
@@ -71,6 +72,22 @@ public class IndexModel : PageModel
             ViewData["UserEmail"] = user.Email;
             ViewData["UserAvatar"]= user.Avatar;
         }
+    }
+
+    public async Task<JsonResult> OnGetRecommendationsAsync()
+    {
+        var token = _auth.GetToken(HttpContext);
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return new JsonResult(new { items = Array.Empty<NovelSummaryDto>() });
+        }
+
+        var result = await _api.GetAsync<RecommendationListDto>("/api/recommendations?limit=6", token);
+        var items = result?.Success == true
+            ? result.Data?.Items?.Take(6).ToList() ?? []
+            : [];
+
+        return new JsonResult(new { items });
     }
 
     private async Task<List<ReadingProgressDto>> LoadContinueReadingAsync(string token)

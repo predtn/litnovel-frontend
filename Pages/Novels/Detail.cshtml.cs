@@ -84,6 +84,22 @@ public class DetailModel : PageModel
         TempData["Success"] = "Báo cáo đã được gửi.";
         return RedirectToPage(new { slug });
     }
+    public async Task<JsonResult> OnGetRecommendationsAsync([FromRoute] string slug)
+    {
+        var token = _auth.GetToken(HttpContext);
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return new JsonResult(new { items = Array.Empty<NovelSummaryDto>() });
+        }
+
+        var result = await _api.GetAsync<RecommendationListDto>("/api/recommendations?limit=8", token);
+        var items = result?.Success == true
+            ? result.Data?.Items?.Take(8).ToList() ?? []
+            : [];
+
+        return new JsonResult(new { items });
+    }
+
     private async Task<bool> IsInteractionLockedAsync(string slug, string token)
     {
         var novelResult = await _api.GetAsync<NovelDetailDto>($"/api/novels/{slug}", token);

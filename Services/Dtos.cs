@@ -131,6 +131,12 @@ public class NovelDetailDto : NovelSummaryDto
     public List<VolumeWithChaptersDto> Volumes { get; set; } = [];
 }
 
+public class RecommendationListDto
+{
+    public string Strategy { get; set; } = "personalized";
+    public List<NovelSummaryDto> Items { get; set; } = [];
+}
+
 public class VolumeDto
 {
     public int Id { get; set; }
