@@ -30,9 +30,9 @@ public class IndexModel : PageModel
 
         // Load homepage content in parallel.
         var catTask          = _api.GetAsync<List<CategoryDto>>("/api/categories");
-        var trendingTask     = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=viewCount&order=desc&page=1&size=24");
+        var trendingTask     = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=viewCount&order=desc&page=1&size=12");
         var newTask          = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=latestChapterUpdatedAt&order=desc&page=1&size=8");
-        var topTask          = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=ratingAverage&order=desc&page=1&size=24");
+        var topTask          = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=ratingAverage&order=desc&page=1&size=12");
         var announcementTask = LoadAnnouncementsAsync(token);
         var readingTask      = !string.IsNullOrWhiteSpace(token)
             ? LoadContinueReadingAsync(token)
@@ -48,12 +48,12 @@ public class IndexModel : PageModel
         Categories      = catTask.Result?.Data ?? [];
         TrendingNovels  = (trendingTask.Result?.Data?.Items ?? [])
             .Where(novel => novel.ViewCount > 0)
-            .Take(6)
+            .Take(12)
             .ToList();
         NewNovels       = newTask.Result?.Data?.Items ?? [];
         TopRatedNovels  = (topTask.Result?.Data?.Items ?? [])
             .Where(novel => novel.RatingAverage > 0)
-            .Take(6)
+            .Take(12)
             .ToList();
         Announcements   = announcementTask.Result;
         ContinueReading = readingTask.Result;
@@ -82,9 +82,9 @@ public class IndexModel : PageModel
             return new JsonResult(new { items = Array.Empty<NovelSummaryDto>() });
         }
 
-        var result = await _api.GetAsync<RecommendationListDto>("/api/recommendations?limit=6", token);
+        var result = await _api.GetAsync<RecommendationListDto>("/api/recommendations?limit=12", token);
         var items = result?.Success == true
-            ? result.Data?.Items?.Take(6).ToList() ?? []
+            ? result.Data?.Items?.Take(12).ToList() ?? []
             : [];
 
         return new JsonResult(new { items });

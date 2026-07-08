@@ -129,7 +129,12 @@
             </div>
             <a href="/Novels?sort=viewCount&order=desc" class="btn btn-ghost">Xem tất cả →</a>
         </div>
-        <div class="home-novel-grid">
+        <div class="home-novel-carousel" data-home-carousel>
+            <button class="home-novel-carousel__nav home-novel-carousel__nav--prev" type="button" aria-label="Sang trai" data-home-carousel-prev>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <div class="home-novel-carousel__viewport">
+                <div class="home-novel-grid home-novel-carousel__track">
             @foreach (var novel in Model?.TrendingNovels ?? new List<NovelSummaryDto>())
             {
                 var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
@@ -169,6 +174,11 @@
                     </div>
                 </article>
             }
+                </div>
+            </div>
+            <button class="home-novel-carousel__nav home-novel-carousel__nav--next" type="button" aria-label="Sang phai" data-home-carousel-next>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
         </div>
     </div>
 </section>
@@ -245,7 +255,12 @@
             </div>
             <a href="/Novels?sort=ratingAverage&order=desc" class="btn btn-ghost">Xem tất cả →</a>
         </div>
-        <div class="home-novel-grid">
+        <div class="home-novel-carousel" data-home-carousel>
+            <button class="home-novel-carousel__nav home-novel-carousel__nav--prev" type="button" aria-label="Sang trai" data-home-carousel-prev>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <div class="home-novel-carousel__viewport">
+                <div class="home-novel-grid home-novel-carousel__track">
             @foreach (var novel in Model?.TopRatedNovels ?? new List<NovelSummaryDto>())
             {
                 var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
@@ -289,6 +304,11 @@
                     </div>
                 </article>
             }
+                </div>
+            </div>
+            <button class="home-novel-carousel__nav home-novel-carousel__nav--next" type="button" aria-label="Sang phai" data-home-carousel-next>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
         </div>
     </div>
 </section>
@@ -305,7 +325,12 @@
                     <p class="section-subtitle">Những tiểu thuyết phù hợp với bạn</p>
                 </div>
             </div>
-            <div class="home-novel-grid">
+            <div class="home-novel-carousel" data-home-carousel>
+                <button class="home-novel-carousel__nav home-novel-carousel__nav--prev" type="button" aria-label="Sang trai" data-home-carousel-prev>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <div class="home-novel-carousel__viewport">
+                    <div class="home-novel-grid home-novel-carousel__track">
                 @foreach (var novel in Model?.RecommendedNovels ?? new List<NovelSummaryDto>())
                 {
                     var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
@@ -349,6 +374,11 @@
                         </div>
                     </article>
                 }
+                    </div>
+                </div>
+                <button class="home-novel-carousel__nav home-novel-carousel__nav--next" type="button" aria-label="Sang phai" data-home-carousel-next>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
             </div>
         </div>
     </section>
@@ -366,7 +396,17 @@
                     <p class="section-subtitle">Nhá»¯ng tiá»ƒu thuyáº¿t phĂ¹ há»£p vá»›i báº¡n</p>
                 </div>
             </div>
-            <div class="home-novel-grid" id="recommendedGrid"></div>
+            <div class="home-novel-carousel" data-home-carousel>
+                <button class="home-novel-carousel__nav home-novel-carousel__nav--prev" type="button" aria-label="Sang trai" data-home-carousel-prev>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <div class="home-novel-carousel__viewport">
+                    <div class="home-novel-grid home-novel-carousel__track" id="recommendedGrid"></div>
+                </div>
+                <button class="home-novel-carousel__nav home-novel-carousel__nav--next" type="button" aria-label="Sang phai" data-home-carousel-next>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+            </div>
         </div>
     </section>
 }
@@ -465,6 +505,73 @@ function escapeHtml(value) {
     }[char]));
 }
 
+function getHomeCarouselVisibleCount(carousel) {
+    const raw = getComputedStyle(carousel).getPropertyValue('--home-carousel-visible').trim();
+    const visible = Number.parseInt(raw, 10);
+    return Number.isFinite(visible) && visible > 0 ? visible : 6;
+}
+
+function updateHomeNovelCarousel(carousel) {
+    const track = carousel.querySelector('.home-novel-carousel__track');
+    const prev = carousel.querySelector('[data-home-carousel-prev]');
+    const next = carousel.querySelector('[data-home-carousel-next]');
+    if (!track || !prev || !next) return;
+
+    const items = Array.from(track.children);
+    const visible = Math.min(getHomeCarouselVisibleCount(carousel), items.length);
+    const maxIndex = Math.max(items.length - visible, 0);
+    const hasIndex = carousel.dataset.homeCarouselIndex !== undefined;
+    const initialIndex = Math.floor(maxIndex / 2);
+    const currentIndex = hasIndex ? Number.parseInt(carousel.dataset.homeCarouselIndex, 10) : initialIndex;
+    const index = Math.min(Math.max(Number.isFinite(currentIndex) ? currentIndex : initialIndex, 0), maxIndex);
+    const firstItem = items[0];
+    const gap = Number.parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap || '0') || 0;
+    const step = firstItem ? firstItem.getBoundingClientRect().width + gap : 0;
+
+    carousel.dataset.homeCarouselIndex = String(index);
+    track.style.transform = `translateX(${-index * step}px)`;
+    prev.classList.toggle('hidden', index <= 0 || maxIndex === 0);
+    next.classList.toggle('hidden', index >= maxIndex || maxIndex === 0);
+    carousel.classList.toggle('home-novel-carousel--static', maxIndex === 0);
+}
+
+function initHomeNovelCarousel(carousel) {
+    const track = carousel.querySelector('.home-novel-carousel__track');
+    const prev = carousel.querySelector('[data-home-carousel-prev]');
+    const next = carousel.querySelector('[data-home-carousel-next]');
+    if (!track || !prev || !next || !track.children.length) return;
+
+    if (carousel.dataset.homeCarouselBound !== 'true') {
+        prev.addEventListener('click', () => {
+            const current = Number.parseInt(carousel.dataset.homeCarouselIndex || '0', 10) || 0;
+            carousel.dataset.homeCarouselIndex = String(current - 1);
+            updateHomeNovelCarousel(carousel);
+        });
+
+        next.addEventListener('click', () => {
+            const current = Number.parseInt(carousel.dataset.homeCarouselIndex || '0', 10) || 0;
+            carousel.dataset.homeCarouselIndex = String(current + 1);
+            updateHomeNovelCarousel(carousel);
+        });
+
+        carousel.dataset.homeCarouselBound = 'true';
+    }
+
+    updateHomeNovelCarousel(carousel);
+}
+
+function initHomeNovelCarousels() {
+    document.querySelectorAll('[data-home-carousel]').forEach(initHomeNovelCarousel);
+}
+
+window.initHomeNovelCarousels = initHomeNovelCarousels;
+
+let homeCarouselResizeTimer;
+window.addEventListener('resize', () => {
+    window.clearTimeout(homeCarouselResizeTimer);
+    homeCarouselResizeTimer = window.setTimeout(initHomeNovelCarousels, 120);
+});
+
 function buildRecommendedCard(novel) {
     const id = novel.id ?? novel.Id;
     const title = novel.title ?? novel.Title ?? '';
@@ -548,6 +655,8 @@ buildRecommendedCard = function(novel) {
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
+    initHomeNovelCarousels();
+
     const section = document.getElementById('recommendedSection');
     const grid = document.getElementById('recommendedGrid');
     if (!section || !grid) return;
@@ -569,6 +678,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         grid.innerHTML = items.map(buildRecommendedCard).join('');
         section.classList.remove('hidden');
+        initHomeNovelCarousels();
     } catch (error) {
         console.warn('Failed to load recommendations.', error);
     }
