@@ -1,5 +1,48 @@
 // LitNovel — site.js
 // ─── Navigation ───
+const THEME_STORAGE_KEY = 'litnovel-theme';
+
+function getActiveTheme() {
+    return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+}
+
+function applyTheme(theme) {
+    const nextTheme = theme === 'dark' ? 'dark' : 'light';
+    if (nextTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+        document.documentElement.removeAttribute('data-theme');
+    }
+
+    try {
+        localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    } catch (e) {
+        // Ignore storage failures in private browsing modes.
+    }
+
+    updateThemeToggleButtons();
+}
+
+function updateThemeToggleButtons() {
+    const isDark = getActiveTheme() === 'dark';
+    document.querySelectorAll('[data-theme-toggle]').forEach(button => {
+        button.setAttribute('aria-pressed', String(isDark));
+        button.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+        button.setAttribute('title', isDark ? 'Light mode' : 'Dark mode');
+    });
+}
+
+function initThemeToggle() {
+    updateThemeToggleButtons();
+    document.querySelectorAll('[data-theme-toggle]').forEach(button => {
+        if (button.dataset.themeToggleBound === 'true') return;
+        button.addEventListener('click', () => {
+            applyTheme(getActiveTheme() === 'dark' ? 'light' : 'dark');
+        });
+        button.dataset.themeToggleBound = 'true';
+    });
+}
+
 function toggleMobileMenu() {
     const menu = document.getElementById('mobileMenu');
     if (menu) menu.classList.toggle('open');
@@ -536,6 +579,7 @@ function initSiteFeedback() {
 }
 
 function initSite() {
+    initThemeToggle();
     initPageTransitions();
     initSiteFeedback();
     initRealtimeFallbacks();

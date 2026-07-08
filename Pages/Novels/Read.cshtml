@@ -237,7 +237,7 @@
                             <span class="comment-user-badges">
                                 @foreach (var badge in comment.User.Badges)
                                 {
-                                    var badgeColor = string.IsNullOrWhiteSpace(badge.Color) ? "#111827" : badge.Color;
+                                    var badgeColor = string.IsNullOrWhiteSpace(badge.Color) ? "var(--color-ink)" : badge.Color;
                                     <span class="comment-user-badge" title="@badge.Name" style="--badge-color:@badgeColor;">
                                         <span>@badge.Name</span>
                                     </span>
@@ -307,7 +307,7 @@
                                                 <span class="comment-user-badges">
                                                     @foreach (var badge in reply.User.Badges)
                                                     {
-                                                        var badgeColor = string.IsNullOrWhiteSpace(badge.Color) ? "#111827" : badge.Color;
+                                                        var badgeColor = string.IsNullOrWhiteSpace(badge.Color) ? "var(--color-ink)" : badge.Color;
                                                         <span class="comment-user-badge" title="@badge.Name" style="--badge-color:@badgeColor;">
                                                             <span>@badge.Name</span>
                                                         </span>

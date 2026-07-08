@@ -20,6 +20,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@(ViewData["Title"] != null ? ViewData["Title"] + " — LitNovel" : "LitNovel")</title>
+    <script>
+        (() => {
+            try {
+                if (localStorage.getItem('litnovel-theme') === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                }
+            } catch {}
+        })();
+    </script>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -29,6 +38,24 @@
         <a href="/" style="font-size: 16px; font-weight: 600; color: var(--color-ink); text-decoration: none;">
             Lit<span style="color: var(--color-link);">Novel</span>
         </a>
+    </div>
+    <div style="position: absolute; top: 18px; right: 24px;">
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle dark mode" title="Dark mode">
+            <svg class="theme-toggle__icon theme-toggle__icon--sun" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2"></path>
+                <path d="M12 20v2"></path>
+                <path d="m4.93 4.93 1.41 1.41"></path>
+                <path d="m17.66 17.66 1.41 1.41"></path>
+                <path d="M2 12h2"></path>
+                <path d="M20 12h2"></path>
+                <path d="m6.34 17.66-1.41 1.41"></path>
+                <path d="m19.07 4.93-1.41 1.41"></path>
+            </svg>
+            <svg class="theme-toggle__icon theme-toggle__icon--moon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20.6 14.4A8.5 8.5 0 0 1 9.6 3.4 8.5 8.5 0 1 0 20.6 14.4Z"></path>
+            </svg>
+        </button>
     </div>
 
     @RenderBody()
