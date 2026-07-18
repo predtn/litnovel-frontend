@@ -23,7 +23,6 @@
     var signalRToken = AuthService.GetToken(Context) ?? "";
     var publicApiBaseUrl = (Configuration["PublicApiBaseUrl"] ?? Configuration["ApiBaseUrl"] ?? "http://localhost:5181").TrimEnd('/');
     var signalRHubUrl = $"{publicApiBaseUrl}/hubs/notifications";
-    var layoutAnnouncements = new List<AnnouncementDto>();
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -196,21 +195,6 @@
     </nav>
 
     @await Html.PartialAsync("_PageTransition")
-
-    <section class="site-announcement-ticker @(layoutAnnouncements.Count == 0 ? "hidden" : "")" id="siteAnnouncementTicker" aria-live="polite" aria-label="Thông báo hệ thống">
-        <div class="site-announcement-ticker__inner">
-            <span class="site-announcement-ticker__label">Tin mới</span>
-            <div class="site-announcement-ticker__viewport">
-                <div class="site-announcement-ticker__track" id="siteAnnouncementTickerTrack">
-                    @foreach (var announcement in layoutAnnouncements)
-                    {
-                        var textContent = System.Text.RegularExpressions.Regex.Replace(announcement.Content ?? "", "<.*?>", " ").Trim();
-                        <span class="site-announcement-ticker__item" data-announcement-id="@announcement.Id">@announcement.Title@(string.IsNullOrWhiteSpace(textContent) ? "" : $" - {textContent}")</span>
-                    }
-                </div>
-            </div>
-        </div>
-    </section>
 
     <!-- Mobile Menu -->
     <div class="mobile-menu" id="mobileMenu">

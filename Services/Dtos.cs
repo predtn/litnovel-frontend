@@ -616,16 +616,6 @@ public class SentNotificationDto
     public DateTime? CreatedAt { get; set; }
 }
 
-public class AnnouncementDto
-{
-    public int Id { get; set; }
-    public string Title { get; set; } = "";
-    public string Content { get; set; } = "";
-    public bool IsActive { get; set; }
-    public DateTime StartDate { get; set; } = DateTime.UtcNow;
-    public DateTime? EndDate { get; set; }
-}
-
 public class BackupDto
 {
     public string Id { get; set; } = "";

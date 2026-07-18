@@ -14,7 +14,6 @@ public class IndexModel : PageModel
     public List<NovelSummaryDto> NewNovels { get; set; } = [];
     public List<NovelSummaryDto> TopRatedNovels { get; set; } = [];
     public List<NovelSummaryDto> RecommendedNovels { get; set; } = [];
-    public List<AnnouncementDto> Announcements { get; set; } = [];
     public List<ReadingProgressDto> ContinueReading { get; set; } = [];
     public HashSet<int> FavoriteIds { get; set; } = [];
 
@@ -33,7 +32,6 @@ public class IndexModel : PageModel
         var trendingTask     = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=viewCount&order=desc&page=1&size=12");
         var newTask          = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=latestChapterUpdatedAt&order=desc&page=1&size=8");
         var topTask          = _api.GetAsync<PagedData<NovelSummaryDto>>("/api/novels?sort=ratingAverage&order=desc&page=1&size=12");
-        var announcementTask = LoadAnnouncementsAsync(token);
         var readingTask      = !string.IsNullOrWhiteSpace(token)
             ? LoadContinueReadingAsync(token)
             : Task.FromResult(new List<ReadingProgressDto>());
@@ -43,7 +41,7 @@ public class IndexModel : PageModel
         var favTask          = !string.IsNullOrWhiteSpace(token)
             ? _api.GetAsync<PagedData<NovelSummaryDto>>("/api/users/me/favorites?page=1&size=200", token)
             : Task.FromResult<ApiResponse<PagedData<NovelSummaryDto>>?>(null);
-        await Task.WhenAll(catTask, trendingTask, newTask, topTask, announcementTask, readingTask, unreadTask, favTask);
+        await Task.WhenAll(catTask, trendingTask, newTask, topTask, readingTask, unreadTask, favTask);
 
         Categories      = catTask.Result?.Data ?? [];
         TrendingNovels  = (trendingTask.Result?.Data?.Items ?? [])
@@ -55,7 +53,6 @@ public class IndexModel : PageModel
             .Where(novel => novel.RatingAverage > 0)
             .Take(12)
             .ToList();
-        Announcements   = announcementTask.Result;
         ContinueReading = readingTask.Result;
         ViewData["UnreadCount"] = unreadTask.Result;
 
@@ -119,24 +116,4 @@ public class IndexModel : PageModel
         return 0;
     }
 
-    private async Task<List<AnnouncementDto>> LoadAnnouncementsAsync(string? token)
-    {
-        var publicResult = await _api.GetAsync<List<AnnouncementDto>>("/api/announcements");
-        var announcements = publicResult?.Success == true ? publicResult.Data : null;
-
-        if ((announcements == null || announcements.Count == 0) && !string.IsNullOrWhiteSpace(token))
-        {
-            var adminResult = await _api.GetAsync<List<AnnouncementDto>>("/api/admin/announcements", token);
-            if (adminResult?.Success == true) announcements = adminResult.Data;
-        }
-
-        var now = DateTime.UtcNow;
-        return (announcements ?? [])
-            .Where(item => item.IsActive
-                && item.StartDate <= now
-                && (!item.EndDate.HasValue || item.EndDate.Value >= now))
-            .OrderByDescending(item => item.StartDate)
-            .Take(3)
-            .ToList();
-    }
 }
