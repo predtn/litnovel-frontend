@@ -1284,7 +1284,7 @@ ul, ol { list-style: none; }
 }
 .table tr:last-child td { border-bottom: none; }
 .table tr:hover td { background: var(--color-canvas-soft); }
-.table .col-actions { text-align: right; }
+.table .col-actions { text-align: center; }
 .table th.publish-col-actions,
 .table td.publish-col-actions {
   text-align: center;
