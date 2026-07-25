@@ -1,12 +1,19 @@
 @page
 @model litnovel_frontend.Pages.Staff.ReportDetailModel
-@{ Layout = "_LayoutDashboard"; ViewData["Title"] = "Chi tiết báo cáo"; }
+@{
+    Layout = "_LayoutDashboard";
+    var kindLabel = DisplayText.ReportKind(Model.Report?.Kind ?? Model.Kind);
+    ViewData["Title"] = $"Chi tiết báo cáo · {kindLabel}";
+}
 @section Sidebar { <partial name="_StaffSidebar" /> }
 <!-- SCR-44: Report Detail -->
 <div class="page-header">
     <div>
         <a href="/Staff/Reports" class="btn btn-secondary btn-sm">← Quay lại</a>
         <h1 class="page-header__title mt-sm">Chi tiết báo cáo #@Model.Report?.Id</h1>
+        <p class="page-header__subtitle">
+            @(Model.Report?.Kind == "Novel" ? "Báo cáo vi phạm về tiểu thuyết" : "Báo cáo vi phạm về người dùng")
+        </p>
     </div>
 </div>
 
@@ -23,22 +30,53 @@
             <div class="card">
                 <div class="card__header">
                     <div>
-                        <span class="badge @(r.Kind == "Novel" ? "badge-primary" : "badge-secondary") mr-xs">@r.Kind</span>
-                        <span class="badge badge-secondary">@r.ReportType</span>
+                        <span class="badge @(r.Kind == "Novel" ? "badge-primary" : "badge-secondary") mr-xs">
+                            @(r.Kind == "Novel" ? "Báo cáo tiểu thuyết" : "Báo cáo người dùng")
+                        </span>
+                        <span class="badge badge-secondary">@DisplayText.ReportType(r.ReportType)</span>
                     </div>
                     <span class="status-badge status-@r.Status.ToLower()">@DisplayText.Status(r.Status)</span>
                 </div>
                 <div class="card__body">
                     <div class="meta-grid">
                         <div class="meta-item">
-                            <span class="meta-label">Đối tượng bị báo cáo</span>
+                            <span class="meta-label">Loại báo cáo</span>
                             <span class="meta-value font-medium">
-                                @if (r.Kind == "Novel")
-                                { @(r.TargetNovel?.Title ?? "—") }
-                                else
-                                { @(r.TargetUser?.Username ?? "—") }
+                                @(r.Kind == "Novel" ? "Tiểu thuyết" : "Người dùng")
                             </span>
                         </div>
+                        @if (r.Kind == "Novel")
+                        {
+                            <div class="meta-item">
+                                <span class="meta-label">Tiểu thuyết bị báo cáo</span>
+                                <span class="meta-value font-medium">@(r.TargetNovel?.Title ?? "—")</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Tác giả</span>
+                                <span class="meta-value">@(r.TargetNovel?.Author?.Username ?? "—")</span>
+                            </div>
+                            @if (r.TargetChapter != null)
+                            {
+                                <div class="meta-item">
+                                    <span class="meta-label">Chương liên quan</span>
+                                    <span class="meta-value">Ch.@r.TargetChapter.ChapterNumber — @r.TargetChapter.Title</span>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="meta-item">
+                                <span class="meta-label">Người dùng bị báo cáo</span>
+                                <span class="meta-value font-medium">@(r.TargetUser?.Username ?? "—")</span>
+                            </div>
+                            @if (r.TargetComment != null)
+                            {
+                                <div class="meta-item" style="grid-column:1 / -1;">
+                                    <span class="meta-label">Bình luận bị báo cáo</span>
+                                    <span class="meta-value">@r.TargetComment.Content</span>
+                                </div>
+                            }
+                        }
                         <div class="meta-item">
                             <span class="meta-label">Người báo cáo</span>
                             <span class="meta-value">@r.Reporter?.Username</span>

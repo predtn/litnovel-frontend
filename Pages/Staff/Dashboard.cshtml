@@ -85,8 +85,13 @@
             {
                 <div class="flex gap-sm items-center mb-sm" style="padding:var(--space-xs) 0; border-bottom:1px solid var(--color-hairline);">
                     <div style="flex:1; min-width:0;">
-                        <div class="text-body-sm font-medium text-ink truncate">@report.TargetNovel?.Title ?? report.TargetUser?.Username ?? "—"</div>
-                        <div class="text-caption text-mute">@report.ReportType · @report.Reporter?.Username</div>
+                        <div class="text-body-sm font-medium text-ink truncate">
+                            @if (report.Kind == "Novel")
+                            { @(report.TargetNovel?.Title ?? "—") }
+                            else
+                            { @(report.TargetUser?.Username ?? "—") }
+                        </div>
+                        <div class="text-caption text-mute">@(report.Kind == "Novel" ? "Tiểu thuyết" : "Người dùng") · @DisplayText.ReportType(report.ReportType) · @report.Reporter?.Username</div>
                     </div>
                     <a href="/Staff/ReportDetail?id=@report.Id&kind=@report.Kind" class="btn btn-secondary btn-sm">Xử lý</a>
                 </div>
