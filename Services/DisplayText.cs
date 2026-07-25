@@ -40,12 +40,25 @@ public static class DisplayText
         _ => string.IsNullOrWhiteSpace(value) ? "-" : value
     };
 
-    public static string ReportType(string? value) => value?.Trim().ToLowerInvariant() switch
+    public static string ReportKind(string? value) => value?.Trim() switch
     {
-        "novel" => "Báo cáo truyện",
-        "user" => "Báo cáo người dùng",
-        "comment" => "Báo cáo bình luận",
-        "chapter" => "Báo cáo chương",
+        "Novel" => "Tiểu thuyết",
+        "User" => "Người dùng",
+        _ => string.IsNullOrWhiteSpace(value) ? "-" : value
+    };
+
+    public static string ReportType(string? value) => value?.Trim() switch
+    {
+        "Spam" => "Spam",
+        "Inappropriate" => "Không phù hợp",
+        "Copyright" => "Bản quyền",
+        "Harassment" => "Quấy rối",
+        "Other" => "Khác",
+        // Admin legacy / kind mistaken as type
+        "novel" or "Novel" => "Báo cáo truyện",
+        "user" or "User" => "Báo cáo người dùng",
+        "comment" or "Comment" => "Báo cáo bình luận",
+        "chapter" or "Chapter" => "Báo cáo chương",
         _ => string.IsNullOrWhiteSpace(value) ? "-" : value
     };
 

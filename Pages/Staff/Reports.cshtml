@@ -41,14 +41,14 @@
             @foreach (var r in Model.Reports)
             {
                 <tr>
-                    <td><span class="badge @(r.Kind == "Novel" ? "badge-primary" : "badge-secondary")">@r.Kind</span></td>
+                    <td><span class="badge @(r.Kind == "Novel" ? "badge-primary" : "badge-secondary")">@(r.Kind == "Novel" ? "Tiểu thuyết" : "Người dùng")</span></td>
                     <td class="text-body-sm font-medium">
                         @if (r.Kind == "Novel")
                         { @(r.TargetNovel?.Title ?? "—") }
                         else
                         { @(r.TargetUser?.Username ?? "—") }
                     </td>
-                    <td><span class="badge badge-secondary">@r.ReportType</span></td>
+                    <td><span class="badge badge-secondary">@DisplayText.ReportType(r.ReportType)</span></td>
                     <td class="text-body-sm">@r.Reporter?.Username</td>
                     <td><span class="status-badge status-@r.Status.ToLower()">@DisplayText.Status(r.Status)</span></td>
                     <td class="text-caption text-mute">@DisplayDateTime.Format(r.CreatedAt, "dd/MM HH:mm")</td>
