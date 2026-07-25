@@ -1,5 +1,48 @@
 // LitNovel — site.js
 // ─── Navigation ───
+const THEME_STORAGE_KEY = 'litnovel-theme';
+
+function getActiveTheme() {
+    return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+}
+
+function applyTheme(theme) {
+    const nextTheme = theme === 'dark' ? 'dark' : 'light';
+    if (nextTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+        document.documentElement.removeAttribute('data-theme');
+    }
+
+    try {
+        localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    } catch (e) {
+        // Ignore storage failures in private browsing modes.
+    }
+
+    updateThemeToggleButtons();
+}
+
+function updateThemeToggleButtons() {
+    const isDark = getActiveTheme() === 'dark';
+    document.querySelectorAll('[data-theme-toggle]').forEach(button => {
+        button.setAttribute('aria-pressed', String(isDark));
+        button.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+        button.setAttribute('title', isDark ? 'Light mode' : 'Dark mode');
+    });
+}
+
+function initThemeToggle() {
+    updateThemeToggleButtons();
+    document.querySelectorAll('[data-theme-toggle]').forEach(button => {
+        if (button.dataset.themeToggleBound === 'true') return;
+        button.addEventListener('click', () => {
+            applyTheme(getActiveTheme() === 'dark' ? 'light' : 'dark');
+        });
+        button.dataset.themeToggleBound = 'true';
+    });
+}
+
 function toggleMobileMenu() {
     const menu = document.getElementById('mobileMenu');
     if (menu) menu.classList.toggle('open');
@@ -198,88 +241,6 @@ function updateNotificationBadge(count) {
     }
 }
 
-const ANNOUNCEMENT_VISIBLE_MS = 30000;
-const ANNOUNCEMENT_POLL_MS = 5000;
-const ANNOUNCEMENT_REPEAT_GAP_MS = 15 * 60 * 1000;
-const ANNOUNCEMENT_MAX_SHOWS = 3;
-const ANNOUNCEMENT_STATE_KEY = 'litnovel_announcement_show_state';
-let activeTickerAnnouncementIds = '';
-const announcementShowCounts = new Map();
-const announcementShowTimes = new Map();
-
-loadAnnouncementShowState();
-
-async function loadSiteAnnouncementTicker() {
-    const root = document.getElementById('siteAnnouncementTicker');
-    const track = document.getElementById('siteAnnouncementTickerTrack');
-    if (!root || !track) return;
-
-    try {
-        const res = await fetch('/api/announcements', { headers: getHeaders() });
-        if (!res.ok) return;
-        const payload = await res.json();
-        const announcements = (payload?.data ?? payload ?? [])
-            .filter(item => item?.isActive)
-            .filter(item => {
-                const now = Date.now();
-                const end = item.endDate ? Date.parse(item.endDate) : Number.POSITIVE_INFINITY;
-                return end >= now;
-            })
-            .sort((a, b) => Date.parse(b.startDate || 0) - Date.parse(a.startDate || 0))
-            .slice(0, 3);
-
-        renderSiteAnnouncementTicker(root, track, announcements);
-    } catch (e) {
-        // Ignore transient polling failures.
-    }
-}
-
-function renderSiteAnnouncementTicker(root, track, announcements) {
-    const now = Date.now();
-    const eligibleAnnouncements = announcements.filter(item => {
-        const id = String(item.id);
-        return canShowAnnouncement(id, now);
-    });
-
-    if (!eligibleAnnouncements.length) {
-        track.replaceChildren();
-        root.classList.add('hidden');
-        activeTickerAnnouncementIds = '';
-        return;
-    }
-
-    const nextIds = eligibleAnnouncements.map(item => String(item.id)).join(',');
-    if (activeTickerAnnouncementIds === nextIds && !root.classList.contains('hidden')) return;
-
-    const fragment = document.createDocumentFragment();
-    eligibleAnnouncements.forEach(item => {
-        const id = String(item.id);
-        const message = document.createElement('span');
-        message.className = 'site-announcement-ticker__item';
-        message.dataset.announcementId = id;
-        message.textContent = [item.title, stripHtml(item.content || '')]
-            .filter(Boolean)
-            .join(' - ');
-        fragment.appendChild(message);
-        markAnnouncementShown(id, now);
-    });
-
-    track.replaceChildren(fragment);
-    activeTickerAnnouncementIds = nextIds;
-    root.classList.remove('hidden');
-
-    window.clearTimeout(root._tickerHideTimer);
-    root._tickerHideTimer = window.setTimeout(() => {
-        root.classList.add('hidden');
-    }, ANNOUNCEMENT_VISIBLE_MS);
-}
-
-function stripHtml(value) {
-    const element = document.createElement('div');
-    element.innerHTML = value;
-    return (element.textContent || element.innerText || '').trim();
-}
-
 function initRealtimeFallbacks() {
     loadUnreadNotificationSnapshot();
     setTimeout(() => {
@@ -287,83 +248,6 @@ function initRealtimeFallbacks() {
             startNotificationFallbackPolling();
         }
     }, 5000);
-
-    // Announcement ticker is temporarily disabled while the API flow is being fixed.
-}
-
-function initRenderedSiteAnnouncementTicker() {
-    const root = document.getElementById('siteAnnouncementTicker');
-    const track = document.getElementById('siteAnnouncementTickerTrack');
-    if (!root || !track || root.classList.contains('hidden')) return;
-
-    const ids = Array.from(track.querySelectorAll('[data-announcement-id]'))
-        .map(item => item.dataset.announcementId)
-        .filter(Boolean);
-    if (!ids.length) return;
-
-    const now = Date.now();
-    const eligibleIds = ids.filter(id => canShowAnnouncement(id, now));
-    if (!eligibleIds.length) {
-        track.replaceChildren();
-        root.classList.add('hidden');
-        activeTickerAnnouncementIds = '';
-        return;
-    }
-
-    Array.from(track.querySelectorAll('[data-announcement-id]')).forEach(item => {
-        if (!eligibleIds.includes(item.dataset.announcementId)) item.remove();
-    });
-
-    activeTickerAnnouncementIds = eligibleIds.join(',');
-    eligibleIds.forEach(id => markAnnouncementShown(id, now));
-
-    window.clearTimeout(root._tickerHideTimer);
-    root._tickerHideTimer = window.setTimeout(() => {
-        root.classList.add('hidden');
-    }, ANNOUNCEMENT_VISIBLE_MS);
-}
-
-function canShowAnnouncement(id, now = Date.now()) {
-    const shownCount = announcementShowCounts.get(id) || 0;
-    if (shownCount >= ANNOUNCEMENT_MAX_SHOWS) return false;
-
-    const lastShownAt = announcementShowTimes.get(id) || 0;
-    return lastShownAt === 0 || now - lastShownAt >= ANNOUNCEMENT_REPEAT_GAP_MS;
-}
-
-function markAnnouncementShown(id, shownAt = Date.now()) {
-    announcementShowCounts.set(id, (announcementShowCounts.get(id) || 0) + 1);
-    announcementShowTimes.set(id, shownAt);
-    saveAnnouncementShowState();
-}
-
-function loadAnnouncementShowState() {
-    try {
-        const stored = JSON.parse(localStorage.getItem(ANNOUNCEMENT_STATE_KEY) || '{}');
-        Object.entries(stored).forEach(([id, state]) => {
-            const count = Number(state?.count || 0);
-            const lastShownAt = Number(state?.lastShownAt || 0);
-            if (count > 0) announcementShowCounts.set(id, count);
-            if (lastShownAt > 0) announcementShowTimes.set(id, lastShownAt);
-        });
-    } catch (e) {
-        // Ignore malformed local state.
-    }
-}
-
-function saveAnnouncementShowState() {
-    try {
-        const state = {};
-        announcementShowCounts.forEach((count, id) => {
-            state[id] = {
-                count,
-                lastShownAt: announcementShowTimes.get(id) || 0
-            };
-        });
-        localStorage.setItem(ANNOUNCEMENT_STATE_KEY, JSON.stringify(state));
-    } catch (e) {
-        // Ignore storage quota/privacy failures.
-    }
 }
 
 window.loadUnreadNotificationSnapshot = loadUnreadNotificationSnapshot;
@@ -384,11 +268,36 @@ function getCookie(name) {
 // ─── Confirm dialog ───
 function confirmAction(message, onConfirm) {
     const modal = document.getElementById('confirmModal');
-    if (!modal) { if (confirm(message)) onConfirm(); return; }
-    document.getElementById('confirmMessage').textContent = message;
-    document.getElementById('confirmBtn').onclick = () => { closeModal('confirmModal'); onConfirm(); };
+    if (!modal) return;
+    const messageEl = document.getElementById('confirmMessage');
+    const confirmBtn = document.getElementById('confirmBtn');
+    if (!messageEl || !confirmBtn) return;
+    messageEl.textContent = message;
+    confirmBtn.onclick = () => { closeModal('confirmModal'); onConfirm(); };
     openModal('confirmModal');
 }
+
+function confirmSubmit(form, message) {
+    if (!form) return false;
+    if (form.dataset.confirmed === 'true') {
+        delete form.dataset.confirmed;
+        return true;
+    }
+
+    confirmAction(message, () => {
+        form.dataset.confirmed = 'true';
+        if (typeof form.requestSubmit === 'function') {
+            form.requestSubmit();
+        } else {
+            form.submit();
+        }
+    });
+
+    return false;
+}
+
+window.confirmAction = confirmAction;
+window.confirmSubmit = confirmSubmit;
 
 // ─── Search debounce ───
 function debounce(fn, delay) {
@@ -412,6 +321,90 @@ function switchTab(tabId, contentPrefix) {
     document.querySelector(`[data-tab-content="${tabId}"]`)?.classList.remove('hidden');
 }
 
+const PAGE_TRANSITION_MS = 500;
+let pageTransitionPending = false;
+
+function getPageTransitionDelay() {
+    return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : PAGE_TRANSITION_MS;
+}
+
+function startPageTransition(callback) {
+    if (pageTransitionPending) return;
+    const transition = document.getElementById('pageTransition');
+    if (!transition) {
+        callback();
+        return;
+    }
+
+    pageTransitionPending = true;
+    transition.classList.remove('is-active');
+    void transition.offsetWidth;
+    transition.classList.add('is-active');
+
+    setTimeout(callback, getPageTransitionDelay());
+}
+
+function resetPageTransition() {
+    pageTransitionPending = false;
+    document.getElementById('pageTransition')?.classList.remove('is-active');
+}
+
+function isModifiedNavigation(event) {
+    return event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+}
+
+function shouldSkipPageTransitionLink(link, event) {
+    if (!link || isModifiedNavigation(event)) return true;
+    if (link.hasAttribute('download')) return true;
+    if (link.dataset.noPageTransition === 'true' || link.closest('[data-no-page-transition="true"]')) return true;
+    if (link.target && link.target !== '_self') return true;
+
+    const href = link.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return true;
+
+    const nextUrl = new URL(href, window.location.href);
+    if (nextUrl.origin !== window.location.origin) return true;
+
+    const current = new URL(window.location.href);
+    const sameDocumentHash = nextUrl.pathname === current.pathname
+        && nextUrl.search === current.search
+        && nextUrl.hash
+        && nextUrl.hash !== current.hash;
+
+    return sameDocumentHash;
+}
+
+function initPageTransitions() {
+    document.addEventListener('click', event => {
+        const link = event.target.closest?.('a[href]');
+        if (shouldSkipPageTransitionLink(link, event)) return;
+
+        event.preventDefault();
+        startPageTransition(() => {
+            window.location.href = link.href;
+        });
+    });
+
+    document.addEventListener('submit', event => {
+        const form = event.target;
+        if (!(form instanceof HTMLFormElement)) return;
+        if (event.defaultPrevented || form.dataset.noPageTransition === 'true') return;
+        if ((form.method || 'get').toLowerCase() !== 'get') return;
+        if (form.target && form.target !== '_self') return;
+
+        event.preventDefault();
+        const nextUrl = new URL(form.action || window.location.href, window.location.href);
+        nextUrl.search = new URLSearchParams(new FormData(form)).toString();
+
+        startPageTransition(() => {
+            window.location.href = nextUrl.toString();
+        });
+    });
+
+    window.addEventListener('pageshow', resetPageTransition);
+    window.addEventListener('pagehide', resetPageTransition);
+}
+
 // Auto-init
 function initSiteFeedback() {
     // Auto-close success alerts
@@ -427,6 +420,8 @@ function initSiteFeedback() {
 }
 
 function initSite() {
+    initThemeToggle();
+    initPageTransitions();
     initSiteFeedback();
     initRealtimeFallbacks();
 }

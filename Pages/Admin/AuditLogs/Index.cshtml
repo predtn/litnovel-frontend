@@ -47,7 +47,7 @@
         {
             var isStaffAction = string.Equals(log.DisplayIp, "Staff action", StringComparison.OrdinalIgnoreCase);
             <tr>
-                <td class="text-caption text-mute">@(log.DisplayCreatedAt == default ? "-" : log.DisplayCreatedAt.ToString("dd/MM/yyyy HH:mm:ss"))</td>
+                <td class="text-caption text-mute">@DisplayDateTime.Format(log.DisplayCreatedAt, "dd/MM/yyyy HH:mm:ss")</td>
                 <td><span class="badge @(isStaffAction ? "badge-warning" : "badge-secondary")">@(isStaffAction ? "Staff" : "Admin")</span></td>
                 <td class="text-body-sm">@log.DisplayActor</td>
                 <td><span class="badge badge-secondary">@log.DisplayAction</span></td>

@@ -39,7 +39,6 @@
                     <h2 class="text-display-sm">@volume.Title</h2>
                     <div class="publish-meta-row">
                         <span>@volume.ChapterCount chương</span>
-                        <span>Tạo ngày @volume.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
                     </div>
                 </div>
                 <div class="publish-actions">
@@ -48,7 +47,7 @@
                         <input type="hidden" name="title" value="@volume.Title" data-volume-title />
                         <button class="btn btn-secondary btn-sm" type="submit" data-volume-edit>Sửa tên</button>
                     </form>
-                    <form method="post" asp-page-handler="Delete" asp-route-novelId="@Model.Novel.Id" asp-route-id="@volume.Id" onsubmit="return confirm('Xóa tập này và toàn bộ chương?');">
+                    <form method="post" asp-page-handler="Delete" asp-route-novelId="@Model.Novel.Id" asp-route-id="@volume.Id" onsubmit="return confirmSubmit(this, 'Xóa tập này và toàn bộ chương?');">
                         <button class="btn btn-danger btn-sm" type="submit">Xóa</button>
                     </form>
                 </div>

@@ -56,7 +56,7 @@ public class FavoritesModel : PageModel
             ? "Đã bỏ yêu thích."
             : (result?.Message ?? "Không thể bỏ yêu thích.");
 
-        return RedirectToPage(new { page });
+        return RedirectToPage("/Reading/Favorites", new { page = Math.Max(1, page) });
     }
 
     private int GetQueryInt(string key, int fallback)

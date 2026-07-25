@@ -24,7 +24,7 @@
                     <h1 class="page-header__title">@Model.Novel.Title</h1>
                     <div class="publish-manage-status">
                         <span class="status-badge status-@Model.Novel.Status.ToLowerInvariant()">@DisplayText.Status(Model.Novel.Status)</span>
-                        <span class="text-caption text-mute">Cập nhật @Model.Novel.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                        <span class="text-caption text-mute">Cập nhật @DisplayDateTime.Format(Model.Novel.UpdatedAt, "dd/MM/yyyy HH:mm")</span>
                     </div>
                 </div>
                 @if (Model.CanEditNovel)
@@ -33,7 +33,7 @@
                 }
                 else
                 {
-                    <button class="btn btn-secondary" type="button" title="@Model.EditUnavailableMessage" onclick="alert('@Model.EditUnavailableMessage')">Chỉnh sửa thông tin truyện</button>
+                    <button class="btn btn-secondary" type="button" title="@Model.EditUnavailableMessage" data-blocked-modal data-message="@Model.EditUnavailableMessage">Chỉnh sửa thông tin truyện</button>
                 }
             </div>
 
@@ -66,20 +66,147 @@
         </div>
     </section>
 
+    @if (Model.CanRestoreNovel)
+    {
+        <div class="alert alert-info mb-md">
+            Truyện đang nằm trong thùng rác và sẽ bị xóa vĩnh viễn@(Model.Novel.ScheduledHardDeleteAt.HasValue ? $" vào {Model.Novel.ScheduledHardDeleteAt.Value:dd/MM/yyyy HH:mm}" : "").
+        </div>
+    }
+
     <div class="publish-detail-grid">
-        <section class="card">
-            <div class="tabs">
+        <section class="card publish-manage-content">
+            <div class="tabs publish-manage-tabs">
                 <a href="#overview" class="tab active">Tổng quan</a>
-                <a asp-page="/Publish/Volumes" asp-route-novelId="@Model.Novel.Id" class="tab">Tập & chương</a>
+                <a href="#volumes" class="tab">Tập & chương</a>
             </div>
-            <div id="overview" class="publish-richtext">@Html.Raw(Model.Novel.Description)</div>
-            <div class="divider"></div>
-            <div class="flex gap-xs" style="flex-wrap:wrap;">
-                @foreach (var tag in Model.Novel.Tags)
+            <div id="overview" class="publish-manage-panel" data-manage-panel="overview">
+                <div class="publish-richtext">@Html.Raw(Model.Novel.Description)</div>
+                <div class="divider"></div>
+                <div class="flex gap-xs" style="flex-wrap:wrap;">
+                    @foreach (var tag in Model.Novel.Tags)
+                    {
+                        <span class="badge badge-secondary">@tag.Name</span>
+                    }
+                </div>
+            </div>
+
+            <section class="publish-manage-section" id="volumes" data-manage-panel="volumes">
+                <div class="publish-section-heading">
+                    <div>
+                        <h2 class="text-display-sm">Tập & chương</h2>
+                        <p class="text-body-sm text-mute">Quản lý cấu trúc truyện ngay tại màn hình này.</p>
+                    </div>                </div>
+
+                @if (Model.CanCreateVolume)
                 {
-                    <span class="badge badge-secondary">@tag.Name</span>
+                    <form method="post" asp-page-handler="CreateVolume" asp-route-id="@Model.Novel.Id" class="publish-inline-form publish-inline-form--compact">
+                        <div class="form-group">
+                            <label class="form-label" asp-for="VolumeInput.VolumeNumber">Số thứ tự</label>
+                            <input class="form-input publish-chapter-number" asp-for="VolumeInput.VolumeNumber" min="1" type="number" />
+                        </div>
+                        <div class="form-group publish-inline-grow">
+                            <label class="form-label" asp-for="VolumeInput.Title">Tiêu đề tập</label>
+                            <input class="form-input" asp-for="VolumeInput.Title" maxlength="200" placeholder="Tập mới" />
+                        </div>
+                        <button class="btn btn-primary" type="submit">Thêm tập</button>
+                    </form>
                 }
-            </div>
+
+                <div class="publish-manage-volume-list">
+                    @foreach (var volume in Model.Novel.Volumes.OrderBy(v => v.VolumeNumber))
+                    {
+                        var chapters = volume.Chapters.OrderBy(c => c.ChapterNumber).ToList();
+                        <details class="publish-manage-volume" open>
+                            <summary class="publish-manage-volume__summary">
+                                <div>
+                                    <div class="text-caption text-mute">Tập @volume.VolumeNumber</div>
+                                    <h3 class="publish-manage-volume__title">@volume.Title</h3>
+                                    <div class="publish-meta-row">
+                                        <span>@chapters.Count chương</span>
+                                    </div>
+                                </div>
+                                <span class="publish-manage-volume__chevron" aria-hidden="true">⌄</span>
+                            </summary>
+                            <div class="publish-manage-volume__body">
+                                <div class="publish-actions publish-manage-volume__actions">
+                                    <a asp-page="/Publish/ChapterCreate" asp-route-volumeId="@volume.Id" asp-route-novelId="@Model.Novel.Id" class="btn btn-primary btn-sm">Thêm chương</a>
+                                    <form method="post" asp-page-handler="EditVolume" asp-route-id="@Model.Novel.Id" asp-route-volumeId="@volume.Id" class="publish-volume-edit-form">
+                                        <input type="hidden" name="volumeNumber" value="@volume.VolumeNumber" />
+                                        <input type="hidden" name="title" value="@volume.Title" data-volume-title />
+                                        <button class="btn btn-secondary btn-sm" type="button" data-volume-edit>Sửa tên</button>
+                                    </form>
+                                    <form method="post" asp-page-handler="DeleteVolume" asp-route-id="@Model.Novel.Id" asp-route-volumeId="@volume.Id" onsubmit="return confirmSubmit(this, 'Xóa tập này?');">
+                                        <button class="btn btn-danger btn-sm" type="submit">Xóa tập</button>
+                                    </form>
+                                </div>
+
+                                @if (chapters.Any())
+                                {
+                                    <div class="publish-manage-chapter-list">
+                                        @foreach (var chapter in chapters)
+                                        {
+                                            var chapterStatus = chapter.Status ?? "Draft";
+                                            <div class="publish-manage-chapter publish-manage-chapter--link" data-href='@Url.Page("/Publish/ChapterPreview", new { id = chapter.Id, volumeId = volume.Id, novelId = Model.Novel.Id })' role="link" tabindex="0">
+                                                <div class="publish-manage-chapter__main">
+                                                    <span class="publish-manage-chapter__number">Ch.@chapter.ChapterNumber</span>
+                                                    <div>
+                                                        <div class="font-medium">@chapter.Title</div>
+                                                        <div class="text-caption text-mute">
+                                                            @(chapter.WordCount > 0 ? $"{chapter.WordCount:N0} từ" : "Chưa có số từ")
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <span class="status-badge status-@chapterStatus.ToLowerInvariant()">@DisplayText.Status(chapterStatus)</span>
+                                                <div class="publish-actions publish-manage-chapter__actions">
+
+                                                    @if (Model.CanSubmitChapter(chapterStatus))
+                                                    {
+                                                        <form method="post" asp-page-handler="SubmitChapter" asp-route-id="@Model.Novel.Id" asp-route-chapterId="@chapter.Id">
+                                                            <button class="btn btn-primary btn-sm" type="submit">Gửi duyệt</button>
+                                                        </form>
+                                                    }
+                                                    @if (Model.CanWithdrawChapter(chapterStatus))
+                                                    {
+                                                        <form method="post" asp-page-handler="WithdrawChapter" asp-route-id="@Model.Novel.Id" asp-route-chapterId="@chapter.Id" onsubmit="return confirmSubmit(this, 'Hủy gửi duyệt và đưa chương về bản nháp?');">
+                                                            <button class="btn btn-secondary btn-sm" type="submit">Hủy duyệt</button>
+                                                        </form>
+                                                    }
+                                                    @if (Model.CanRestoreChapter(chapterStatus))
+                                                    {
+                                                        <form method="post" asp-page-handler="RestoreChapter" asp-route-id="@Model.Novel.Id" asp-route-chapterId="@chapter.Id" onsubmit="return confirmSubmit(this, 'Khôi phục chương này?');">
+                                                            <button class="btn btn-primary btn-sm" type="submit">Khôi phục</button>
+                                                        </form>
+                                                    }
+                                                    @if (Model.CanDeleteChapter(chapterStatus))
+                                                    {
+                                                        <form method="post" asp-page-handler="DeleteChapter" asp-route-id="@Model.Novel.Id" asp-route-chapterId="@chapter.Id" onsubmit="return confirmSubmit(this, 'Xóa chương này?');">
+                                                            <button class="btn btn-danger btn-sm" type="submit">Xóa</button>
+                                                        </form>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="empty-state empty-state--compact">
+                                        <div class="empty-state__title">Chưa có chương</div>
+                                    </div>
+                                }
+                            </div>
+                        </details>
+                    }
+                </div>
+
+                @if (!Model.Novel.Volumes.Any())
+                {
+                    <div class="empty-state empty-state--compact">
+                        <div class="empty-state__title">Chưa có tập</div>
+                        <div class="empty-state__desc">Tạo tập đầu tiên để bắt đầu thêm chương.</div>
+                    </div>
+                }
+            </section>
         </section>
 
         <aside class="card publish-side-panel">
@@ -105,19 +232,124 @@
                     <button class="btn btn-primary w-full" type="submit">Gửi duyệt</button>
                 </form>
             }
+            else if (Model.CanRestoreNovel)
+            {
+                <form method="post" asp-page-handler="Restore" asp-route-id="@Model.Novel.Id" class="mb-sm" onsubmit="return confirmSubmit(this, 'Khôi phục truyện này?');">
+                    <button class="btn btn-primary w-full" type="submit">Khôi phục truyện</button>
+                </form>
+            }
             else if (Model.CanCancelReview)
             {
                 <div class="card-soft mb-sm text-body-sm">Truyện đang chờ xét duyệt. Bạn cần hủy gửi duyệt trước khi chỉnh sửa thông tin truyện.</div>
-                <form method="post" asp-page-handler="CancelReview" asp-route-id="@Model.Novel.Id" class="mb-sm" onsubmit="return confirm('Hủy gửi duyệt và đưa truyện về bản nháp?');">
+                <form method="post" asp-page-handler="CancelReview" asp-route-id="@Model.Novel.Id" class="mb-sm" onsubmit="return confirmSubmit(this, 'Hủy gửi duyệt và đưa truyện về bản nháp?');">
                     <button class="btn btn-secondary w-full" type="submit">Hủy gửi duyệt</button>
                 </form>
             }
             @if (Model.CanDeleteNovel)
             {
-                <form method="post" asp-page-handler="Delete" asp-route-id="@Model.Novel.Id" onsubmit="return confirm('Xóa truyện này và toàn bộ chương? Hành động này không thể hoàn tác.');">
+                <form method="post" asp-page-handler="Delete" asp-route-id="@Model.Novel.Id" onsubmit="return confirmSubmit(this, 'Xóa truyện này và toàn bộ chương? Hành động này không thể hoàn tác.');">
                     <button class="btn btn-danger w-full" type="submit">Xóa truyện</button>
                 </form>
             }
         </aside>
     </div>
 </div>
+
+<div class="modal-overlay" id="publishBlockedModal" role="dialog" aria-modal="true" aria-labelledby="publishBlockedModalTitle">
+    <div class="modal">
+        <div class="modal__header">
+            <div class="modal__title" id="publishBlockedModalTitle">Không thể chỉnh sửa</div>
+            <button type="button" class="modal__close" onclick="closeModal('publishBlockedModal')" aria-label="Đóng">×</button>
+        </div>
+        <p class="text-body-sm text-body" id="publishBlockedModalMessage"></p>
+        <div class="modal__footer">
+            <button type="button" class="btn btn-primary" onclick="closeModal('publishBlockedModal')">Đã hiểu</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="volumeEditModal" role="dialog" aria-modal="true" aria-labelledby="volumeEditModalTitle">
+    <div class="modal">
+        <div class="modal__header">
+            <div class="modal__title" id="volumeEditModalTitle">Sửa tên tập</div>
+            <button type="button" class="modal__close" onclick="closeModal('volumeEditModal')" aria-label="Đóng">×</button>
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="volumeEditTitle">Tên tập</label>
+            <input class="form-input" id="volumeEditTitle" maxlength="200" />
+        </div>
+        <div class="modal__footer">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('volumeEditModal')">Hủy</button>
+            <button type="button" class="btn btn-primary" data-volume-save>Lưu</button>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        const tabs = document.querySelectorAll('.publish-manage-tabs .tab');
+        const panels = document.querySelectorAll('[data-manage-panel]');
+
+        function activateManageTab(hash) {
+            const active = hash === '#volumes' ? 'volumes' : 'overview';
+            tabs.forEach(tab => tab.classList.toggle('active', tab.getAttribute('href') === `#${active}`));
+            panels.forEach(panel => panel.classList.toggle('hidden', panel.dataset.managePanel !== active));
+        }
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => window.setTimeout(() => activateManageTab(window.location.hash), 0));
+        });
+        activateManageTab(window.location.hash);
+
+        document.querySelectorAll('[data-blocked-modal]').forEach(button => {
+            button.addEventListener('click', () => {
+                const message = button.dataset.message || button.getAttribute('title') || 'Nội dung đang bị khóa nên không thể chỉnh sửa.';
+                const target = document.getElementById('publishBlockedModalMessage');
+                if (target) target.textContent = message;
+                openModal('publishBlockedModal');
+            });
+        });
+
+        let activeVolumeForm = null;
+        const volumeTitleInput = document.getElementById('volumeEditTitle');
+        document.querySelectorAll('[data-volume-edit]').forEach(button => {
+            button.addEventListener('click', () => {
+                activeVolumeForm = button.closest('form');
+                const input = activeVolumeForm?.querySelector('[data-volume-title]');
+                if (!activeVolumeForm || !input || !volumeTitleInput) return;
+                volumeTitleInput.value = input.value || '';
+                openModal('volumeEditModal');
+                volumeTitleInput.focus();
+                volumeTitleInput.select();
+            });
+        });
+
+        document.querySelector('[data-volume-save]')?.addEventListener('click', () => {
+            const nextTitle = (volumeTitleInput?.value || '').trim();
+            if (!nextTitle) {
+                showToast('Cần nhập tiêu đề tập.', 'error');
+                return;
+            }
+            const input = activeVolumeForm?.querySelector('[data-volume-title]');
+            if (!activeVolumeForm || !input) return;
+            input.value = nextTitle;
+            activeVolumeForm.submit();
+        });
+
+        document.querySelectorAll('.publish-manage-chapter--link').forEach(row => {
+            const go = () => {
+                const href = row.dataset.href;
+                if (href) window.location.href = href;
+            };
+            row.addEventListener('click', event => {
+                if (event.target.closest('a, button, input, select, textarea, form')) return;
+                go();
+            });
+            row.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    go();
+                }
+            });
+        });
+    </script>
+}

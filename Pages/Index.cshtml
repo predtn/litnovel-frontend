@@ -129,7 +129,12 @@
             </div>
             <a href="/Novels?sort=viewCount&order=desc" class="btn btn-ghost">Xem tất cả →</a>
         </div>
-        <div class="home-novel-grid">
+        <div class="home-novel-carousel" data-home-carousel>
+            <button class="home-novel-carousel__nav home-novel-carousel__nav--prev" type="button" aria-label="Sang trai" data-home-carousel-prev>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <div class="home-novel-carousel__viewport">
+                <div class="home-novel-grid home-novel-carousel__track">
             @foreach (var novel in Model?.TrendingNovels ?? new List<NovelSummaryDto>())
             {
                 var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
@@ -169,6 +174,11 @@
                     </div>
                 </article>
             }
+                </div>
+            </div>
+            <button class="home-novel-carousel__nav home-novel-carousel__nav--next" type="button" aria-label="Sang phai" data-home-carousel-next>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
         </div>
     </div>
 </section>
@@ -245,7 +255,12 @@
             </div>
             <a href="/Novels?sort=ratingAverage&order=desc" class="btn btn-ghost">Xem tất cả →</a>
         </div>
-        <div class="home-novel-grid">
+        <div class="home-novel-carousel" data-home-carousel>
+            <button class="home-novel-carousel__nav home-novel-carousel__nav--prev" type="button" aria-label="Sang trai" data-home-carousel-prev>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <div class="home-novel-carousel__viewport">
+                <div class="home-novel-grid home-novel-carousel__track">
             @foreach (var novel in Model?.TopRatedNovels ?? new List<NovelSummaryDto>())
             {
                 var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
@@ -289,9 +304,112 @@
                     </div>
                 </article>
             }
+                </div>
+            </div>
+            <button class="home-novel-carousel__nav home-novel-carousel__nav--next" type="button" aria-label="Sang phai" data-home-carousel-next>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
         </div>
     </div>
 </section>
+
+@if ((Model?.RecommendedNovels.Count ?? 0) > 0)
+{
+    <section class="section">
+        <div class="container">
+            <div class="home-section-header mb-xl">
+                <div>
+                    <h2 class="section-title">
+                        Đề xuất cho bạn
+                    </h2>
+                    <p class="section-subtitle">Những tiểu thuyết phù hợp với bạn</p>
+                </div>
+            </div>
+            <div class="home-novel-carousel" data-home-carousel>
+                <button class="home-novel-carousel__nav home-novel-carousel__nav--prev" type="button" aria-label="Sang trai" data-home-carousel-prev>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <div class="home-novel-carousel__viewport">
+                    <div class="home-novel-grid home-novel-carousel__track">
+                @foreach (var novel in Model?.RecommendedNovels ?? new List<NovelSummaryDto>())
+                {
+                    var novelUrl = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString();
+                    var latestChapterUrl = !string.IsNullOrWhiteSpace(novel.LatestChapterSlug) ? novel.LatestChapterSlug : null;
+                    var hasLatestChapter = !string.IsNullOrWhiteSpace(latestChapterUrl);
+                    var description = !string.IsNullOrWhiteSpace(novel.Description) ? novel.Description : "Truyện hiện chưa có mô tả.";
+                    <article class="novel-card home-spotlight-card">
+                        <div class="home-spotlight-card__media">
+                            @if (!string.IsNullOrEmpty(novel.CoverImage))
+                            {
+                                <img class="novel-card__cover" src="@novel.CoverImage" alt="@novel.Title" loading="lazy" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
+                                <div class="novel-card__cover-placeholder hidden"><span class="cover-placeholder-icon" aria-hidden="true"></span></div>
+                            }
+                            else
+                            {
+                                <div class="novel-card__cover-placeholder"><span class="cover-placeholder-icon" aria-hidden="true"></span></div>
+                            }
+                            <div class="home-spotlight-card__rating-badge" aria-label="Đánh giá @(novel.RatingAverage > 0 ? novel.RatingAverage.ToString("0.0") : "0.0") sao">
+                                <span>@(novel.RatingAverage > 0 ? novel.RatingAverage.ToString("0.0") : "0.0")</span>
+                                <svg class="star-filled" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/></svg>
+                            </div>
+                        </div>
+                        <div class="novel-card__body">
+                            <a href="/Novels/@novelUrl" class="novel-card__title home-spotlight-card__title">@novel.Title</a>
+                        </div>
+                        <div class="home-spotlight-card__overlay">
+                            <p class="home-spotlight-card__description">@description</p>
+                            <div class="home-spotlight-card__actions">
+                                @if (hasLatestChapter)
+                                {
+                                    <a href="/Novels/@novelUrl/@latestChapterUrl/read" class="home-spotlight-card__read">Đọc ngay</a>
+                                }
+                                else
+                                {
+                                    <span class="home-spotlight-card__read home-spotlight-card__read--disabled" aria-disabled="true">Đọc ngay</span>
+                                }
+                                <a href="/Novels/@novelUrl" class="home-spotlight-card__detail" aria-label="Xem chi tiết @novel.Title">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                                </a>
+                            </div>
+                        </div>
+                    </article>
+                }
+                    </div>
+                </div>
+                <button class="home-novel-carousel__nav home-novel-carousel__nav--next" type="button" aria-label="Sang phai" data-home-carousel-next>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+            </div>
+        </div>
+    </section>
+}
+
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <section class="section hidden" id="recommendedSection" data-recommendations-url="@Url.Page("/Index", "Recommendations")">
+        <div class="container">
+            <div class="home-section-header mb-xl">
+                <div>
+                    <h2 class="section-title">
+                        Äá» xuáº¥t cho báº¡n
+                    </h2>
+                    <p class="section-subtitle">Nhá»¯ng tiá»ƒu thuyáº¿t phĂ¹ há»£p vá»›i báº¡n</p>
+                </div>
+            </div>
+            <div class="home-novel-carousel" data-home-carousel>
+                <button class="home-novel-carousel__nav home-novel-carousel__nav--prev" type="button" aria-label="Sang trai" data-home-carousel-prev>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <div class="home-novel-carousel__viewport">
+                    <div class="home-novel-grid home-novel-carousel__track" id="recommendedGrid"></div>
+                </div>
+                <button class="home-novel-carousel__nav home-novel-carousel__nav--next" type="button" aria-label="Sang phai" data-home-carousel-next>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+            </div>
+        </div>
+    </section>
+}
 
 <!-- Call to action (unauthenticated) -->
 @if (!User.Identity!.IsAuthenticated)
@@ -376,6 +494,195 @@ function toggleFavorite(event, novelId) {
         showToast("Không thể kết nối tới máy chủ.", "error");
     });
 }
+
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[char]));
+}
+
+function getHomeCarouselVisibleCount(carousel) {
+    const raw = getComputedStyle(carousel).getPropertyValue('--home-carousel-visible').trim();
+    const visible = Number.parseInt(raw, 10);
+    return Number.isFinite(visible) && visible > 0 ? visible : 6;
+}
+
+function updateHomeNovelCarousel(carousel) {
+    const track = carousel.querySelector('.home-novel-carousel__track');
+    const prev = carousel.querySelector('[data-home-carousel-prev]');
+    const next = carousel.querySelector('[data-home-carousel-next]');
+    if (!track || !prev || !next) return;
+
+    const items = Array.from(track.children);
+    const visible = Math.min(getHomeCarouselVisibleCount(carousel), items.length);
+    const maxIndex = Math.max(items.length - visible, 0);
+    const hasIndex = carousel.dataset.homeCarouselIndex !== undefined;
+    const initialIndex = Math.floor(maxIndex / 2);
+    const currentIndex = hasIndex ? Number.parseInt(carousel.dataset.homeCarouselIndex, 10) : initialIndex;
+    const index = Math.min(Math.max(Number.isFinite(currentIndex) ? currentIndex : initialIndex, 0), maxIndex);
+    const firstItem = items[0];
+    const gap = Number.parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap || '0') || 0;
+    const step = firstItem ? firstItem.getBoundingClientRect().width + gap : 0;
+
+    carousel.dataset.homeCarouselIndex = String(index);
+    track.style.transform = `translateX(${-index * step}px)`;
+    prev.classList.toggle('hidden', index <= 0 || maxIndex === 0);
+    next.classList.toggle('hidden', index >= maxIndex || maxIndex === 0);
+    carousel.classList.toggle('home-novel-carousel--static', maxIndex === 0);
+}
+
+function initHomeNovelCarousel(carousel) {
+    const track = carousel.querySelector('.home-novel-carousel__track');
+    const prev = carousel.querySelector('[data-home-carousel-prev]');
+    const next = carousel.querySelector('[data-home-carousel-next]');
+    if (!track || !prev || !next || !track.children.length) return;
+
+    if (carousel.dataset.homeCarouselBound !== 'true') {
+        prev.addEventListener('click', () => {
+            const current = Number.parseInt(carousel.dataset.homeCarouselIndex || '0', 10) || 0;
+            carousel.dataset.homeCarouselIndex = String(current - 1);
+            updateHomeNovelCarousel(carousel);
+        });
+
+        next.addEventListener('click', () => {
+            const current = Number.parseInt(carousel.dataset.homeCarouselIndex || '0', 10) || 0;
+            carousel.dataset.homeCarouselIndex = String(current + 1);
+            updateHomeNovelCarousel(carousel);
+        });
+
+        carousel.dataset.homeCarouselBound = 'true';
+    }
+
+    updateHomeNovelCarousel(carousel);
+}
+
+function initHomeNovelCarousels() {
+    document.querySelectorAll('[data-home-carousel]').forEach(initHomeNovelCarousel);
+}
+
+window.initHomeNovelCarousels = initHomeNovelCarousels;
+
+let homeCarouselResizeTimer;
+window.addEventListener('resize', () => {
+    window.clearTimeout(homeCarouselResizeTimer);
+    homeCarouselResizeTimer = window.setTimeout(initHomeNovelCarousels, 120);
+});
+
+function buildRecommendedCard(novel) {
+    const id = novel.id ?? novel.Id;
+    const title = novel.title ?? novel.Title ?? '';
+    const slug = novel.slug ?? novel.Slug;
+    const latestChapterSlug = novel.latestChapterSlug ?? novel.LatestChapterSlug;
+    const coverImage = novel.coverImage ?? novel.CoverImage;
+    const ratingAverage = novel.ratingAverage ?? novel.RatingAverage;
+    const novelUrl = slug || id;
+    const latestChapterUrl = latestChapterSlug || null;
+    const hasLatestChapter = Boolean(latestChapterUrl);
+    const description = novel.description ?? novel.Description ?? 'Truyện hiện chưa có mô tả.';
+    const rating = ratingAverage > 0 ? Number(ratingAverage).toFixed(1) : '0.0';
+    const cover = coverImage
+        ? `<img class="novel-card__cover" src="${escapeHtml(coverImage)}" alt="${escapeHtml(title)}" loading="lazy" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
+           <div class="novel-card__cover-placeholder hidden"><span class="cover-placeholder-icon" aria-hidden="true"></span></div>`
+        : `<div class="novel-card__cover-placeholder"><span class="cover-placeholder-icon" aria-hidden="true"></span></div>`;
+    const readAction = hasLatestChapter
+        ? `<a href="/Novels/${encodeURIComponent(novelUrl)}/${encodeURIComponent(latestChapterUrl)}/read" class="home-spotlight-card__read">Đọc ngay</a>`
+        : `<span class="home-spotlight-card__read home-spotlight-card__read--disabled" aria-disabled="true">Đọc ngay</span>`;
+
+    return `
+        <article class="novel-card home-spotlight-card">
+            <div class="home-spotlight-card__media">
+                ${cover}
+                <div class="home-spotlight-card__rating-badge" aria-label="Đánh giá ${rating} sao">
+                    <span>${rating}</span>
+                    <svg class="star-filled" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/></svg>
+                </div>
+            </div>
+            <div class="novel-card__body">
+                <a href="/Novels/${encodeURIComponent(novelUrl)}" class="novel-card__title home-spotlight-card__title">${escapeHtml(title)}</a>
+            </div>
+            <div class="home-spotlight-card__overlay">
+                <p class="home-spotlight-card__description">${escapeHtml(description)}</p>
+                <div class="home-spotlight-card__actions">
+                    ${readAction}
+                    <a href="/Novels/${encodeURIComponent(novelUrl)}" class="home-spotlight-card__detail" aria-label="Xem chi tiết ${escapeHtml(title)}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                    </a>
+                </div>
+            </div>
+        </article>`;
+}
+
+buildRecommendedCard = function(novel) {
+    const id = novel.id ?? novel.Id;
+    const title = novel.title ?? novel.Title ?? '';
+    const slug = novel.slug ?? novel.Slug;
+    const latestChapterSlug = novel.latestChapterSlug ?? novel.LatestChapterSlug;
+    const coverImage = novel.coverImage ?? novel.CoverImage;
+    const novelUrl = slug || id;
+    const latestChapterUrl = latestChapterSlug || null;
+    const hasLatestChapter = Boolean(latestChapterUrl);
+    const description = novel.description ?? novel.Description ?? 'Truy\u1ec7n hi\u1ec7n ch\u01b0a c\u00f3 m\u00f4 t\u1ea3.';
+    const cover = coverImage
+        ? `<img class="novel-card__cover" src="${escapeHtml(coverImage)}" alt="${escapeHtml(title)}" loading="lazy" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
+           <div class="novel-card__cover-placeholder hidden"><span class="cover-placeholder-icon" aria-hidden="true"></span></div>`
+        : `<div class="novel-card__cover-placeholder"><span class="cover-placeholder-icon" aria-hidden="true"></span></div>`;
+    const readAction = hasLatestChapter
+        ? `<a href="/Novels/${encodeURIComponent(novelUrl)}/${encodeURIComponent(latestChapterUrl)}/read" class="home-spotlight-card__read">\u0110\u1ecdc ngay</a>`
+        : `<span class="home-spotlight-card__read home-spotlight-card__read--disabled" aria-disabled="true">\u0110\u1ecdc ngay</span>`;
+
+    return `
+        <article class="novel-card home-spotlight-card">
+            <div class="home-spotlight-card__media">
+                ${cover}
+            </div>
+            <div class="novel-card__body">
+                <a href="/Novels/${encodeURIComponent(novelUrl)}" class="novel-card__title home-spotlight-card__title">${escapeHtml(title)}</a>
+            </div>
+            <div class="home-spotlight-card__overlay">
+                <p class="home-spotlight-card__description">${escapeHtml(description)}</p>
+                <div class="home-spotlight-card__actions">
+                    ${readAction}
+                    <a href="/Novels/${encodeURIComponent(novelUrl)}" class="home-spotlight-card__detail" aria-label="Xem chi ti\u1ebft ${escapeHtml(title)}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                    </a>
+                </div>
+            </div>
+        </article>`;
+};
+
+document.addEventListener('DOMContentLoaded', async () => {
+    initHomeNovelCarousels();
+
+    const section = document.getElementById('recommendedSection');
+    const grid = document.getElementById('recommendedGrid');
+    if (!section || !grid) return;
+
+    const title = section.querySelector('.section-title');
+    const subtitle = section.querySelector('.section-subtitle');
+    if (title) title.textContent = '\u0110\u1ec1 xu\u1ea5t cho b\u1ea1n';
+    if (subtitle) subtitle.textContent = 'Nh\u1eefng ti\u1ec3u thuy\u1ebft ph\u00f9 h\u1ee3p v\u1edbi b\u1ea1n';
+
+    try {
+        const response = await fetch(section.dataset.recommendationsUrl, {
+            headers: { 'X-Requested-With': 'fetch' }
+        });
+        if (!response.ok) return;
+
+        const payload = await response.json();
+        const items = Array.isArray(payload.items) ? payload.items : [];
+        if (!items.length) return;
+
+        grid.innerHTML = items.map(buildRecommendedCard).join('');
+        section.classList.remove('hidden');
+        initHomeNovelCarousels();
+    } catch (error) {
+        console.warn('Failed to load recommendations.', error);
+    }
+});
 </script>
 }
 

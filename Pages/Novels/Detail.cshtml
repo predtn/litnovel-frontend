@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = Model.Novel?.Title ?? "Chi tiết truyện";
     var novel = Model.Novel;
+    var interactionsLocked = IsPendingDeletion(novel?.Status);
 }
 
 @if (novel == null)
@@ -96,6 +97,13 @@
 
             <h1 style="font-size:var(--text-display-md); font-weight:600; letter-spacing:var(--ls-display-md); color:var(--color-ink); margin-bottom:var(--space-xs);">@novel.Title</h1>
 
+            @if (interactionsLocked)
+            {
+                <div class="alert alert-info mb-md">
+                    Tác giả đã lên lịch xóa truyện này@(novel.ScheduledHardDeleteAt.HasValue ? $", nội dung sẽ được dọn vào {FormatDateTime(novel.ScheduledHardDeleteAt.Value)}" : "").
+                </div>
+            }
+
             <div class="novel-detail__meta">
                 <a href="/Profile/@novel.Author?.Id" class="novel-detail__author">
                     @if (!string.IsNullOrWhiteSpace(novel.Author?.Avatar))
@@ -120,6 +128,10 @@
                 <div class="novel-detail__stat">
                     <div id="novelLikeCount" class="novel-detail__stat-value" data-count="@novel.LikeCount">@FormatNum(novel.LikeCount)</div>
                     <div class="text-caption text-mute">Lượt thích</div>
+                </div>
+                <div class="novel-detail__stat">
+                    <div id="novelCreatedAt" class="novel-detail__stat-value">@novel.CreatedAt.ToString("yyyy")</div>
+                    <div class="text-caption text-mute">Năm phát hành</div>
                 </div>
                 <div class="novel-detail__stat">
                     <div class="novel-detail__stat-value novel-detail__stat-value--rating">@(novel.RatingAverage > 0 ? novel.RatingAverage.ToString("0.0") : "0.0") ★</div>
@@ -164,7 +176,7 @@
                             <span class="truncate">@ch.Title</span>
                             @if (string.Equals(ch.Status, "Published", StringComparison.OrdinalIgnoreCase))
                             {
-                                <span class="novel-detail__chapter-date">@ch.CreatedAt.ToString("dd/MM")</span>
+                                <span class="novel-detail__chapter-date">@DisplayDateTime.Format(ch.CreatedAt, "dd/MM")</span>
                             }
                             else
                             {
@@ -196,7 +208,12 @@
         @if (User.Identity?.IsAuthenticated == true && Model.CurrentUserId != novel.Author?.Id)
         {
             <section class="novel-detail__review-form">
-                @if (novel.UserReviewId.HasValue)
+                @if (interactionsLocked)
+                {
+                    <h3 class="novel-detail__review-title">&#272;&#225;nh gi&#225; &#273;ang t&#7841;m kh&#243;a</h3>
+                    <p class="text-body-sm text-mute">Truy&#7879;n &#273;ang &#7903; tr&#7841;ng th&#225;i ch&#7901; x&#243;a n&#234;n kh&#244;ng th&#7875; g&#7917;i ho&#7863;c ch&#7881;nh s&#7917;a &#273;&#225;nh gi&#225;.</p>
+                }
+                else if (novel.UserReviewId.HasValue)
                 {
                     <h3 class="novel-detail__review-title">Chỉnh sửa đánh giá của bạn</h3>
                     <form method="post" asp-page-handler="UpdateReview" class="novel-detail__review-form-body">
@@ -252,9 +269,9 @@
                         }
                         <div>
                             <div class="text-body-sm font-medium">@review.User?.Username</div>
-                            <div class="text-caption text-mute">@review.CreatedAt.ToString("dd/MM/yyyy")</div>
+                            <div class="text-caption text-mute">@DisplayDateTime.Format(review.CreatedAt, "dd/MM/yyyy")</div>
                         </div>
-                        <div class="flex gap-xxs ml-auto">
+                        <div class="review-card__stars">
                             @for (var s = 1; s <= 5; s++)
                             {
                                 <span style="color:@(s <= review.Rating ? "#d97706" : "var(--color-hairline)");">★</span>
@@ -269,6 +286,22 @@
             }
         </div>
     </div>
+
+        @if (User.Identity?.IsAuthenticated == true)
+    {
+        <section class="section hidden"
+                 id="detailRecommendedSection"
+                 data-current-novel-id="@novel.Id"
+                 data-recommendations-url="@Url.Page("/Novels/Detail", "Recommendations", new { slug = !string.IsNullOrWhiteSpace(novel.Slug) ? novel.Slug : novel.Id.ToString() })">
+            <div class="home-section-header mb-xl">
+                <div>
+                    <h2 class="section-title">&#272;&#7873; xu&#7845;t cho b&#7841;n</h2>
+                    <p class="section-subtitle">Nh&#7919;ng ti&#7875;u thuy&#7871;t ph&#249; h&#7907;p v&#7899;i gu &#273;&#7885;c c&#7911;a b&#7841;n</p>
+                </div>
+            </div>
+            <div class="home-novel-grid" id="detailRecommendedGrid"></div>
+        </section>
+    }
 </div>
 
 <div class="modal-overlay" id="reportModal">
@@ -319,19 +352,12 @@
 @functions {
     string FormatNum(int n) => n >= 1000000 ? $"{n / 1000000.0:0.#}M" : n >= 1000 ? $"{n / 1000.0:0.#}K" : n.ToString();
 
-    static string StatusLabel(string? status) => status?.Trim().ToLowerInvariant() switch
-    {
-        "draft" => "Bản nháp",
-        "pending" => "Chờ duyệt",
-        "ongoing" => "Đang ra",
-        "published" => "Đã xuất bản",
-        "ended" => "Hoàn thành",
-        "dropped" => "Đã bỏ",
-        "rejected" => "Bị từ chối",
-        "hiatus" => "Tạm dừng",
-        "locked" => "Đã khóa",
-        _ => string.IsNullOrWhiteSpace(status) ? "Không rõ" : status
-    };
+    static string StatusLabel(string? status) => DisplayText.Status(status);
+
+    static bool IsPendingDeletion(string? status)
+        => string.Equals(status, "PendingDeletion", StringComparison.OrdinalIgnoreCase);
+
+    static string FormatDateTime(DateTime value) => DisplayDateTime.Format(value, "dd/MM/yyyy HH:mm");
 }
 
 @section Scripts {
@@ -357,7 +383,10 @@ document.querySelectorAll('.js-star-rating').forEach(container => {
     stars.forEach(s => s.textContent = '\u2605');
 
     const paint = value => {
-        stars.forEach((s, j) => s.style.color = j < value ? '#d97706' : '#ebebeb');
+        const styles = getComputedStyle(document.documentElement);
+        const activeColor = styles.getPropertyValue('--color-warning').trim() || '#d97706';
+        const inactiveColor = styles.getPropertyValue('--color-hairline').trim() || '#ebebeb';
+        stars.forEach((s, j) => s.style.color = j < value ? activeColor : inactiveColor);
     };
 
     if (input && !input.value) input.value = container.dataset.value || '0';
@@ -371,6 +400,79 @@ document.querySelectorAll('.js-star-rating').forEach(container => {
             paint(i + 1);
         });
     });
+});
+
+function escapeDetailRecommendHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[char]));
+}
+
+function buildDetailRecommendedCard(novel) {
+    const id = novel.id ?? novel.Id;
+    const title = novel.title ?? novel.Title ?? '';
+    const slug = novel.slug ?? novel.Slug;
+    const latestChapterSlug = novel.latestChapterSlug ?? novel.LatestChapterSlug;
+    const coverImage = novel.coverImage ?? novel.CoverImage;
+    const novelUrl = slug || id;
+    const latestChapterUrl = latestChapterSlug || null;
+    const hasLatestChapter = Boolean(latestChapterUrl);
+    const description = novel.description ?? novel.Description ?? 'Truy\u1ec7n hi\u1ec7n ch\u01b0a c\u00f3 m\u00f4 t\u1ea3.';
+    const cover = coverImage
+        ? `<img class="novel-card__cover" src="${escapeDetailRecommendHtml(coverImage)}" alt="${escapeDetailRecommendHtml(title)}" loading="lazy" onerror="this.classList.add('hidden'); if (this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');" />
+           <div class="novel-card__cover-placeholder hidden"><span class="cover-placeholder-icon" aria-hidden="true"></span></div>`
+        : `<div class="novel-card__cover-placeholder"><span class="cover-placeholder-icon" aria-hidden="true"></span></div>`;
+    const readAction = hasLatestChapter
+        ? `<a href="/Novels/${encodeURIComponent(novelUrl)}/${encodeURIComponent(latestChapterUrl)}/read" class="home-spotlight-card__read">\u0110\u1ecdc ngay</a>`
+        : `<span class="home-spotlight-card__read home-spotlight-card__read--disabled" aria-disabled="true">\u0110\u1ecdc ngay</span>`;
+
+    return `
+        <article class="novel-card home-spotlight-card">
+            <div class="home-spotlight-card__media">
+                ${cover}
+            </div>
+            <div class="novel-card__body">
+                <a href="/Novels/${encodeURIComponent(novelUrl)}" class="novel-card__title home-spotlight-card__title">${escapeDetailRecommendHtml(title)}</a>
+            </div>
+            <div class="home-spotlight-card__overlay">
+                <p class="home-spotlight-card__description">${escapeDetailRecommendHtml(description)}</p>
+                <div class="home-spotlight-card__actions">
+                    ${readAction}
+                    <a href="/Novels/${encodeURIComponent(novelUrl)}" class="home-spotlight-card__detail" aria-label="Xem chi ti\u1ebft ${escapeDetailRecommendHtml(title)}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                    </a>
+                </div>
+            </div>
+        </article>`;
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const section = document.getElementById('detailRecommendedSection');
+    const grid = document.getElementById('detailRecommendedGrid');
+    if (!section || !grid) return;
+
+    try {
+        const response = await fetch(section.dataset.recommendationsUrl, {
+            headers: { 'X-Requested-With': 'fetch' }
+        });
+        if (!response.ok) return;
+
+        const payload = await response.json();
+        const currentNovelId = Number.parseInt(section.dataset.currentNovelId || '0', 10);
+        const items = (Array.isArray(payload.items) ? payload.items : [])
+            .filter(item => Number(item.id ?? item.Id) !== currentNovelId)
+            .slice(0, 6);
+        if (!items.length) return;
+
+        grid.innerHTML = items.map(buildDetailRecommendedCard).join('');
+        section.classList.remove('hidden');
+    } catch (error) {
+        console.warn('Failed to load detail recommendations.', error);
+    }
 });
 
 let novelViewRecorded = false;

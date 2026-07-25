@@ -21,6 +21,7 @@ public static class DisplayText
         "InProgress" => "Đang chạy",
         "Scheduled" => "Đã lên lịch",
         "Locked" => "Bị khóa",
+        "PendingDeletion" => "Chờ xóa",
         _ => string.IsNullOrWhiteSpace(value) ? "-" : value
     };
 

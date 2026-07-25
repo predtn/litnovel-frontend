@@ -60,8 +60,8 @@
 
     <!-- Stats -->
     <div class="grid-4 mt-xl" style="grid-template-columns:repeat(4,1fr);">
-        <div class="stat-card"><div class="stat-card__label">Truyện đã viết</div><div class="stat-card__value">@u?.Stats.NovelsCreated</div></div>
-        <div class="stat-card"><div class="stat-card__label">Chương đã đăng</div><div class="stat-card__value">@u?.Stats.ChaptersPublished</div></div>
+        <div class="stat-card"><div class="stat-card__label">Tổng truyện</div><div class="stat-card__value">@u?.Stats.NovelsCreated</div></div>
+        <div class="stat-card"><div class="stat-card__label">Tổng chương</div><div class="stat-card__value">@u?.Stats.ChaptersPublished</div></div>
         <div class="stat-card"><div class="stat-card__label">Yêu thích</div><div class="stat-card__value">@u?.Stats.FavoritesCount</div></div>
         <div class="stat-card"><div class="stat-card__label">Bình luận</div><div class="stat-card__value">@u?.Stats.CommentsCount</div></div>
     </div>
@@ -96,7 +96,7 @@
                             <div class="profile-badge-card__name">@b.Name</div>
                             @if (b.EarnedAt != default)
                             {
-                                <div class="profile-badge-card__meta">Nhận @b.EarnedAt.ToString("dd/MM/yyyy")</div>
+                                <div class="profile-badge-card__meta">Nhận @DisplayDateTime.Format(b.EarnedAt, "dd/MM/yyyy")</div>
                             }
                         </div>
                     </div>

@@ -1,28 +1,7 @@
 @page
 @model litnovel_frontend.Pages.Staff.ReportDetailModel
 @{ Layout = "_LayoutDashboard"; ViewData["Title"] = "Chi tiết báo cáo"; }
-@section Sidebar {
-    <a href="/Staff/Dashboard" class="sidebar__link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
-        Tổng quan
-    </a>
-    <a href="/Staff/PendingNovels" class="sidebar__link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-        Tiểu thuyết chờ duyệt
-    </a>
-    <a href="/Staff/PendingChapters" class="sidebar__link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        Chương chờ duyệt
-    </a>
-    <a href="/Staff/Reports" class="sidebar__link active">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        Báo cáo vi phạm
-    </a>
-    <a href="/Staff/ModerationHistory" class="sidebar__link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-        Lịch sử kiểm duyệt
-    </a>
-}
+@section Sidebar { <partial name="_StaffSidebar" /> }
 <!-- SCR-44: Report Detail -->
 <div class="page-header">
     <div>
@@ -47,7 +26,7 @@
                         <span class="badge @(r.Kind == "Novel" ? "badge-primary" : "badge-secondary") mr-xs">@r.Kind</span>
                         <span class="badge badge-secondary">@r.ReportType</span>
                     </div>
-                    <span class="status-badge status-@r.Status.ToLower()">@r.Status</span>
+                    <span class="status-badge status-@r.Status.ToLower()">@DisplayText.Status(r.Status)</span>
                 </div>
                 <div class="card__body">
                     <div class="meta-grid">
@@ -66,7 +45,7 @@
                         </div>
                         <div class="meta-item">
                             <span class="meta-label">Ngày gửi</span>
-                            <span class="meta-value">@r.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                            <span class="meta-value">@DisplayDateTime.Format(r.CreatedAt, "dd/MM/yyyy HH:mm")</span>
                         </div>
                         @if (r.ProcessedBy != null)
                         {
@@ -106,50 +85,40 @@
         @if (r.Status == "Pending")
         {
             <div class="review-sidebar">
-                <!-- Warn User (only for Novel reports with TargetNovel author) -->
-                @if (r.Kind == "Novel" && r.TargetNovel != null)
-                {
-                    <div class="card mb-md">
-                        <div class="card__header"><h3 class="card__title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Cảnh báo tác giả</h3></div>
-                        <div class="card__body">
-                            <a href="/Staff/UserWarning?userId=@Model.NovelAuthorId&username=@Uri.EscapeDataString(Model.NovelAuthorUsername ?? "")" class="btn btn-warning w-full"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Gửi cảnh báo</a>
-                        </div>
-                    </div>
-                }
 
                 <div class="card action-card">
                     <div class="card__header"><h3 class="card__title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Xử lý báo cáo</h3></div>
                     <div class="card__body">
-                        <!-- Resolve -->
-                        <button class="btn btn-success w-full mb-sm"
-                                onclick="document.getElementById('resolveModal').showModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Xác nhận xử lý</button>
-                        <!-- Reject -->
-                        <button class="btn btn-secondary w-full"
-                                onclick="document.getElementById('rejectModal').showModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Bác bỏ báo cáo</button>
+                        <button class="btn btn-primary w-full mb-sm"
+                                onclick="document.getElementById('resolveModal').showModal()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Xử lý toàn diện
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <dialog id="resolveModal" class="modal-dialog">
+            <dialog id="resolveModal" class="modal-dialog" style="width: 500px; max-width: 90vw;">
                 <form method="post" class="modal-content">
-                    <div class="modal-header"><h3>Xác nhận xử lý báo cáo</h3></div>
+                    <div class="modal-header"><h3>Xử lý báo cáo (Unified Resolution)</h3></div>
                     <div class="modal-body">
                         <input type="hidden" name="id" value="@r.Id" />
                         <input type="hidden" name="kind" value="@r.Kind" />
-                        <input type="hidden" name="action" value="Resolve" />
-                        <div class="form-group">
-                            <label class="form-label">Hành động đã thực hiện</label>
-                            <input type="text" name="actionTaken" class="form-control" placeholder="VD: Đã xóa nội dung vi phạm" />
+                        <input type="hidden" name="targetUserId" value="@(r.Kind == "User" ? r.TargetUser?.Id : r.TargetNovel?.Author?.Id)" />
+                        
+                        <div class="form-group mb-md">
+                            <label class="form-label">1. Kết quả xử lý báo cáo (Bắt buộc)</label>
+                            <select name="action" class="form-control" required>
+                                <option value="Resolve">Chấp nhận báo cáo (Resolve)</option>
+                                <option value="Reject">Bác bỏ báo cáo (Reject)</option>
+                            </select>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Ghi chú giải quyết</label>
-                            <textarea name="resolutionNotes" class="form-control" rows="3" placeholder="Nhập ghi chú..."></textarea>
-                        </div>
-                        @if ((r.Kind == "User" && r.TargetComment != null) || (r.Kind == "Novel" && r.TargetChapter != null))
-                        {
-                            <div class="form-group mt-sm">
+
+                        <div class="form-group mb-md">
+                            <label class="form-label">2. Xử lý nội dung vi phạm</label>
+                            @if ((r.Kind == "User" && r.TargetComment != null) || (r.Kind == "Novel" && r.TargetChapter != null))
+                            {
                                 <label class="d-flex align-items-center gap-xs" style="cursor:pointer">
-                                    <input type="checkbox" name="takeDownContent" value="true" id="chkTakeDown" />
+                                    <input type="checkbox" name="takeDownContent" value="true" />
                                     <span>
                                         @if (r.Kind == "User")
                                         { <strong>Xóa bình luận vi phạm (#@r.TargetComment!.Id)</strong> }
@@ -157,35 +126,70 @@
                                         { <strong>Gỡ chương vi phạm về Draft: "@r.TargetChapter!.Title"</strong> }
                                     </span>
                                 </label>
-                                <small class="text-muted">Hành động này sẽ được ghi vào lịch sử kiểm duyệt.</small>
-                            </div>
-                        }
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('resolveModal').close()">Hủy</button>
-                        <button type="submit" class="btn btn-success">Xác nhận</button>
-                    </div>
-                </form>
-            </dialog>
+                            }
+                            else
+                            {
+                                <span class="text-muted text-sm">Không có nội dung cụ thể để xử lý tự động.</span>
+                            }
+                        </div>
 
-            <dialog id="rejectModal" class="modal-dialog">
-                <form method="post" class="modal-content">
-                    <div class="modal-header"><h3>Bác bỏ báo cáo</h3></div>
-                    <div class="modal-body">
-                        <input type="hidden" name="id" value="@r.Id" />
-                        <input type="hidden" name="kind" value="@r.Kind" />
-                        <input type="hidden" name="action" value="Reject" />
+                        <div class="form-group mb-md">
+                            <label class="form-label">3. Xử phạt người dùng (Tùy chọn)</label>
+                            <label class="d-flex align-items-center gap-xs mb-xs" style="cursor:pointer">
+                                <input type="checkbox" name="warnUser" value="true" />
+                                <span>Gửi cảnh báo (Warn User)</span>
+                            </label>
+                            <label class="d-flex align-items-center gap-xs" style="cursor:pointer">
+                                <input type="checkbox" name="banUser" value="true" />
+                                <span class="text-danger">Khóa tài khoản (Ban User)</span>
+                            </label>
+                        </div>
+
                         <div class="form-group">
-                            <label class="form-label">Lý do bác bỏ</label>
-                            <textarea name="resolutionNotes" class="form-control" rows="3" placeholder="Nhập lý do bác bỏ báo cáo..."></textarea>
+                            <label class="form-label">Ghi chú & Lý do (Bắt buộc)</label>
+                            <textarea name="resolutionNotes" class="form-control" rows="3" required placeholder="Lý do này sẽ được dùng cho Ghi chú báo cáo, Cảnh báo và Khóa tài khoản (nếu có)..."></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('rejectModal').close()">Hủy</button>
-                        <button type="submit" class="btn btn-danger">Bác bỏ</button>
+                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('resolveModal').close()">Hủy</button>
+                        <button type="submit" class="btn btn-primary">Xác nhận thực thi</button>
                     </div>
                 </form>
             </dialog>
         }
     </div>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const actionSelect = document.querySelector('select[name="action"]');
+            if (actionSelect) {
+                actionSelect.addEventListener('change', function () {
+                    const isReject = this.value === 'Reject';
+                    
+                    // Disable and uncheck takeDownContent
+                    const takeDownCb = document.querySelector('input[name="takeDownContent"]');
+                    if (takeDownCb) {
+                        takeDownCb.disabled = isReject;
+                        if (isReject) takeDownCb.checked = false;
+                    }
+                    
+                    // Disable and uncheck warnUser
+                    const warnUserCb = document.querySelector('input[name="warnUser"]');
+                    if (warnUserCb) {
+                        warnUserCb.disabled = isReject;
+                        if (isReject) warnUserCb.checked = false;
+                    }
+                    
+                    // Disable and uncheck banUser
+                    const banUserCb = document.querySelector('input[name="banUser"]');
+                    if (banUserCb) {
+                        banUserCb.disabled = isReject;
+                        if (isReject) banUserCb.checked = false;
+                    }
+                });
+            }
+        });
+    </script>
 }

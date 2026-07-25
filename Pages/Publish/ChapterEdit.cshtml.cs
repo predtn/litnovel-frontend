@@ -22,11 +22,11 @@ public class ChapterEditModel : PublishPageModel
         var guard = RequireAuthor();
         if (guard != null) return guard;
         var loaded = await LoadAsync(id, volumeId, novelId);
-        if (!loaded) return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
+        if (!loaded) return RedirectToManageVolumes(novelId);
         if (!CanEditChapter)
         {
             TempData["Error"] = EditBlockedMessage();
-            return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
+            return RedirectToManageVolumes(novelId);
         }
 
         Input = new()
@@ -45,11 +45,11 @@ public class ChapterEditModel : PublishPageModel
         var guard = RequireAuthor();
         if (guard != null) return guard;
         var loaded = await LoadAsync(id, volumeId, novelId);
-        if (!loaded) return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
+        if (!loaded) return RedirectToManageVolumes(novelId);
         if (!CanEditChapter)
         {
             TempData["Error"] = EditBlockedMessage();
-            return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
+            return RedirectToManageVolumes(novelId);
         }
 
         Input.Status = "Pending";
@@ -81,9 +81,10 @@ public class ChapterEditModel : PublishPageModel
         }
 
         TempData["Success"] = "Đã lưu thay đổi và gửi chương vào hàng chờ duyệt.";
-        return RedirectToPage("/Publish/Chapters", new { volumeId, novelId });
+        return RedirectToManageVolumes(novelId);
     }
 
+    private IActionResult RedirectToManageVolumes(int novelId) => RedirectToPage("/Publish/Manage", pageHandler: null, routeValues: new { id = novelId }, fragment: "volumes");
     private string EditBlockedMessage()
         => IsPendingReview(Chapter.Status)
             ? "Chương đang chờ duyệt, không thể chỉnh sửa."

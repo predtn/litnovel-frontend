@@ -9,7 +9,7 @@ public static class ApiProxyEndpoints
         endpoints.MapNovelProxyEndpoints();
         endpoints.MapCommentProxyEndpoints();
         endpoints.MapNotificationProxyEndpoints();
-        endpoints.MapAnnouncementProxyEndpoints();
+        endpoints.MapReportProxyEndpoints();
         return endpoints;
     }
 
@@ -212,24 +212,21 @@ public static class ApiProxyEndpoints
         return endpoints;
     }
 
-    private static IEndpointRouteBuilder MapAnnouncementProxyEndpoints(this IEndpointRouteBuilder endpoints)
+    private static IEndpointRouteBuilder MapReportProxyEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/api/announcements", async (
+        endpoints.MapPost("/api/reports/users", async (
             HttpContext context,
             IApiService api,
             IAuthService auth) =>
         {
-            if (context.User.IsInRole("Admin"))
+            var token = auth.GetToken(context);
+            if (string.IsNullOrWhiteSpace(token))
             {
-                return Results.Json(new ApiResponse<List<AnnouncementDto>>
-                {
-                    Success = true,
-                    Data = []
-                });
+                return Results.Unauthorized();
             }
 
-            var token = auth.GetToken(context);
-            var result = await api.GetAsync<List<AnnouncementDto>>("/api/announcements", token);
+            var request = await context.Request.ReadFromJsonAsync<object>();
+            var result = await api.PostAsync<object>("/api/reports/users", request, token);
             return ToProxyResult(result);
         });
 

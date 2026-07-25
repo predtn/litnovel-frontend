@@ -20,12 +20,22 @@
     }
     else
     {
-        <div class="grid-4" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr));">
+        <div class="catalog-list view-grid">
             @foreach (var n in Model.Novels)
             {
                 var novelUrl = !string.IsNullOrWhiteSpace(n.Slug) ? n.Slug : n.Id.ToString();
-                <div class="novel-card" style="position:relative;">
-                    <a href="/Novels/@novelUrl">
+                <div class="novel-item-card" data-novel-id="@n.Id">
+                    <form method="post" style="display:contents;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="novelId" value="@n.Id" />
+                        <input type="hidden" name="page" value="@Model.PageNumber" />
+                        <button type="submit" class="novel-card__fav-btn active" title="Bỏ yêu thích" aria-label="Bỏ yêu thích">
+                            <svg class="heart-icon" viewBox="0 0 24 24">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
+                        </button>
+                    </form>
+                    <a href="/Novels/@novelUrl" class="novel-card__cover-wrapper">
                         @if (!string.IsNullOrWhiteSpace(n.CoverImage))
                         {
                             <img class="novel-card__cover" src="@n.CoverImage" alt="@n.Title" loading="lazy" />
@@ -36,24 +46,38 @@
                         }
                     </a>
                     <div class="novel-card__body">
-                        <div class="novel-card__title">
-                            <a href="/Novels/@novelUrl" style="color:inherit;text-decoration:none;">@n.Title</a>
+                        <div class="novel-card__header">
+                            <a href="/Novels/@novelUrl" class="novel-card__title">@n.Title</a>
+                            @if (n.Category != null)
+                            {
+                                <a href="/Novels?categoryId=@n.Category.Id&view=grid" class="novel-card__category">@n.Category.Name</a>
+                            }
                         </div>
+                        <div class="novel-card__author">Tác giả: <span>@n.Author?.Username</span></div>
+
+                        @if (n.Tags != null && n.Tags.Any())
+                        {
+                            <div class="novel-card__tags">
+                                @foreach (var tag in n.Tags.Take(8))
+                                {
+                                    <a href="/Novels?tagId=@tag.Id&view=grid" class="tag novel-card__tag">@tag.Name</a>
+                                }
+                            </div>
+                        }
+
                         <div class="novel-card__meta">
-                            <span>★ @n.RatingAverage.ToString("0.0")</span>
-                            <span class="status-badge status-@n.Status.ToLower()">@StatusLabel(n.Status)</span>
+                            <span class="novel-card__metric novel-card__metric--rated" title="Đánh giá">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/></svg>
+                                @n.RatingAverage.ToString("0.0")
+                            </span>
+                            <span class="novel-card__metric novel-card__meta-item--volumes" title="Số tập">@n.TotalVolumes tập</span>
+                            <span class="novel-card__metric novel-card__meta-item--chapters" title="Số chương">@n.TotalChapters chương</span>
+                            <span class="status-badge status-@n.Status.ToLowerInvariant()"><span class="status-badge__text">@StatusLabel(n.Status)</span></span>
                         </div>
                     </div>
-                    <form method="post" style="position:absolute;top:var(--space-xs);right:var(--space-xs);">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="novelId" value="@n.Id" />
-                        <input type="hidden" name="page" value="@Model.PageNumber" />
-                        <button type="submit" class="btn-icon" title="Bỏ yêu thích" style="color:var(--color-error);background:rgba(255,255,255,.9);">♡</button>
-                    </form>
                 </div>
             }
         </div>
-
         @if (Model.TotalPages > 1)
         {
             <div class="flex justify-center mt-xl">
@@ -154,16 +178,5 @@
         return items;
     }
 
-    private static string StatusLabel(string status) => status?.Trim().ToLowerInvariant() switch
-    {
-        "draft" => "Bản nháp",
-        "pending" => "Chờ duyệt",
-        "ongoing" => "Đang ra",
-        "published" => "Đã xuất bản",
-        "ended" => "Hoàn thành",
-        "rejected" => "Bị từ chối",
-        "hiatus" => "Tạm dừng",
-        "locked" => "Đã khóa",
-        _ => string.IsNullOrWhiteSpace(status) ? "Không rõ" : status
-    };
+    private static string StatusLabel(string? status) => DisplayText.Status(status);
 }

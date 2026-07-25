@@ -1,6 +1,7 @@
 @using Microsoft.AspNetCore.Http
 @using System.Security.Claims
 @inject IAuthService AuthService
+@inject IConfiguration Configuration
 @{
     var sessionNotice = Context.Session.GetString("SessionNotice");
     var sessionNoticeType = Context.Session.GetString("SessionNoticeType") ?? "info";
@@ -20,7 +21,8 @@
         Context.Session.Remove("SessionNoticeType");
     }
     var signalRToken = AuthService.GetToken(Context) ?? "";
-    var layoutAnnouncements = new List<AnnouncementDto>();
+    var publicApiBaseUrl = (Configuration["PublicApiBaseUrl"] ?? Configuration["ApiBaseUrl"] ?? "http://localhost:5181").TrimEnd('/');
+    var signalRHubUrl = $"{publicApiBaseUrl}/hubs/notifications";
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -29,10 +31,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="@(ViewData["Description"] ?? "LitNovel — Nền tảng đọc và xuất bản truyện chữ trực tuyến")" />
     <title>@(ViewData["Title"] != null ? ViewData["Title"] + " — LitNovel" : "LitNovel")</title>
+    <script>
+        (() => {
+            try {
+                if (localStorage.getItem('litnovel-theme') === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                }
+            } catch {}
+        })();
+    </script>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @if (!string.IsNullOrEmpty(signalRToken))
     {
         <meta name="signalr-token" content="@signalRToken" />
+        <meta name="signalr-hub-url" content="@signalRHubUrl" />
     }
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -47,7 +59,6 @@
             <div class="navbar__links">
                 <a href="/Novels" class="navbar__link @(ViewData["ActiveNav"]?.ToString() == "catalog" ? "active" : "")">Thư viện</a>
                 <a href="/Novels/Search" class="navbar__link @(ViewData["ActiveNav"]?.ToString() == "search" ? "active" : "")">Tìm kiếm</a>
-                <a href="/Forum" class="navbar__link @(ViewData["ActiveNav"]?.ToString() == "forum" ? "active" : "")">Diễn đàn</a>
                 @if (Context.User.Identity?.IsAuthenticated == true)
                 {
                     <a href="/Publish" class="navbar__link @(ViewData["ActiveNav"]?.ToString() == "publish" ? "active" : "")">Viết truyện</a>
@@ -80,6 +91,23 @@
                             <span class="sr-only">@count thông báo chưa đọc</span>
                         }
                     </a>
+
+                    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle dark mode" title="Dark mode">
+                        <svg class="theme-toggle__icon theme-toggle__icon--sun" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="12" r="4"></circle>
+                            <path d="M12 2v2"></path>
+                            <path d="M12 20v2"></path>
+                            <path d="m4.93 4.93 1.41 1.41"></path>
+                            <path d="m17.66 17.66 1.41 1.41"></path>
+                            <path d="M2 12h2"></path>
+                            <path d="M20 12h2"></path>
+                            <path d="m6.34 17.66-1.41 1.41"></path>
+                            <path d="m19.07 4.93-1.41 1.41"></path>
+                        </svg>
+                        <svg class="theme-toggle__icon theme-toggle__icon--moon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M20.6 14.4A8.5 8.5 0 0 1 9.6 3.4 8.5 8.5 0 1 0 20.6 14.4Z"></path>
+                        </svg>
+                    </button>
 
                     <!-- User Avatar Dropdown -->
                     <div class="dropdown" id="userDropdown">
@@ -137,6 +165,22 @@
                 }
                 else
                 {
+                    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle dark mode" title="Dark mode">
+                        <svg class="theme-toggle__icon theme-toggle__icon--sun" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="12" r="4"></circle>
+                            <path d="M12 2v2"></path>
+                            <path d="M12 20v2"></path>
+                            <path d="m4.93 4.93 1.41 1.41"></path>
+                            <path d="m17.66 17.66 1.41 1.41"></path>
+                            <path d="M2 12h2"></path>
+                            <path d="M20 12h2"></path>
+                            <path d="m6.34 17.66-1.41 1.41"></path>
+                            <path d="m19.07 4.93-1.41 1.41"></path>
+                        </svg>
+                        <svg class="theme-toggle__icon theme-toggle__icon--moon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M20.6 14.4A8.5 8.5 0 0 1 9.6 3.4 8.5 8.5 0 1 0 20.6 14.4Z"></path>
+                        </svg>
+                    </button>
                     <a href="/Auth/Login" class="btn btn-nav-login">Đăng nhập</a>
                     <a href="/Auth/Register" class="btn btn-nav-signup">Đăng ký</a>
                 }
@@ -149,27 +193,13 @@
         </div>
     </nav>
 
-    <section class="site-announcement-ticker @(layoutAnnouncements.Count == 0 ? "hidden" : "")" id="siteAnnouncementTicker" aria-live="polite" aria-label="Thông báo hệ thống">
-        <div class="site-announcement-ticker__inner">
-            <span class="site-announcement-ticker__label">Tin mới</span>
-            <div class="site-announcement-ticker__viewport">
-                <div class="site-announcement-ticker__track" id="siteAnnouncementTickerTrack">
-                    @foreach (var announcement in layoutAnnouncements)
-                    {
-                        var textContent = System.Text.RegularExpressions.Regex.Replace(announcement.Content ?? "", "<.*?>", " ").Trim();
-                        <span class="site-announcement-ticker__item" data-announcement-id="@announcement.Id">@announcement.Title@(string.IsNullOrWhiteSpace(textContent) ? "" : $" - {textContent}")</span>
-                    }
-                </div>
-            </div>
-        </div>
-    </section>
+    @await Html.PartialAsync("_PageTransition")
 
     <!-- Mobile Menu -->
     <div class="mobile-menu" id="mobileMenu">
         <button class="mobile-menu__close" onclick="toggleMobileMenu()">✕</button>
         <a href="/Novels" class="mobile-menu__link">Thư viện</a>
         <a href="/Novels/Search" class="mobile-menu__link">Tìm kiếm</a>
-        <a href="/Forum" class="mobile-menu__link">Diễn đàn</a>
         @if (Context.User.Identity?.IsAuthenticated == true)
         {
             <a href="/Profile" class="mobile-menu__link">Hồ sơ</a>
@@ -228,6 +258,20 @@
     {
         <div class="server-toast" data-message="@toast.Message" data-type="@toast.Type" hidden></div>
     }
+
+    <div class="modal-overlay" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+        <div class="modal">
+            <div class="modal__header">
+                <div class="modal__title" id="confirmTitle">X&aacute;c nh&#7853;n thao t&aacute;c</div>
+                <button class="modal__close" type="button" onclick="closeModal('confirmModal')" aria-label="&Dstrok;&oacute;ng">&times;</button>
+            </div>
+            <div id="confirmMessage" class="text-body"></div>
+            <div class="modal__footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('confirmModal')">H&#7911;y</button>
+                <button type="button" class="btn btn-danger" id="confirmBtn">X&aacute;c nh&#7853;n</button>
+            </div>
+        </div>
+    </div>
 
     <!-- JS -->
     <script src="~/js/site.js" asp-append-version="true"></script>

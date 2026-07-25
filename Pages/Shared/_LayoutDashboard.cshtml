@@ -1,5 +1,6 @@
 @using Microsoft.AspNetCore.Http
 @inject IAuthService AuthService
+@inject IConfiguration Configuration
 @{
     var sessionNotice = Context.Session.GetString("SessionNotice");
     var sessionNoticeType = Context.Session.GetString("SessionNoticeType") ?? "info";
@@ -20,7 +21,8 @@
         Context.Session.Remove("SessionNoticeType");
     }
     var signalRToken = AuthService.GetToken(Context) ?? "";
-    var layoutAnnouncements = new List<AnnouncementDto>();
+    var publicApiBaseUrl = (Configuration["PublicApiBaseUrl"] ?? Configuration["ApiBaseUrl"] ?? "http://localhost:5181").TrimEnd('/');
+    var signalRHubUrl = $"{publicApiBaseUrl}/hubs/notifications";
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -32,6 +34,7 @@
     @if (!string.IsNullOrEmpty(signalRToken))
     {
         <meta name="signalr-token" content="@signalRToken" />
+        <meta name="signalr-hub-url" content="@signalRHubUrl" />
     }
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -53,20 +56,6 @@
         </aside>
 
         <main class="dashboard-content admin-content">
-            <section class="site-announcement-ticker site-announcement-ticker--dashboard @(layoutAnnouncements.Count == 0 ? "hidden" : "")" id="siteAnnouncementTicker" aria-live="polite" aria-label="Thông báo hệ thống">
-                <div class="site-announcement-ticker__inner">
-                    <span class="site-announcement-ticker__label">Tin mới</span>
-                    <div class="site-announcement-ticker__viewport">
-                        <div class="site-announcement-ticker__track" id="siteAnnouncementTickerTrack">
-                            @foreach (var announcement in layoutAnnouncements)
-                            {
-                                var textContent = System.Text.RegularExpressions.Regex.Replace(announcement.Content ?? "", "<.*?>", " ").Trim();
-                                <span class="site-announcement-ticker__item" data-announcement-id="@announcement.Id">@announcement.Title@(string.IsNullOrWhiteSpace(textContent) ? "" : $" - {textContent}")</span>
-                            }
-                        </div>
-                    </div>
-                </div>
-            </section>
             @RenderBody()
         </main>
     </div>

@@ -1,4 +1,4 @@
-﻿@page "/Profile/{userId:int}"
+@page "/Profile/{userId:int}"
 @model litnovel_frontend.Pages.Profile.PublicModel
 @{
     ViewData["Title"] = Model.User?.Username ?? "Hồ sơ";
@@ -39,7 +39,7 @@
                 <div><span class="text-display-sm font-semibold">@u.Stats.NovelsCreated</span> <span class="text-caption text-mute">Truyện</span></div>
                 <div><span class="text-display-sm font-semibold">@u.Stats.ChaptersPublished</span> <span class="text-caption text-mute">Chương</span></div>
             </div>
-            <div class="text-caption text-mute">Tham gia từ @joinedAt?.ToString("dd/MM/yyyy")</div>
+            <div class="text-caption text-mute">Tham gia từ @DisplayDateTime.Format(joinedAt, "dd/MM/yyyy")</div>
         </div>
     </div>
 
@@ -73,7 +73,7 @@
                             <div class="profile-badge-card__name">@b.Name</div>
                             @if (b.EarnedAt != default)
                             {
-                                <div class="profile-badge-card__meta">Nhận @b.EarnedAt.ToString("dd/MM/yyyy")</div>
+                                <div class="profile-badge-card__meta">Nhận @DisplayDateTime.Format(b.EarnedAt, "dd/MM/yyyy")</div>
                             }
                         </div>
                     </div>
@@ -120,11 +120,12 @@
     { <div class="empty-state"><div class="empty-state__icon">✎</div><div class="empty-state__title">Chưa có truyện nào</div></div> }
     else
     {
-        <div class="grid-4" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr));">
+        <div class="catalog-list view-grid">
             @foreach (var n in Model.Novels)
             {
                 var novelUrl = !string.IsNullOrWhiteSpace(n.Slug) ? n.Slug : n.Id.ToString();
-                <a href="/Novels/@novelUrl" class="novel-card">
+                <div class="novel-item-card" data-novel-id="@n.Id">
+                    <a href="/Novels/@novelUrl" class="novel-card__cover-wrapper">
                     @if (!string.IsNullOrWhiteSpace(n.CoverImage))
                     {
                         <img class="novel-card__cover" src="@n.CoverImage" alt="@n.Title" loading="lazy" />
@@ -133,19 +134,27 @@
                     {
                         <div class="novel-card__cover-placeholder">📖</div>
                     }
+                    </a>
                     <div class="novel-card__body">
-                        <div class="novel-card__title">@n.Title</div>
-                        <div class="profile-novel-meta">
-                            <span class="status-badge status-@n.Status.ToLowerInvariant()">@StatusLabel(n.Status)</span>
+                        <div class="novel-card__header">
+                            <a href="/Novels/@novelUrl" class="novel-card__title">@n.Title</a>
+                            @if (n.Category != null)
+                            {
+                                <a href="/Novels?categoryId=@n.Category.Id&view=grid" class="novel-card__category">@n.Category.Name</a>
+                            }
                         </div>
-                        <div class="profile-novel-details">
-                            <div><span>Số volume: @n.TotalVolumes</span></div>
-                            <div><span>Số chương: @n.TotalChapters</span></div>
-                            <div><span>Đánh giá: ★ @n.RatingAverage.ToString("0.0")</span></div>
-                            <div><span>Cập nhật: @n.UpdatedAt.ToString("dd/MM/yyyy")</span></div>
+                        <div class="novel-card__author">Tác giả: <span>@(n.Author?.Username ?? u.Username)</span></div>
+                        <div class="novel-card__meta">
+                            <span class="novel-card__metric novel-card__metric--rated" title="Đánh giá">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/></svg>
+                                @n.RatingAverage.ToString("0.0")
+                            </span>
+                            <span class="novel-card__metric novel-card__meta-item--volumes" title="Số tập">@n.TotalVolumes tập</span>
+                            <span class="novel-card__metric novel-card__meta-item--chapters" title="Số chương">@n.TotalChapters chương</span>
+                            <span class="status-badge status-@n.Status.ToLowerInvariant()"><span class="status-badge__text">@StatusLabel(n.Status)</span></span>
                         </div>
                     </div>
-                </a>
+                </div>
             }
         </div>
     }
@@ -160,18 +169,7 @@
             || icon.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string StatusLabel(string status) => status?.Trim().ToLowerInvariant() switch
-    {
-        "draft" => "Bản nháp",
-        "pending" => "Chờ duyệt",
-        "ongoing" => "Đang ra",
-        "published" => "Đã xuất bản",
-        "ended" => "Hoàn thành",
-        "rejected" => "Bị từ chối",
-        "hiatus" => "Tạm dừng",
-        "locked" => "Đã khóa",
-        _ => string.IsNullOrWhiteSpace(status) ? "Không rõ" : status
-    };
+    private static string StatusLabel(string? status) => DisplayText.Status(status);
 
     private static string UserStatusLabel(string? status) => status?.Trim().ToLowerInvariant() switch
     {

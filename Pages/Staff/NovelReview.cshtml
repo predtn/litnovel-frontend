@@ -1,28 +1,7 @@
 @page
 @model litnovel_frontend.Pages.Staff.NovelReviewModel
 @{ Layout = "_LayoutDashboard"; ViewData["Title"] = "Xem xét tiểu thuyết"; }
-@section Sidebar {
-    <a href="/Staff/Dashboard" class="sidebar__link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
-        Tổng quan
-    </a>
-    <a href="/Staff/PendingNovels" class="sidebar__link active">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-        Tiểu thuyết chờ duyệt
-    </a>
-    <a href="/Staff/PendingChapters" class="sidebar__link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        Chương chờ duyệt
-    </a>
-    <a href="/Staff/Reports" class="sidebar__link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        Báo cáo vi phạm
-    </a>
-    <a href="/Staff/ModerationHistory" class="sidebar__link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-        Lịch sử kiểm duyệt
-    </a>
-}
+@section Sidebar { <partial name="_StaffSidebar" /> }
 <!-- SCR-40: Novel Review -->
 <div class="page-header">
     <div>
@@ -43,7 +22,7 @@
             <div class="card">
                 <div class="card__header">
                     <h2 class="card__title">@n.Title</h2>
-                    <span class="status-badge status-@n.Status.ToLower()">@n.Status</span>
+                    <span class="status-badge status-@n.Status.ToLower()">@DisplayText.Status(n.Status)</span>
                 </div>
                 <div class="card__body">
                     @if (!string.IsNullOrEmpty(n.Description))
@@ -55,10 +34,10 @@
                         <div class="meta-item"><span class="meta-label">Thể loại</span><span class="meta-value">@(n.CategoryName ?? "—")</span></div>
                         <div class="meta-item"><span class="meta-label">Tổng chương</span><span class="meta-value">@n.TotalChapters</span></div>
                         <div class="meta-item"><span class="meta-label">Lượt xem</span><span class="meta-value">@n.ViewCount</span></div>
-                        <div class="meta-item"><span class="meta-label">Ngày tạo</span><span class="meta-value">@n.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</span></div>
-                        <div class="meta-item"><span class="meta-label">Cập nhật</span><span class="meta-value">@n.UpdatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span></div>
+                        <div class="meta-item"><span class="meta-label">Ngày tạo</span><span class="meta-value">@DisplayDateTime.Format(n.CreatedAt, "dd/MM/yyyy")</span></div>
+                        <div class="meta-item"><span class="meta-label">Cập nhật</span><span class="meta-value">@DisplayDateTime.Format(n.UpdatedAt, "dd/MM/yyyy HH:mm")</span></div>
                     </div>
-                    @if (n.Tags.Any())
+                    @if (n.Tags != null && n.Tags.Any())
                     {
                         <div class="tags-row mt-sm">
                             @foreach (var tag in n.Tags)
@@ -71,7 +50,7 @@
             </div>
 
             <!-- Volume & Chapter List -->
-            @foreach (var vol in n.Volumes)
+            @foreach (var vol in n.Volumes ?? new List<litnovel_frontend.Services.ReviewVolumeDto>())
             {
                 <div class="volume-block">
                     <div class="volume-header">
@@ -80,19 +59,19 @@
                         <span class="badge badge-secondary">@vol.Chapters.Count chương</span>
                     </div>
                     <div class="chapter-list">
-                        @foreach (var ch in vol.Chapters)
+                        @foreach (var ch in vol.Chapters ?? new List<litnovel_frontend.Services.ReviewChapterDto>())
                         {
                             <div class="chapter-item">
                                 <span class="chapter-num">Chương @ch.ChapterNumber</span>
                                 <span class="chapter-title">@ch.Title</span>
-                                <span class="status-badge status-@ch.Status.ToLower() badge-sm">@ch.Status</span>
+                                <span class="status-badge status-@ch.Status.ToLower() badge-sm">@DisplayText.Status(ch.Status)</span>
                                 <a href="/Staff/ChapterReview?id=@ch.Id" class="btn btn-secondary btn-xs">Xem</a>
                             </div>
                         }
                     </div>
                 </div>
             }
-            @if (!n.Volumes.Any())
+            @if (n.Volumes == null || !n.Volumes.Any())
             {
                 <div class="empty-state">
                     <div class="empty-state__icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
@@ -135,13 +114,15 @@
 
     <!-- Reject Modal -->
     <dialog id="rejectModal" class="modal-dialog">
-        <form method="post" class="modal-content">
+        <form method="post" class="modal-content" onsubmit="return validateNovelRejectForm()">
             <div class="modal-header"><h3>Từ chối tiểu thuyết</h3></div>
             <div class="modal-body">
                 <input type="hidden" name="id" value="@n.Id" />
                 <input type="hidden" name="action" value="Reject" />
-                <label class="form-label">Lý do từ chối *</label>
-                <textarea name="reason" class="form-control" rows="4" placeholder="Nhập lý do từ chối..."></textarea>
+                <label class="form-label">Lý do từ chối <span style="color:var(--color-danger)">*</span></label>
+                <textarea name="reason" id="rejectReasonNovel" class="form-control" rows="4"
+                          placeholder="Nhập lý do từ chối..." required minlength="1"></textarea>
+                <div id="rejectReasonNovelError" style="color:var(--color-danger);font-size:0.85em;display:none;margin-top:4px;">Vui lòng nhập lý do từ chối.</div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="document.getElementById('rejectModal').close()">Hủy</button>
@@ -156,3 +137,18 @@ else
 {
     <div class="empty-state"><div class="empty-state__icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="empty-state__title">Không tìm thấy tiểu thuyết</div></div>
 }
+
+<script>
+    function validateNovelRejectForm() {
+        var reason = document.getElementById('rejectReasonNovel');
+        var errDiv = document.getElementById('rejectReasonNovelError');
+        if (!reason || !reason.value.trim()) {
+            if (errDiv) errDiv.style.display = 'block';
+            if (reason) { reason.style.borderColor = 'var(--color-danger)'; reason.focus(); }
+            return false;
+        }
+        if (errDiv) errDiv.style.display = 'none';
+        reason.style.borderColor = '';
+        return true;
+    }
+</script>

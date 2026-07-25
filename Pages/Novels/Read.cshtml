@@ -5,6 +5,7 @@
     var ch = Model.Chapter;
     var novelUrl = !string.IsNullOrWhiteSpace(ch?.Novel?.Slug) ? ch.Novel.Slug : ch?.Novel?.Id.ToString();
     var allVolumes = Model.Novel?.Volumes ?? [];
+    var interactionsLocked = ch != null && (IsPendingDeletion(ch.Novel?.Status) || IsPendingDeletion(ch.Status));
 }
 @if (ch == null)
 {
@@ -115,13 +116,54 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="reportCommentModal">
+    <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal__header">
+            <div class="modal__title">Báo cáo bình luận</div>
+            <button type="button" class="modal__close" onclick="closeModal('reportCommentModal')">×</button>
+        </div>
+        <form id="reportCommentForm" onsubmit="submitReportComment(event)">
+            <input type="hidden" id="reportCommentId" name="TargetCommentId" />
+            <input type="hidden" id="reportUserId" name="TargetUserId" />
+            <input type="hidden" name="ReportKind" value="User" />
+            
+            <div class="modal__body" style="padding:var(--space-md);">
+                <div class="form-group mb-sm">
+                    <label class="form-label">Loại vi phạm</label>
+                    <select name="ReportType" class="form-control" required>
+                        <option value="Spam">Spam / Quảng cáo</option>
+                        <option value="Inappropriate">Ngôn từ không phù hợp / Xúc phạm</option>
+                        <option value="Harassment">Quấy rối / Công kích cá nhân</option>
+                        <option value="Other">Khác</option>
+                    </select>
+                </div>
+                <div class="form-group mb-md">
+                    <label class="form-label">Mô tả thêm (Không bắt buộc)</label>
+                    <textarea name="Description" class="form-textarea" rows="3" placeholder="Chi tiết vi phạm..."></textarea>
+                </div>
+            </div>
+            <div class="modal__footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('reportCommentModal')">Hủy</button>
+                <button type="submit" class="btn btn-danger" id="submitReportBtn">Gửi báo cáo</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="reader-layout reader-layout--main" id="readerLayout">
     <div class="reader-header">
         <div class="reader-novel-title">
             <a href="/Novels/@novelUrl" style="color:var(--color-mute); text-decoration:none;">@ch.Novel?.Title</a>
         </div>
         <h1 class="reader-chapter-title">@ch.Title</h1>
-        <div class="text-caption text-mute mt-xs">Chương @ch.ChapterNumber · @ch.CreatedAt.ToString("dd/MM/yyyy")</div>
+        @if (interactionsLocked)
+        {
+            var hardDeleteAt = ch.ScheduledHardDeleteAt ?? ch.Novel?.ScheduledHardDeleteAt;
+            <div class="alert alert-info mt-md">
+                Tác giả đã lên lịch xóa nội dung này@(hardDeleteAt.HasValue ? $", nội dung sẽ được dọn vào {FormatDateTime(hardDeleteAt.Value)}" : "").
+            </div>
+        }
+        <div class="text-caption text-mute mt-xs">Chương @ch.ChapterNumber · @DisplayDateTime.Format(ch.CreatedAt, "dd/MM/yyyy")</div>
     </div>
 
     <div class="reader-content" id="chapterContent">
@@ -157,7 +199,11 @@
     <div class="reader-layout" style="padding-top:0; padding-bottom:0;">
         <h2 class="text-display-sm mb-xl">Bình luận (@Model.TotalComments)</h2>
 
-        @if (User.Identity?.IsAuthenticated == true)
+        @if (interactionsLocked)
+        {
+            <div class="alert alert-info mb-xl">N&#7897;i dung &#273;ang &#7903; tr&#7841;ng th&#225;i ch&#7901; x&#243;a n&#234;n b&#236;nh lu&#7853;n &#273;&#227; t&#7841;m kh&#243;a.</div>
+        }
+        else if (User.Identity?.IsAuthenticated == true)
         {
             <form method="post" asp-page-handler="Comment" class="mb-xl">
                 @Html.AntiForgeryToken()
@@ -191,7 +237,7 @@
                             <span class="comment-user-badges">
                                 @foreach (var badge in comment.User.Badges)
                                 {
-                                    var badgeColor = string.IsNullOrWhiteSpace(badge.Color) ? "#111827" : badge.Color;
+                                    var badgeColor = string.IsNullOrWhiteSpace(badge.Color) ? "var(--color-ink)" : badge.Color;
                                     <span class="comment-user-badge" title="@badge.Name" style="--badge-color:@badgeColor;">
                                         <span>@badge.Name</span>
                                     </span>
@@ -207,7 +253,7 @@
                     </div>
                     <div class="comment__content">@comment.Content</div>
                     <div class="comment__actions">
-                        @if (User.Identity?.IsAuthenticated == true)
+                        @if (User.Identity?.IsAuthenticated == true && !interactionsLocked)
                         {
                             <button type="button"
                                     class="comment__action @(comment.IsLiked ? "active" : "")"
@@ -218,6 +264,10 @@
                                 <span class="comment-like-count">@comment.LikeCount</span>
                             </button>
                             <button type="button" class="comment__action" onclick="showReply(@comment.Id)">Trả lời</button>
+                            @if (Model.CurrentUserId != comment.User?.Id)
+                            {
+                                <button type="button" class="comment__action text-mute" onclick="reportComment(@comment.Id, @(comment.User?.Id ?? 0))" title="Báo cáo bình luận">Báo cáo</button>
+                            }
                         }
                         else
                         {
@@ -226,7 +276,7 @@
                         <span class="comment__time">@TimeAgo(comment.CreatedAt)</span>
                     </div>
 
-                    @if (User.Identity?.IsAuthenticated == true)
+                    @if (User.Identity?.IsAuthenticated == true && !interactionsLocked)
                     {
                         <form method="post" asp-page-handler="Reply" id="replyForm-@comment.Id" class="hidden mt-sm" style="margin-left:0;">
                             @Html.AntiForgeryToken()
@@ -257,7 +307,7 @@
                                                 <span class="comment-user-badges">
                                                     @foreach (var badge in reply.User.Badges)
                                                     {
-                                                        var badgeColor = string.IsNullOrWhiteSpace(badge.Color) ? "#111827" : badge.Color;
+                                                        var badgeColor = string.IsNullOrWhiteSpace(badge.Color) ? "var(--color-ink)" : badge.Color;
                                                         <span class="comment-user-badge" title="@badge.Name" style="--badge-color:@badgeColor;">
                                                             <span>@badge.Name</span>
                                                         </span>
@@ -273,7 +323,7 @@
                                         </div>
                                         <div class="comment__content">@reply.Content</div>
                                         <div class="comment__actions">
-                                            @if (User.Identity?.IsAuthenticated == true)
+                                            @if (User.Identity?.IsAuthenticated == true && !interactionsLocked)
                                             {
                                                 <button type="button"
                                                         class="comment__action @(reply.IsLiked ? "active" : "")"
@@ -283,6 +333,10 @@
                                                     <span class="comment-like-text">@(reply.IsLiked ? "Bỏ thích" : "Thích")</span>
                                                     <span class="comment-like-count">@reply.LikeCount</span>
                                                 </button>
+                                                @if (Model.CurrentUserId != reply.User?.Id)
+                                                {
+                                                    <button type="button" class="comment__action text-mute" onclick="reportComment(@reply.Id, @(reply.User?.Id ?? 0))" title="Báo cáo bình luận">Báo cáo</button>
+                                                }
                                             }
                                             else
                                             {
@@ -313,12 +367,13 @@
 @functions {
     string TimeAgo(DateTime dt)
     {
-        var d = DateTime.UtcNow - dt;
-        if (d.TotalMinutes < 60) return $"{Math.Max(0, (int)d.TotalMinutes)}p trước";
-        if (d.TotalHours < 24) return $"{(int)d.TotalHours}h trước";
-        if (d.TotalDays < 30) return $"{(int)d.TotalDays}d trước";
-        return dt.ToString("dd/MM/yy");
+        return DisplayDateTime.Relative(dt);
     }
+
+    static bool IsPendingDeletion(string? status)
+        => string.Equals(status, "PendingDeletion", StringComparison.OrdinalIgnoreCase);
+
+    static string FormatDateTime(DateTime value) => DisplayDateTime.Format(value, "dd/MM/yyyy HH:mm");
 
     Microsoft.AspNetCore.Html.IHtmlContent RenderAvatar(string? username, string? avatar, string cssClass)
     {
@@ -412,6 +467,48 @@ async function confirmDeleteComment() {
         showToast('Đã xóa bình luận.', 'success');
     } catch {
         showToast('Không thể xóa bình luận.', 'error');
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+function reportComment(commentId, targetUserId) {
+    if (targetUserId === 0) return;
+    document.getElementById('reportCommentId').value = commentId;
+    document.getElementById('reportUserId').value = targetUserId;
+    document.getElementById('reportCommentForm').reset();
+    openModal('reportCommentModal');
+}
+
+async function submitReportComment(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitReportBtn');
+    if (btn) btn.disabled = true;
+
+    const form = e.target;
+    const data = {
+        TargetUserId: parseInt(form.TargetUserId.value),
+        TargetCommentId: parseInt(form.TargetCommentId.value),
+        ReportType: form.ReportType.value,
+        Description: form.Description.value
+    };
+
+    try {
+        const res = await fetch('/api/reports/users', {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+            showToast('Đã gửi báo cáo bình luận thành công.', 'success');
+            closeModal('reportCommentModal');
+        } else {
+            const error = await res.json();
+            showToast(error?.message || 'Không thể gửi báo cáo.', 'error');
+        }
+    } catch {
+        showToast('Có lỗi xảy ra khi gửi báo cáo.', 'error');
     } finally {
         if (btn) btn.disabled = false;
     }
